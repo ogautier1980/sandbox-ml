@@ -1,0 +1,945 @@
+\documentclass[11pt,a4paper]{article}
+
+% Encodage et langue
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\onehalfspacing
+
+% Polices
+\usepackage{lmodern}
+
+% Couleurs et liens
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=NavyBlue,
+    urlcolor=NavyBlue,
+    citecolor=NavyBlue,
+    pdfauthor={ML Sandbox},
+    pdftitle={Guide ML Sandbox - Configuration et Outils},
+}
+
+% Code et listings
+\usepackage{listings}
+\usepackage{fancyvrb}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    framesep=3pt,
+    framerule=0.5pt,
+    rulecolor=\color{gray!50},
+    backgroundcolor=\color{gray!5},
+    showstringspaces=false,
+    tabsize=4,
+    columns=flexible,
+    keepspaces=true,
+    xleftmargin=0.5cm,
+    xrightmargin=0.5cm,
+}
+
+\lstdefinestyle{bash}{
+    language=bash,
+    morekeywords={docker,git,pip,python,jupyter,tesseract,libreoffice,convert,ffmpeg,pandoc,xelatex,latexmk},
+    keywordstyle=\color{NavyBlue}\bfseries,
+    commentstyle=\color{gray},
+    stringstyle=\color{OliveGreen},
+}
+
+\lstdefinestyle{python}{
+    language=Python,
+    keywordstyle=\color{NavyBlue}\bfseries,
+    commentstyle=\color{gray},
+    stringstyle=\color{OliveGreen},
+    morekeywords={self,True,False,None,as,with},
+}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{ML Sandbox}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Table des matières
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+% Images
+\usepackage{graphicx}
+
+% Boîtes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+\newtcolorbox{infobox}[1][]{
+    colback=blue!5,
+    colframe=NavyBlue,
+    fonttitle=\bfseries,
+    title=#1,
+    breakable,
+}
+
+\newtcolorbox{warningbox}[1][]{
+    colback=orange!5,
+    colframe=Orange,
+    fonttitle=\bfseries,
+    title=#1,
+    breakable,
+}
+
+\newtcolorbox{tipbox}[1][]{
+    colback=green!5,
+    colframe=OliveGreen,
+    fonttitle=\bfseries,
+    title=#1,
+    breakable,
+}
+
+% Commandes personnalisées
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\file}[1]{\texttt{#1}}
+
+% Titre
+\title{
+    \vspace{-2cm}
+    {\Huge\bfseries Guide ML Sandbox}\\[0.5cm]
+    {\Large Configuration et Outils}\\[1cm]
+    {\large Container Docker pour le Machine Learning en Python}
+}
+\author{Repository: \href{https://github.com/ogautier1980/sandbox-ml}{github.com/ogautier1980/sandbox-ml}}
+\date{Version 0.1 -- Janvier 2026}
+
+% ============================================
+% DOCUMENT
+% ============================================
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\vfill
+
+\begin{abstract}
+Ce guide présente l'installation et l'utilisation du container Docker \textbf{ML Sandbox}, un environnement complet pour le Machine Learning en Python. Il inclut PyTorch, TensorFlow, scikit-learn, et plus de 100 packages pour le data science, le traitement de documents, l'OCR, et la visualisation.
+\end{abstract}
+
+\vfill
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Composant} & \textbf{Contenu} \\
+\midrule
+Python & 3.11 \\
+ML/Deep Learning & PyTorch, TensorFlow, scikit-learn, XGBoost \\
+Data & NumPy, Pandas, Polars \\
+Documents & LaTeX, LibreOffice, Pandoc \\
+OCR & Tesseract (FR/EN), EasyOCR \\
+Web/API & FastAPI, Streamlit, Gradio \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vfill
+
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================
+% PARTIE 1 : CONFIGURATION
+% ============================================
+\part{Guide de Configuration}
+
+\section{Prérequis}
+
+Avant de commencer, assurez-vous d'avoir installé les logiciels suivants :
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Logiciel} & \textbf{Téléchargement} & \textbf{Vérification} \\
+\midrule
+Docker Desktop & \url{docker.com/products/docker-desktop} & \code{docker --version} \\
+VS Code & \url{code.visualstudio.com} & \code{code --version} \\
+Git & \url{git-scm.com} & \code{git --version} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{warningbox}[Mémoire Docker]
+Docker Desktop utilise par défaut 2 GB de RAM. Pour les packages ML, augmentez à \textbf{8 GB minimum} (16 GB recommandé) dans Docker Desktop $\rightarrow$ Settings $\rightarrow$ Resources.
+\end{warningbox}
+
+% --------------------------------------------
+\section{Méthode 1 : VS Code Dev Container (Recommandée)}
+
+Cette méthode ouvre VS Code directement dans le container Docker avec toutes les extensions pré-configurées.
+
+\subsection{Étape 1 : Installer l'extension Dev Containers}
+
+\begin{enumerate}
+    \item Ouvrir VS Code
+    \item Aller dans Extensions (\code{Ctrl+Shift+X})
+    \item Rechercher \textbf{``Dev Containers''} (Microsoft)
+    \item Cliquer sur \textbf{Installer}
+\end{enumerate}
+
+\subsection{Étape 2 : Cloner le repository}
+
+\textbf{Option A -- Via terminal :}
+\begin{lstlisting}[style=bash]
+git clone https://github.com/ogautier1980/sandbox-ml.git
+cd sandbox-ml
+code .
+\end{lstlisting}
+
+\textbf{Option B -- Via VS Code :}
+\begin{enumerate}
+    \item Ouvrir VS Code
+    \item \code{Ctrl+Shift+P} $\rightarrow$ taper ``Git: Clone''
+    \item Coller l'URL : \code{https://github.com/ogautier1980/sandbox-ml.git}
+    \item Choisir un dossier de destination
+    \item Cliquer ``Open'' quand VS Code propose d'ouvrir le repository
+\end{enumerate}
+
+\subsection{Étape 3 : Ouvrir dans le container}
+
+\begin{enumerate}
+    \item VS Code détecte automatiquement le fichier \file{.devcontainer/devcontainer.json}
+    \item Une notification apparaît : \textit{``Folder contains a Dev Container configuration file...''}
+    \item Cliquer sur \textbf{``Reopen in Container''}
+\end{enumerate}
+
+\begin{tipbox}[Si la notification n'apparaît pas]
+\code{Ctrl+Shift+P} $\rightarrow$ taper ``Dev Containers: Reopen in Container''
+\end{tipbox}
+
+\subsection{Étape 4 : Attendre le build}
+
+Le premier lancement prend \textbf{10-20 minutes} car Docker doit :
+\begin{itemize}
+    \item Télécharger l'image Python 3.11
+    \item Installer les packages système (LaTeX, LibreOffice, FFmpeg, etc.)
+    \item Installer les packages Python ($\sim$100 packages)
+    \item Configurer les extensions VS Code
+\end{itemize}
+
+\subsection{Étape 5 : Accéder à Jupyter Lab}
+
+Jupyter Lab démarre automatiquement sur le port 8888.
+
+\begin{enumerate}
+    \item Ouvrir un navigateur
+    \item Aller à : \textbf{\url{http://localhost:8888}}
+    \item Jupyter Lab s'ouvre sans mot de passe
+\end{enumerate}
+
+% --------------------------------------------
+\section{Méthode 2 : Docker Compose}
+
+Pour utiliser le container sans VS Code Dev Containers.
+
+\subsection{Démarrer le container}
+
+\textbf{Windows :}
+\begin{lstlisting}[style=bash]
+git clone https://github.com/ogautier1980/sandbox-ml.git
+cd sandbox-ml
+start.bat
+\end{lstlisting}
+
+\textbf{Linux / macOS :}
+\begin{lstlisting}[style=bash]
+git clone https://github.com/ogautier1980/sandbox-ml.git
+cd sandbox-ml
+chmod +x start.sh
+./start.sh
+\end{lstlisting}
+
+\textbf{Ou directement :}
+\begin{lstlisting}[style=bash]
+docker-compose up -d --build
+\end{lstlisting}
+
+\subsection{Accéder aux services}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Service} & \textbf{Port} & \textbf{URL} \\
+\midrule
+Jupyter Lab & 8888 & \url{http://localhost:8888} \\
+TensorBoard & 6006 & \url{http://localhost:6006} \\
+MLflow & 5000 & \url{http://localhost:5000} \\
+Streamlit & 8501 & \url{http://localhost:8501} \\
+Gradio & 7860 & \url{http://localhost:7860} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% --------------------------------------------
+\section{Vérification de l'installation}
+
+\subsection{Python et packages ML}
+
+\begin{lstlisting}[style=python]
+import torch
+import tensorflow as tf
+import sklearn
+import pandas as pd
+import numpy as np
+
+print(f"PyTorch: {torch.__version__}")
+print(f"TensorFlow: {tf.__version__}")
+print(f"scikit-learn: {sklearn.__version__}")
+print(f"CUDA disponible: {torch.cuda.is_available()}")
+\end{lstlisting}
+
+\subsection{Outils système}
+
+\begin{lstlisting}[style=bash]
+pdflatex --version      # LaTeX
+libreoffice --version   # LibreOffice
+tesseract --version     # OCR
+convert --version       # ImageMagick
+ffmpeg -version         # FFmpeg
+pandoc --version        # Pandoc
+\end{lstlisting}
+
+% --------------------------------------------
+\section{Commandes utiles}
+
+\subsection{Gestion du container}
+
+\begin{lstlisting}[style=bash]
+# Demarrer
+docker-compose up -d
+
+# Arreter
+docker-compose down
+
+# Redemarrer
+docker-compose restart
+
+# Voir les logs
+docker-compose logs -f ml-sandbox
+
+# Acceder au shell
+docker exec -it ml-sandbox bash
+
+# Reconstruire (apres modif Dockerfile)
+docker-compose build --no-cache && docker-compose up -d
+\end{lstlisting}
+
+\subsection{Services optionnels}
+
+\begin{lstlisting}[style=bash]
+# Demarrer avec TensorBoard
+docker-compose --profile tensorboard up -d
+
+# Demarrer avec MLflow
+docker-compose --profile mlflow up -d
+\end{lstlisting}
+
+% --------------------------------------------
+\section{Résolution de problèmes}
+
+\subsection{Port déjà utilisé}
+
+Modifier le port dans \file{docker-compose.yml} :
+\begin{lstlisting}[style=bash]
+ports:
+  - "8889:8888"  # Changer 8888 en 8889
+\end{lstlisting}
+
+\subsection{Mémoire insuffisante}
+
+\begin{enumerate}
+    \item Ouvrir Docker Desktop $\rightarrow$ Settings $\rightarrow$ Resources
+    \item Augmenter Memory à \textbf{8 GB minimum}
+    \item Augmenter Swap à \textbf{4 GB}
+    \item Cliquer ``Apply \& Restart''
+\end{enumerate}
+
+\subsection{Permissions sur Linux/macOS}
+
+\begin{lstlisting}[style=bash]
+sudo chown -R $USER:$USER notebooks/ data/ models/ src/
+\end{lstlisting}
+
+% ============================================
+% PARTIE 2 : OUTILS
+% ============================================
+\newpage
+\part{Guide des Outils}
+
+% --------------------------------------------
+\section{Outils Système (Linux)}
+
+\subsection{Compression / Archives}
+
+\begin{table}[h]
+\centering
+\begin{tabularx}{\textwidth}{lXll}
+\toprule
+\textbf{Outil} & \textbf{Description} & \textbf{Compression} & \textbf{Décompression} \\
+\midrule
+zip/unzip & Format ZIP standard & \code{zip -r a.zip dir/} & \code{unzip a.zip} \\
+p7zip & Format 7z (haute compression) & \code{7z a a.7z dir/} & \code{7z x a.7z} \\
+tar+gzip & Archive .tar.gz & \code{tar -czvf a.tar.gz dir/} & \code{tar -xzvf a.tar.gz} \\
+tar+bzip2 & Archive .tar.bz2 & \code{tar -cjvf a.tar.bz2 dir/} & \code{tar -xjvf a.tar.bz2} \\
+tar+xz & Archive .tar.xz & \code{tar -cJvf a.tar.xz dir/} & \code{tar -xJvf a.tar.xz} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{ImageMagick}
+
+Manipulation d'images en ligne de commande.
+
+\begin{lstlisting}[style=bash]
+# Conversion de format
+convert image.png image.jpg
+
+# Redimensionner
+convert image.png -resize 800x600 output.png
+convert image.png -resize 50% output.png
+
+# Rotation
+convert image.png -rotate 90 output.png
+
+# Creer un PDF a partir d'images
+convert *.jpg output.pdf
+
+# Creer un GIF anime
+convert -delay 100 -loop 0 frame*.png animation.gif
+
+# Ajouter du texte
+convert image.png -pointsize 36 -fill white -annotate +50+50 'Texte' output.png
+\end{lstlisting}
+
+\subsection{FFmpeg}
+
+Manipulation audio/vidéo.
+
+\begin{lstlisting}[style=bash]
+# Conversion de format
+ffmpeg -i video.avi video.mp4
+
+# Extraire l'audio d'une video
+ffmpeg -i video.mp4 -vn audio.mp3
+
+# Extraire une image d'une video
+ffmpeg -i video.mp4 -ss 00:01:30 -frames:v 1 screenshot.png
+
+# Couper une video
+ffmpeg -i video.mp4 -ss 00:00:30 -to 00:01:00 -c copy extrait.mp4
+
+# GIF a partir d'une video
+ffmpeg -i video.mp4 -vf "fps=10,scale=320:-1" output.gif
+\end{lstlisting}
+
+\subsection{PDF Tools (poppler-utils)}
+
+\begin{lstlisting}[style=bash]
+# PDF vers images
+pdftoppm document.pdf output -png
+
+# PDF vers texte
+pdftotext document.pdf
+pdftotext -layout document.pdf output.txt
+
+# Informations sur un PDF
+pdfinfo document.pdf
+
+# Fusionner des PDFs
+pdfunite file1.pdf file2.pdf merged.pdf
+
+# Separer un PDF
+pdfseparate document.pdf page_%d.pdf
+\end{lstlisting}
+
+\subsection{LibreOffice (Mode Headless)}
+
+\begin{lstlisting}[style=bash]
+# Word -> PDF
+libreoffice --headless --convert-to pdf document.docx
+
+# PowerPoint -> PDF
+libreoffice --headless --convert-to pdf presentation.pptx
+
+# Excel -> CSV
+libreoffice --headless --convert-to csv spreadsheet.xlsx
+
+# Word -> Texte brut
+libreoffice --headless --convert-to txt document.docx
+
+# Conversion par lot
+libreoffice --headless --convert-to pdf *.docx
+\end{lstlisting}
+
+\subsection{Tesseract OCR}
+
+\begin{lstlisting}[style=bash]
+# OCR basique (anglais par defaut)
+tesseract image.png output
+
+# OCR en francais
+tesseract image.png output -l fra
+
+# OCR multilingue
+tesseract image.png output -l fra+eng
+
+# Sortie en PDF searchable
+tesseract image.png output -l fra pdf
+\end{lstlisting}
+
+\subsection{Sox (Audio)}
+
+\begin{lstlisting}[style=bash]
+# Informations sur un fichier audio
+soxi audio.wav
+
+# Conversion de format
+sox audio.wav audio.mp3
+
+# Modifier le volume
+sox audio.wav output.wav vol 0.5
+
+# Couper un extrait (de 10s, duree 30s)
+sox audio.wav output.wav trim 10 30
+
+# Concatener des fichiers
+sox audio1.wav audio2.wav output.wav
+\end{lstlisting}
+
+% --------------------------------------------
+\section{Machine Learning \& Deep Learning}
+
+\subsection{scikit-learn}
+
+\begin{lstlisting}[style=python]
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+
+# Preparation des donnees
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Entrainement
+model = RandomForestClassifier(n_estimators=100)
+model.fit(X_train, y_train)
+
+# Prediction et evaluation
+predictions = model.predict(X_test)
+print(f"Accuracy: {accuracy_score(y_test, predictions):.2f}")
+print(classification_report(y_test, predictions))
+\end{lstlisting}
+
+\subsection{PyTorch}
+
+\begin{lstlisting}[style=python]
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+class SimpleNN(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super().__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        return self.fc2(self.relu(self.fc1(x)))
+
+# Creer le modele
+model = SimpleNN(784, 128, 10)
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# GPU support
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+\end{lstlisting}
+
+\subsection{XGBoost}
+
+\begin{lstlisting}[style=python]
+import xgboost as xgb
+
+model = xgb.XGBClassifier(
+    n_estimators=100,
+    max_depth=6,
+    learning_rate=0.1,
+    objective='binary:logistic'
+)
+model.fit(X_train, y_train)
+
+# Feature importance
+xgb.plot_importance(model)
+\end{lstlisting}
+
+% --------------------------------------------
+\section{Data Processing}
+
+\subsection{Pandas}
+
+\begin{lstlisting}[style=python]
+import pandas as pd
+
+# Lecture de fichiers
+df = pd.read_csv('data.csv')
+df = pd.read_excel('data.xlsx')
+df = pd.read_parquet('data.parquet')
+
+# Exploration
+df.head()
+df.info()
+df.describe()
+
+# Selection et filtrage
+df['colonne']
+df[df['age'] > 25]
+
+# Agregation
+df.groupby('ville')['age'].mean()
+
+# Export
+df.to_csv('output.csv', index=False)
+df.to_parquet('output.parquet')
+\end{lstlisting}
+
+\subsection{Polars (Alternative rapide)}
+
+\begin{lstlisting}[style=python]
+import polars as pl
+
+df = pl.read_csv('data.csv')
+
+result = (
+    df.lazy()
+    .filter(pl.col('age') > 25)
+    .select(['nom', 'age'])
+    .with_columns([
+        (pl.col('age') * 2).alias('age_double')
+    ])
+    .collect()
+)
+\end{lstlisting}
+
+% --------------------------------------------
+\section{Visualisation}
+
+\subsection{Matplotlib}
+
+\begin{lstlisting}[style=python]
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+plt.plot(x, y, label='Donnees', color='blue')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Mon Graphique')
+plt.legend()
+plt.grid(True)
+plt.savefig('graph.png', dpi=300)
+plt.show()
+\end{lstlisting}
+
+\subsection{Seaborn}
+
+\begin{lstlisting}[style=python]
+import seaborn as sns
+
+sns.set_theme(style="whitegrid")
+
+# Distribution
+sns.histplot(data=df, x='age', kde=True)
+
+# Relations
+sns.scatterplot(data=df, x='x', y='y', hue='category')
+
+# Heatmap
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+\end{lstlisting}
+
+\subsection{Plotly (Interactif)}
+
+\begin{lstlisting}[style=python]
+import plotly.express as px
+
+fig = px.scatter(df, x='x', y='y', color='category',
+                 hover_data=['name'], title='Mon Plot')
+fig.show()
+fig.write_html('graph.html')
+\end{lstlisting}
+
+% --------------------------------------------
+\section{NLP \& LLM}
+
+\subsection{Transformers (Hugging Face)}
+
+\begin{lstlisting}[style=python]
+from transformers import pipeline
+
+# Analyse de sentiment
+classifier = pipeline("sentiment-analysis")
+result = classifier("I love this product!")
+
+# Generation de texte
+generator = pipeline("text-generation", model="gpt2")
+text = generator("Once upon a time", max_length=100)
+
+# Question-Answering
+qa = pipeline("question-answering")
+result = qa(question="What is ML?", context="Machine learning is...")
+\end{lstlisting}
+
+\subsection{spaCy}
+
+\begin{lstlisting}[style=python]
+import spacy
+
+nlp = spacy.load("fr_core_news_md")
+doc = nlp("Apple cherche a acheter une startup.")
+
+# Tokens
+for token in doc:
+    print(token.text, token.pos_, token.lemma_)
+
+# Entites nommees
+for ent in doc.ents:
+    print(ent.text, ent.label_)
+\end{lstlisting}
+
+% --------------------------------------------
+\section{PDF \& Documents}
+
+\subsection{pypdf}
+
+\begin{lstlisting}[style=python]
+from pypdf import PdfReader, PdfWriter, PdfMerger
+
+# Lecture
+reader = PdfReader("document.pdf")
+for page in reader.pages:
+    print(page.extract_text())
+
+# Fusionner des PDFs
+merger = PdfMerger()
+merger.append("doc1.pdf")
+merger.append("doc2.pdf")
+merger.write("merged.pdf")
+\end{lstlisting}
+
+\subsection{python-docx}
+
+\begin{lstlisting}[style=python]
+from docx import Document
+
+doc = Document()
+doc.add_heading('Mon Document', 0)
+doc.add_paragraph('Texte normal')
+doc.add_paragraph('Item 1', style='List Bullet')
+doc.save('output.docx')
+\end{lstlisting}
+
+\subsection{pytesseract (OCR Python)}
+
+\begin{lstlisting}[style=python]
+import pytesseract
+from PIL import Image
+
+# OCR basique
+text = pytesseract.image_to_string(Image.open('image.png'))
+
+# Avec langue
+text = pytesseract.image_to_string(Image.open('image.png'), lang='fra')
+
+# PDF searchable
+pdf = pytesseract.image_to_pdf_or_hocr(Image.open('image.png'), extension='pdf')
+with open('output.pdf', 'wb') as f:
+    f.write(pdf)
+\end{lstlisting}
+
+% --------------------------------------------
+\section{Web \& API}
+
+\subsection{FastAPI}
+
+\begin{lstlisting}[style=python]
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Item(BaseModel):
+    name: str
+    price: float
+
+@app.get("/")
+def read_root():
+    return {"message": "Hello World"}
+
+@app.post("/items/")
+def create_item(item: Item):
+    return {"name": item.name, "price": item.price}
+
+# Lancer: uvicorn main:app --reload --host 0.0.0.0
+\end{lstlisting}
+
+\subsection{Streamlit}
+
+\begin{lstlisting}[style=python]
+import streamlit as st
+
+st.title("Mon Application ML")
+
+name = st.text_input("Votre nom")
+age = st.slider("Age", 0, 100, 25)
+
+uploaded_file = st.file_uploader("Fichier CSV")
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    st.dataframe(df)
+
+# Lancer: streamlit run app.py
+\end{lstlisting}
+
+\subsection{Gradio}
+
+\begin{lstlisting}[style=python]
+import gradio as gr
+
+def predict(text):
+    return f"Prediction pour: {text}"
+
+demo = gr.Interface(
+    fn=predict,
+    inputs=gr.Textbox(label="Texte"),
+    outputs=gr.Textbox(label="Resultat"),
+    title="Mon Modele ML"
+)
+
+demo.launch(server_name="0.0.0.0")
+\end{lstlisting}
+
+% --------------------------------------------
+\section{ML Utilities}
+
+\subsection{MLflow}
+
+\begin{lstlisting}[style=python]
+import mlflow
+
+mlflow.set_experiment("mon_experiment")
+
+with mlflow.start_run():
+    mlflow.log_param("n_estimators", 100)
+    model.fit(X_train, y_train)
+    mlflow.log_metric("accuracy", accuracy)
+    mlflow.sklearn.log_model(model, "model")
+\end{lstlisting}
+
+\subsection{Optuna}
+
+\begin{lstlisting}[style=python]
+import optuna
+
+def objective(trial):
+    n_estimators = trial.suggest_int('n_estimators', 50, 500)
+    max_depth = trial.suggest_int('max_depth', 3, 15)
+
+    model = XGBClassifier(n_estimators=n_estimators, max_depth=max_depth)
+    scores = cross_val_score(model, X, y, cv=5)
+    return scores.mean()
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=100)
+print(study.best_params)
+\end{lstlisting}
+
+\subsection{SHAP (Explainability)}
+
+\begin{lstlisting}[style=python]
+import shap
+
+explainer = shap.TreeExplainer(model)
+shap_values = explainer.shap_values(X_test)
+
+shap.summary_plot(shap_values, X_test)
+shap.force_plot(explainer.expected_value, shap_values[0], X_test.iloc[0])
+\end{lstlisting}
+
+% ============================================
+% ANNEXES
+% ============================================
+\newpage
+\appendix
+\section{Récapitulatif des Ports}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Port} & \textbf{Service} & \textbf{URL} \\
+\midrule
+8888 & Jupyter Lab & \url{http://localhost:8888} \\
+6006 & TensorBoard & \url{http://localhost:6006} \\
+5000 & MLflow & \url{http://localhost:5000} \\
+8000 & FastAPI (uvicorn) & \url{http://localhost:8000} \\
+8501 & Streamlit & \url{http://localhost:8501} \\
+7860 & Gradio & \url{http://localhost:7860} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Structure du Projet}
+
+\begin{verbatim}
+sandbox-ml/
+├── .devcontainer/       # Config Dev Container
+├── .vscode/             # Config VS Code
+├── notebooks/           # Notebooks Jupyter
+├── data/                # Datasets (gitignored)
+├── models/              # Modeles sauvegardes (gitignored)
+├── src/                 # Code source Python
+├── logs/                # Logs TensorBoard (gitignored)
+├── mlruns/              # Runs MLflow (gitignored)
+├── docs/                # Documentation PDF
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── README.md
+├── claude.md
+├── tools.md
+└── config.md
+\end{verbatim}
+
+\end{document}

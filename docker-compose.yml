@@ -1,0 +1,52 @@
+services:
+  ml-sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ml-sandbox
+    ports:
+      - "8888:8888"  # Jupyter Lab
+      - "6006:6006"  # TensorBoard
+      - "5000:5000"  # MLflow
+    volumes:
+      - ./notebooks:/workspace/notebooks
+      - ./data:/workspace/data
+      - ./models:/workspace/models
+      - ./src:/workspace/src
+      - ./docs:/workspace/docs
+      - ./TPs:/workspace/TPs
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+  # Service optionnel pour TensorBoard
+  tensorboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ml-tensorboard
+    ports:
+      - "6007:6006"
+    volumes:
+      - ./logs:/workspace/logs
+    command: tensorboard --logdir=/workspace/logs --host=0.0.0.0 --port=6006
+    profiles:
+      - tensorboard
+    restart: unless-stopped
+
+  # Service optionnel pour MLflow
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ml-mlflow
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./mlruns:/workspace/mlruns
+    command: mlflow server --host=0.0.0.0 --port=5000 --backend-store-uri=/workspace/mlruns
+    profiles:
+      - mlflow
+    restart: unless-stopped
