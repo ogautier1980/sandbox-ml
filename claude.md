@@ -12,9 +12,11 @@
 
 ## Vue d'Ensemble du Projet
 
-Environnement Docker complet pour Machine Learning avec cours intégré de 14 chapitres + annexes.
+Environnement Docker complet pour Machine Learning et Cryptographie avec cours universitaires intégrés.
 
-**Statut** : Cours 100% finalisé (PDFs théoriques + notebooks pratiques)
+**Cours disponibles** :
+- **Machine Learning** : 14 chapitres + annexes (100% finalisé)
+- **Cryptographie** : 5 chapitres niveau universitaire (structure créée, à compléter)
 
 ---
 
@@ -43,6 +45,14 @@ sandbox-ml/
 │   ├── 00_introduction/   # PDFs + notebooks
 │   ├── ...                # Chapitres 01-13
 │   └── annexes/           # Annexes complètes
+│
+├── cours-crypto/           # Cours Cryptographie (5 chapitres)
+│   ├── README.md          # Documentation du cours crypto
+│   ├── 01_introduction/   # Perfect Security, OTP
+│   ├── 02_symmetric_crypto/  # Stream & Block Ciphers
+│   ├── 03_message_integrity/ # MAC, Hash, AEAD
+│   ├── 04_public_key_crypto/ # DH, RSA, ElGamal
+│   └── 05_anonymous_communication/ # Tor, Mixnets
 │
 ├── scripts/                # Scripts utilitaires
 │   ├── README.md          # Documentation des scripts
@@ -244,6 +254,13 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 
 ## Historique Léger
 
+### 2026-01-11 - Ajout Cours Cryptographie
+- Création cours-crypto/ avec 5 chapitres universitaires
+- Chapitre 1 complet (14 pages) : Introduction & Perfect Security (OTP)
+- Chapitres 2-5 : Squelettes LaTeX avec structures principales
+- Notebooks exemples : OTP démo, exercices
+- Basé sur "The Joy of Cryptography" (Rosulek)
+
 ### 2026-01-11 - Clean-up Final du Projet
 - Suppression fichiers LaTeX auxiliaires (.aux, .log, .out, .toc)
 - Consolidation markdown (9 fichiers → structure claire)
@@ -280,6 +297,7 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 | `docs/config.md` | Guide d'installation technique |
 | `docs/tools.md` | Documentation exhaustive des outils |
 | `cours/README.md` | Guide du cours ML |
+| `cours-crypto/README.md` | Guide du cours Cryptographie |
 | `scripts/README.md` | Documentation des scripts |
 
 ---

@@ -1,0 +1,304 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern,geometry,amsmath,amssymb,amsthm,hyperref,tcolorbox,enumitem}
+
+\geometry{margin=2.5cm}
+\newtheorem{definition}{Définition}[section]
+\newtheorem{theorem}{Théorème}[section]
+\newtcolorbox{defbox}{colback=blue!5!white,colframe=blue!75!black}
+
+\title{\textbf{Chapitre 4 : Cryptographie à Clé Publique\\Diffie-Hellman, RSA, ElGamal}}
+\author{Cours de Cryptographie}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+%=============================================================================
+\section{Introduction : Le problème de la distribution des clés}
+%=============================================================================
+
+\textbf{Problème fondamental} : La cryptographie symétrique nécessite une clé partagée secrète. Comment Alice et Bob établissent-ils une clé commune sans canal sécurisé préalable ?
+
+\textbf{Solution révolutionnaire (1976)} : Diffie et Hellman inventent la cryptographie à clé publique.
+
+\textbf{Paradigme} :
+\begin{itemize}
+    \item Chaque utilisateur a une paire $(pk, sk)$ : clé publique + clé secrète
+    \item $pk$ est publique (annuaire)
+    \item $sk$ est gardée secrète
+    \item Chiffrement avec $pk$, déchiffrement avec $sk$
+\end{itemize}
+
+%=============================================================================
+\section{Fondations mathématiques}
+%=============================================================================
+
+\subsection{Groupes cycliques}
+
+\begin{defbox}
+\textbf{Groupe cyclique}
+
+Un groupe $(G, \cdot)$ d'ordre $q$ est cyclique s'il existe un générateur $g$ tel que :
+\[
+G = \{g^0, g^1, g^2, \ldots, g^{q-1}\}
+\]
+\end{defbox}
+
+\textbf{Exemples} :
+\begin{itemize}
+    \item $(\mathbb{Z}_p^*, \cdot)$ : entiers modulo $p$ premier (ordre $p-1$)
+    \item Courbes elliptiques sur corps finis
+\end{itemize}
+
+\subsection{Problème du logarithme discret (DLP)}
+
+\begin{defbox}
+\textbf{Discrete Logarithm Problem (DLP)}
+
+\textbf{Entrée} : $G, g, h$ où $h \in G$
+
+\textbf{Problème} : Trouver $x$ tel que $g^x = h$
+
+\textbf{Hypothèse} : Aucun algorithme efficace ne résout DLP pour des groupes bien choisis.
+\end{defbox}
+
+\textbf{Groupes sécurisés} :
+\begin{itemize}
+    \item $\mathbb{Z}_p^*$ avec $p$ premier de 2048-4096 bits
+    \item Courbes elliptiques (Curve25519, secp256k1) avec 256 bits
+\end{itemize}
+
+\subsection{Problème Diffie-Hellman (CDH, DDH)}
+
+\textbf{À COMPLÉTER} : Définitions CDH (Computational DH) et DDH (Decisional DH)
+
+%=============================================================================
+\section{Diffie-Hellman Key Exchange}
+%=============================================================================
+
+\subsection{Protocole}
+
+\begin{algorithm}
+\caption{Diffie-Hellman}
+\begin{algorithmic}
+\STATE \textbf{Paramètres publics} : Groupe $G$ d'ordre $q$, générateur $g$
+\STATE \textbf{Alice} : Choisit $a \xleftarrow{\$} \mathbb{Z}_q$, calcule $A = g^a$, envoie $A$
+\STATE \textbf{Bob} : Choisit $b \xleftarrow{\$} \mathbb{Z}_q$, calcule $B = g^b$, envoie $B$
+\STATE \textbf{Alice} : Calcule $K = B^a = g^{ab}$
+\STATE \textbf{Bob} : Calcule $K = A^b = g^{ab}$
+\STATE \textbf{Clé partagée} : $K = g^{ab}$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Sécurité} : Basée sur l'hypothèse DDH (Decisional Diffie-Hellman)
+
+\subsection{Attaque Man-in-the-Middle}
+
+\textbf{Problème} : DH seul n'authentifie pas les participants !
+
+\textbf{Attaque} :
+\begin{itemize}
+    \item Eve intercepte $A = g^a$ d'Alice
+    \item Eve envoie $E = g^e$ à Bob (se faisant passer pour Alice)
+    \item Eve partage $K_1 = g^{ae}$ avec Alice et $K_2 = g^{eb}$ avec Bob
+    \item Eve déchiffre et rechiffre tous les messages
+\end{itemize}
+
+\textbf{Solution} : Authenticated DH (avec signatures ou certificats)
+
+%=============================================================================
+\section{Chiffrement à clé publique}
+%=============================================================================
+
+\subsection{Définition}
+
+\begin{defbox}
+\textbf{Public Key Encryption}
+
+\textbf{Algorithmes} :
+\begin{itemize}
+    \item $\textsf{Gen}() \to (pk, sk)$ : Génération de paire de clés
+    \item $\textsf{Enc}(pk, m) \to c$ : Chiffrement avec clé publique
+    \item $\textsf{Dec}(sk, c) \to m$ : Déchiffrement avec clé secrète
+\end{itemize}
+
+\textbf{Correction} : $\textsf{Dec}(sk, \textsf{Enc}(pk, m)) = m$
+\end{defbox}
+
+\subsection{Sécurité CPA pour chiffrement asymétrique}
+
+\textbf{Différence avec symétrique} : L'adversaire a accès à $pk$ et peut donc chiffrer lui-même !
+
+\textbf{Jeu IND-CPA} : Similaire au cas symétrique mais $\mathcal{A}$ connaît $pk$.
+
+%=============================================================================
+\section{Chiffrement ElGamal}
+%=============================================================================
+
+\subsection{Construction}
+
+\begin{defbox}
+\textbf{ElGamal Encryption}
+
+\textbf{Paramètres} : Groupe $G$ d'ordre $q$, générateur $g$
+
+\textbf{Gen} :
+\begin{itemize}
+    \item Choisir $x \xleftarrow{\$} \mathbb{Z}_q$
+    \item $pk = g^x$, $sk = x$
+\end{itemize}
+
+\textbf{Enc}$(pk, m \in G)$ :
+\begin{itemize}
+    \item Choisir $r \xleftarrow{\$} \mathbb{Z}_q$
+    \item $c_1 = g^r$, $c_2 = m \cdot (pk)^r = m \cdot g^{xr}$
+    \item Retourner $(c_1, c_2)$
+\end{itemize}
+
+\textbf{Dec}$(sk, (c_1, c_2))$ :
+\begin{itemize}
+    \item Calculer $s = c_1^{sk} = g^{rx}$
+    \item Retourner $m = c_2 / s = (m \cdot g^{xr}) / g^{xr}$
+\end{itemize}
+\end{defbox}
+
+\textbf{Sécurité} : IND-CPA sous hypothèse DDH
+
+\textbf{Limitation} : Chiffre seulement des éléments de $G$ (pas directement des bitstrings)
+
+%=============================================================================
+\section{RSA}
+%=============================================================================
+
+\subsection{Arithmétique modulaire}
+
+\textbf{Prérequis} :
+\begin{itemize}
+    \item Théorème d'Euler : $a^{\phi(n)} \equiv 1 \pmod{n}$
+    \item Si $n = pq$ (produit de deux premiers), $\phi(n) = (p-1)(q-1)$
+    \item Identité de Bézout, algorithme d'Euclide étendu
+\end{itemize}
+
+\subsection{Chiffrement RSA (textbook - INSÉCURISÉ)}
+
+\begin{defbox}
+\textbf{RSA Textbook (ne PAS utiliser !)}
+
+\textbf{Gen} :
+\begin{itemize}
+    \item Choisir deux grands premiers $p, q$ (ex: 1024 bits chacun)
+    \item $n = pq$, $\phi(n) = (p-1)(q-1)$
+    \item Choisir $e$ tel que $\gcd(e, \phi(n)) = 1$ (souvent $e = 65537$)
+    \item Calculer $d = e^{-1} \bmod \phi(n)$
+    \item $pk = (n, e)$, $sk = (n, d)$
+\end{itemize}
+
+\textbf{Enc}$(pk, m)$ : $c = m^e \bmod n$
+
+\textbf{Dec}$(sk, c)$ : $m = c^d \bmod n$
+
+\textbf{Correction} : $c^d = (m^e)^d = m^{ed} = m^{1 + k\phi(n)} = m \cdot (m^{\phi(n)})^k = m \pmod{n}$
+\end{defbox}
+
+\textbf{AVERTISSEMENT} : RSA textbook est \textbf{déterministe} donc PAS CPA-sécurisé !
+
+\subsection{RSA-OAEP (sécurisé)}
+
+\textbf{Optimal Asymmetric Encryption Padding}
+
+\textbf{Principe} : Ajouter du padding randomisé avant chiffrement RSA.
+
+\textbf{À COMPLÉTER} : Schéma OAEP, preuves dans le modèle de l'oracle aléatoire
+
+\textbf{Standard} : RSA-OAEP avec SHA-256
+
+%=============================================================================
+\section{Signatures numériques}
+%=============================================================================
+
+\subsection{Définition}
+
+\begin{defbox}
+\textbf{Digital Signature}
+
+\textbf{Algorithmes} :
+\begin{itemize}
+    \item $\textsf{Gen}() \to (pk, sk)$
+    \item $\textsf{Sign}(sk, m) \to \sigma$ : Signature
+    \item $\textsf{Vrfy}(pk, m, \sigma) \to \{0,1\}$ : Vérification
+\end{itemize}
+\end{defbox}
+
+\textbf{Sécurité} : UF-CMA (Unforgeability under Chosen Message Attack)
+
+\subsection{RSA Signatures (avec hachage)}
+
+\textbf{Sign}$(sk, m)$ : $\sigma = H(m)^d \bmod n$
+
+\textbf{Vrfy}$(pk, m, \sigma)$ : Vérifier $\sigma^e \stackrel{?}{=} H(m) \pmod{n}$
+
+\subsection{DSA / ECDSA}
+
+\textbf{À COMPLÉTER} : Digital Signature Algorithm, variante sur courbes elliptiques
+
+\subsection{EdDSA (moderne)}
+
+\textbf{Ed25519} : Standard moderne, très rapide, résistant aux side-channels
+
+%=============================================================================
+\section{Courbes elliptiques}
+%=============================================================================
+
+\subsection{Principe}
+
+\textbf{Groupe} : Points d'une courbe elliptique $y^2 = x^3 + ax + b$ sur un corps fini
+
+\textbf{Avantages} :
+\begin{itemize}
+    \item Clés plus courtes (256 bits ECC $\approx$ 3072 bits RSA)
+    \item Opérations plus rapides
+    \item Meilleure résistance aux attaques quantiques (Grover seulement, pas Shor pour log discret)
+\end{itemize}
+
+\textbf{Courbes standard} :
+\begin{itemize}
+    \item Curve25519 (X25519 key exchange, Ed25519 signatures)
+    \item secp256k1 (Bitcoin, Ethereum)
+    \item NIST P-256, P-384, P-521
+\end{itemize}
+
+%=============================================================================
+\section{Notebooks pratiques}
+%=============================================================================
+
+\begin{itemize}
+    \item \texttt{04_demo_diffie_hellman.ipynb} : Échange de clés DH
+    \item \texttt{04_demo_elgamal.ipynb} : Chiffrement ElGamal
+    \item \texttt{04_demo_rsa.ipynb} : RSA (chiffrement OAEP + signatures)
+    \item \texttt{04_demo_ecdsa.ipynb} : Courbes elliptiques (ECDH, ECDSA, Ed25519)
+    \item \texttt{04_exercices.ipynb} : Exercices guidés
+\end{itemize}
+
+%=============================================================================
+\section{Conclusion}
+%=============================================================================
+
+\textbf{Points clés} :
+\begin{itemize}
+    \item Cryptographie à clé publique résout la distribution des clés
+    \item Basée sur problèmes difficiles (DLP, factorisation)
+    \item Diffie-Hellman : échange de clés
+    \item ElGamal, RSA : chiffrement asymétrique (avec padding !)
+    \item DSA, RSA-PSS, EdDSA : signatures numériques
+    \item Courbes elliptiques : efficaces et modernes
+\end{itemize}
+
+Le chapitre suivant explore les applications à la \textbf{communication anonyme} (Tor, mixnets).
+
+\end{document}

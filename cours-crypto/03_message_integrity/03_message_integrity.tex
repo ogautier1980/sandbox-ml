@@ -1,0 +1,307 @@
+\documentclass[11pt,a4paper]{article}
+
+% [Préambule identique]
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\geometry{margin=2.5cm}
+
+\newtheorem{definition}{Définition}[section]
+\newtheorem{theorem}{Théorème}[section]
+\newtheorem{example}{Exemple}[section]
+
+\newtcolorbox{defbox}{colback=blue!5!white,colframe=blue!75!black}
+\newtcolorbox{warnbox}{colback=red!5!white,colframe=red!75!black}
+
+\newcommand{\MAC}{\textsf{MAC}}
+\newcommand{\Tag}{\textsf{Tag}}
+\newcommand{\Vrfy}{\textsf{Vrfy}}
+\newcommand{\xor}{\oplus}
+\newcommand{\bits}{\{0,1\}}
+
+\title{\textbf{Chapitre 3 : Intégrité des Messages\\MAC, Hachage et Authenticated Encryption}}
+\author{Cours de Cryptographie}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+%=============================================================================
+\section{Introduction}
+%=============================================================================
+
+\textbf{Problème} : Le chiffrement seul (chapitres 1-2) garantit la \textbf{confidentialité} mais pas l'\textbf{intégrité}. Un attaquant peut modifier les ciphertexts !
+
+\textbf{Objectifs} :
+\begin{itemize}
+    \item Détecter toute modification des messages
+    \item Authentifier la source du message
+    \item Combiner confidentialité + intégrité (Authenticated Encryption)
+\end{itemize}
+
+\textbf{Outils} :
+\begin{enumerate}
+    \item Message Authentication Codes (MAC)
+    \item Fonctions de hachage résistantes aux collisions
+    \item Authenticated Encryption with Associated Data (AEAD)
+\end{enumerate}
+
+%=============================================================================
+\section{Message Authentication Codes (MAC)}
+%=============================================================================
+
+\subsection{Définition}
+
+\begin{defbox}
+\textbf{Message Authentication Code (MAC)}
+
+Un MAC est un tuple d'algorithmes $(\Gen, \Tag, \Vrfy)$ :
+\begin{itemize}
+    \item $\Gen$ : génère une clé secrète $k \xleftarrow{\$} \K$
+    \item $\Tag_k(m)$ : produit un tag $t \in \mathcal{T}$ pour le message $m$
+    \item $\Vrfy_k(m, t)$ : retourne 1 (valide) ou 0 (invalide)
+\end{itemize}
+
+\textbf{Correction} : $\Vrfy_k(m, \Tag_k(m)) = 1$ pour tous $k, m$.
+\end{defbox}
+
+\subsection{Modèle de sécurité : UF-CMA}
+
+\textbf{Unforgeability under Chosen Message Attack}
+
+\begin{algorithm}
+\caption{Jeu UF-CMA}
+\begin{algorithmic}
+\STATE Challenger génère $k \xleftarrow{\$} \K$
+\STATE $\A$ interroge $\Tag_k(\cdot)$ sur $m_1, \ldots, m_q$ (obtient $t_1, \ldots, t_q$)
+\STATE $\A$ produit $(m^*, t^*)$ avec $m^* \notin \{m_1, \ldots, m_q\}$
+\STATE $\A$ gagne si $\Vrfy_k(m^*, t^*) = 1$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Sécurité} : $\Pr[\A \text{ gagne}] \leq \epsilon$ négligeable.
+
+\subsection{Constructions}
+
+\subsubsection{CBC-MAC}
+
+\textbf{Principe} : Utiliser un block cipher en mode CBC, ne garder que le dernier bloc.
+
+\textbf{À COMPLÉTER} : Détails de CBC-MAC, limitations (longueur fixe), variantes (CMAC, OMAC)
+
+\subsubsection{HMAC (Hash-based MAC)}
+
+\begin{defbox}
+\textbf{HMAC Construction}
+
+Soit $H$ une fonction de hachage (ex: SHA-256). On définit :
+\[
+\text{HMAC}_k(m) = H((k \xor \text{opad}) \| H((k \xor \text{ipad}) \| m))
+\]
+
+où :
+\begin{itemize}
+    \item $\text{ipad} = 0x36$ répété (inner padding)
+    \item $\text{opad} = 0x5C$ répété (outer padding)
+    \item $k$ est ajusté à la taille de bloc de $H$
+\end{itemize}
+\end{defbox}
+
+\textbf{Sécurité} : HMAC est UF-CMA sécurisé si $H$ est résistante aux collisions.
+
+\textbf{Standards} : HMAC-SHA256, HMAC-SHA384, HMAC-SHA512
+
+%=============================================================================
+\section{Fonctions de hachage cryptographiques}
+%=============================================================================
+
+\subsection{Définition et propriétés}
+
+\begin{defbox}
+\textbf{Fonction de hachage cryptographique}
+
+$H : \bits^* \to \bits^n$ doit satisfaire :
+\begin{enumerate}
+    \item \textbf{Résistance aux préimages} : Difficile de trouver $m$ tel que $H(m) = h$ (étant donné $h$)
+    \item \textbf{Résistance aux secondes préimages} : Difficile de trouver $m' \neq m$ tel que $H(m') = H(m)$ (étant donné $m$)
+    \item \textbf{Résistance aux collisions} : Difficile de trouver $m_1 \neq m_2$ tel que $H(m_1) = H(m_2)$
+\end{enumerate}
+\end{defbox}
+
+\subsection{Paradoxe des anniversaires}
+
+\textbf{Question} : Combien de personnes faut-il pour que deux aient la même date d'anniversaire avec probabilité $> 50\%$ ?
+
+\textbf{Réponse} : 23 personnes ! (contre-intuitif)
+
+\textbf{Généralisation} : Pour une fonction de hachage $H : \bits^* \to \bits^n$, trouver une collision nécessite $\approx \sqrt{2^n} = 2^{n/2}$ évaluations.
+
+\textbf{Conséquence} : SHA-256 ($n=256$) résiste à $2^{128}$ essais.
+
+\subsection{Construction : Merkle-Damgård}
+
+\textbf{Principe} : Construire une fonction de hachage à longueur variable à partir d'une fonction de compression à longueur fixe.
+
+\textbf{À COMPLÉTER} : Schéma Merkle-Damgård, padding, IV, itération
+
+\subsection{Fonctions de hachage modernes}
+
+\begin{center}
+\begin{tabular}{|l|c|c|l|}
+\hline
+Fonction & Sortie & Sécurité & Statut \\
+\hline
+MD5 & 128 bits & ❌ CASSÉ & Obsolète \\
+SHA-1 & 160 bits & ❌ CASSÉ (2017) & Déprécié \\
+SHA-256 & 256 bits & ✅ Sécurisé & Standard \\
+SHA-3 & Variable & ✅ Sécurisé & Standard (2015) \\
+BLAKE2 & Variable & ✅ Sécurisé & Rapide \\
+\hline
+\end{tabular}
+\end{center}
+
+%=============================================================================
+\section{Authenticated Encryption}
+%=============================================================================
+
+\subsection{Principe}
+
+Combiner chiffrement (confidentialité) et MAC (intégrité/authenticité) en un seul schéma.
+
+\subsection{Compositions naïves}
+
+Trois approches possibles :
+
+\begin{enumerate}
+    \item \textbf{Encrypt-and-MAC} : $c = \Enc_k(m)$, $t = \MAC_{k'}(m)$
+    \item \textbf{MAC-then-Encrypt} : $t = \MAC_{k'}(m)$, $c = \Enc_k(m \| t)$
+    \item \textbf{Encrypt-then-MAC} : $c = \Enc_k(m)$, $t = \MAC_{k'}(c)$
+\end{enumerate}
+
+\begin{warnbox}
+\textbf{Seul Encrypt-then-MAC est génériquement sécurisé !}
+
+\begin{itemize}
+    \item Encrypt-and-MAC : Le tag peut fuiter de l'information sur $m$
+    \item MAC-then-Encrypt : Vulnérable aux padding oracle attacks
+    \item \textbf{Encrypt-then-MAC} : Prouvé sécurisé (CCA-secure)
+\end{itemize}
+\end{warnbox}
+
+\subsection{AEAD : Authenticated Encryption with Associated Data}
+
+\begin{defbox}
+\textbf{AEAD}
+
+\textbf{API} :
+\begin{itemize}
+    \item $\Enc_k(m, \text{AD})$ : Chiffre $m$, authentifie $m$ et les données associées AD
+    \item $\Dec_k(c, \text{AD})$ : Déchiffre et vérifie, retourne $m$ ou $\perp$ (erreur)
+\end{itemize}
+
+\textbf{Associated Data (AD)} : Données non chiffrées mais authentifiées (ex: en-têtes réseau)
+\end{defbox}
+
+\subsection{Standards AEAD}
+
+\subsubsection{AES-GCM (Galois/Counter Mode)}
+
+\textbf{Le plus utilisé en pratique}
+\begin{itemize}
+    \item Chiffrement : AES en mode CTR
+    \item Authentification : GMAC (basé sur multiplication dans $\text{GF}(2^{128})$)
+    \item Très rapide avec accélération matérielle (instructions AES-NI, PCLMULQDQ)
+    \item Utilisé dans TLS 1.3, IPsec, SSH
+\end{itemize}
+
+\subsubsection{ChaCha20-Poly1305}
+
+\textbf{Alternative moderne}
+\begin{itemize}
+    \item Chiffrement : ChaCha20 stream cipher
+    \item Authentification : Poly1305 MAC
+    \item Plus rapide qu'AES-GCM sans accélération matérielle
+    \item Utilisé dans TLS 1.3, WireGuard VPN
+\end{itemize}
+
+\subsubsection{Autres}
+
+\textbf{À COMPLÉTER} :
+\begin{itemize}
+    \item AES-CCM (Counter with CBC-MAC)
+    \item AES-OCB (Offset Codebook Mode)
+    \item ASCON (vainqueur compétition CAESAR, lightweight)
+\end{itemize}
+
+%=============================================================================
+\section{Attaques pratiques}
+%=============================================================================
+
+\subsection{Padding Oracle Attack}
+
+\textbf{Scénario} : CBC + MAC-then-Encrypt avec messages d'erreur différents pour "padding invalide" vs "MAC invalide".
+
+\textbf{Résultat} : L'attaquant peut déchiffrer complètement sans connaître la clé !
+
+\textbf{Exemples historiques} :
+\begin{itemize}
+    \item ASP.NET (2010)
+    \item OpenSSL (2003)
+    \item Variantes : POODLE (SSL 3.0), Lucky 13 (TLS)
+\end{itemize}
+
+\subsection{Nonce reuse
+
+ dans GCM}
+
+\textbf{Catastrophe} : Réutiliser un nonce en AES-GCM permet de :
+\begin{itemize}
+    \item Retrouver la clé d'authentification
+    \item Forger des tags arbitraires
+    \item Casser complètement la confidentialité
+\end{itemize}
+
+\textbf{Moralité} : Les nonces doivent être STRICTEMENT uniques !
+
+%=============================================================================
+\section{Notebooks pratiques}
+%=============================================================================
+
+\begin{itemize}
+    \item \texttt{03_demo_mac.ipynb} : HMAC-SHA256
+    \item \texttt{03_demo_hash_collisions.ipynb} : Paradoxe des anniversaires, attaques sur MD5
+    \item \texttt{03_demo_aead.ipynb} : AES-GCM et ChaCha20-Poly1305
+    \item \texttt{03_exercices.ipynb} : Exercices guidés
+\end{itemize}
+
+%=============================================================================
+\section{Conclusion}
+%=============================================================================
+
+\textbf{Points clés} :
+\begin{itemize}
+    \item Chiffrement seul NE SUFFIT PAS : il faut aussi l'intégrité
+    \item MAC : authentification avec clé partagée (HMAC standard)
+    \item Hash : empreintes, résistance aux collisions (SHA-256, SHA-3)
+    \item AEAD : combinaison sécurisée (AES-GCM, ChaCha20-Poly1305)
+    \item Encrypt-then-MAC : seule composition générique sûre
+    \item Nonce management : critique pour la sécurité
+\end{itemize}
+
+Le chapitre suivant introduira la \textbf{cryptographie à clé publique}, qui résout le problème de la distribution des clés.
+
+\end{document}

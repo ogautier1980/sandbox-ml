@@ -1,0 +1,470 @@
+\documentclass[11pt,a4paper]{article}
+
+% [Même préambule que chapitre 1 - packages, couleurs, environnements]
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+
+\geometry{margin=2.5cm}
+\usetikzlibrary{shapes,arrows,positioning,calc,patterns}
+
+\definecolor{defcolor}{RGB}{0,102,204}
+\definecolor{thmcolor}{RGB}{204,0,102}
+\definecolor{excolor}{RGB}{0,153,76}
+
+\newtheorem{definition}{Définition}[section]
+\newtheorem{theorem}{Théorème}[section]
+\newtheorem{lemma}[theorem]{Lemme}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{example}{Exemple}[section]
+\newtheorem{remark}{Remarque}[section]
+
+\newtcolorbox{defbox}{colback=defcolor!5!white,colframe=defcolor!75!black,title=Définition}
+\newtcolorbox{thmbox}{colback=thmcolor!5!white,colframe=thmcolor!75!black,title=Théorème}
+\newtcolorbox{exbox}{colback=excolor!5!white,colframe=excolor!75!black,title=Exemple}
+\newtcolorbox{warnbox}{colback=red!5!white,colframe=red!75!black,title=Avertissement}
+
+\newcommand{\bits}{\{0,1\}}
+\newcommand{\Enc}{\textsf{Enc}}
+\newcommand{\Dec}{\textsf{Dec}}
+\newcommand{\Gen}{\textsf{Gen}}
+\newcommand{\Adv}{\textsf{Adv}}
+\newcommand{\PRG}{\textsf{PRG}}
+\newcommand{\PRP}{\textsf{PRP}}
+\newcommand{\xor}{\oplus}
+
+\title{\textbf{Chapitre 2 : Chiffrements Symétriques\\Stream Ciphers \& Block Ciphers}}
+\author{Cours de Cryptographie}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+%=============================================================================
+\section{Introduction}
+%=============================================================================
+
+\subsection{Motivations}
+
+Le chapitre précédent a montré que la sécurité parfaite nécessite des clés aussi longues que les messages ($|\K| \geq |\M|$). Cette contrainte est rédhibitoire en pratique.
+
+\textbf{Objectif de ce chapitre} : Construire des systèmes de chiffrement avec :
+\begin{itemize}
+    \item Clés \textbf{courtes} et \textbf{réutilisables}
+    \item Sécurité basée sur la \textbf{complexité computationnelle}
+    \item Efficacité pratique (chiffrement rapide)
+\end{itemize}
+
+\textbf{Prix à payer} : Abandon de la sécurité parfaite au profit de la \textbf{sécurité computationnelle}.
+
+\subsection{Plan du chapitre}
+
+\begin{enumerate}
+    \item \textbf{Sécurité computationnelle} : Définitions, modèle de l'adversaire
+    \item \textbf{Pseudorandom Generators (PRG)} : Étendre une courte clé en un long pad
+    \item \textbf{Stream Ciphers} : Construction à partir de PRG
+    \item \textbf{Block Ciphers} : Permutations pseudoaléatoires (PRP)
+    \item \textbf{Modes opératoires} : ECB, CBC, CTR, OFB
+    \item \textbf{Sécurité CPA} (Chosen Plaintext Attack)
+    \item \textbf{AES} : Standard moderne de chiffrement par blocs
+\end{enumerate}
+
+%=============================================================================
+\section{Sécurité computationnelle}
+%=============================================================================
+
+\subsection{Principe}
+
+Au lieu d'exiger qu'un adversaire ne puisse \textbf{jamais} casser le système (sécurité parfaite), on exige qu'il ne puisse pas le casser en \textbf{temps raisonnable}.
+
+\begin{defbox}
+\textbf{Sécurité Computationnelle}
+
+Un système est \textbf{computationnellement sécurisé} si tout adversaire efficace (temps polynomial) a une probabilité négligeable de succès.
+
+\textbf{Formalisation} :
+\begin{itemize}
+    \item Adversaire limité à $2^{80}$ opérations (minimum)
+    \item Probabilité de casser $< 2^{-80}$ (négligeable)
+    \item Paramètre de sécurité $\lambda$ : clé de longueur $\lambda$ bits
+\end{itemize}
+\end{defbox}
+
+\subsection{Hypothèses cryptographiques}
+
+La sécurité repose sur des \textbf{hypothèses} (non prouvées) :
+\begin{itemize}
+    \item Certains problèmes sont difficiles (ex: factorisation, log discret)
+    \item $\mathcal{P} \neq \mathcal{NP}$ (conjecture centrale)
+    \item Existence de fonctions à sens unique
+    \item Existence de générateurs pseudoaléatoires
+\end{itemize}
+
+%=============================================================================
+\section{Pseudorandom Generators (PRG)}
+%=============================================================================
+
+\subsection{Définition informelle}
+
+Un PRG étend une courte graine (seed) aléatoire en une longue séquence indistinguable de l'aléatoire.
+
+\begin{defbox}
+\textbf{Pseudorandom Generator (PRG)}
+
+Un PRG est une fonction déterministe $G : \bits^\lambda \to \bits^{n}$ avec $n \gg \lambda$ telle que :
+\begin{enumerate}
+    \item \textbf{Expansion} : $n > \lambda$ (typiquement $n = \lambda \cdot c$ pour $c$ constant)
+    \item \textbf{Efficacité} : $G$ est calculable en temps polynomial
+    \item \textbf{Pseudoaléatoire} : $G(s)$ (avec $s \xleftarrow{\$} \bits^\lambda$) est indistinguable d'une chaîne uniforme $r \xleftarrow{\$} \bits^n$ pour tout adversaire efficace
+\end{enumerate}
+\end{defbox}
+
+\subsection{Jeu d'indistinguabilité PRG}
+
+\begin{thmbox}
+\textbf{Jeu PRG-IND}
+
+\begin{algorithmic}
+\STATE Challenger choisit $b \xleftarrow{\$} \{0,1\}$
+\IF{$b = 0$}
+    \STATE $s \xleftarrow{\$} \bits^\lambda$, envoie $y = G(s)$ à $\A$
+\ELSE
+    \STATE $r \xleftarrow{\$} \bits^n$, envoie $y = r$ à $\A$
+\ENDIF
+\STATE $\A$ retourne $b' \in \{0,1\}$
+\STATE $\A$ gagne si $b' = b$
+\end{algorithmic}
+
+\textbf{Avantage de l'adversaire} :
+\[
+\Adv_G^{\text{PRG}}(\A) = \left| \Pr[\A \text{ gagne}] - \frac{1}{2} \right|
+\]
+
+$G$ est un PRG sécurisé si $\Adv_G^{\text{PRG}}(\A) \leq \epsilon$ négligeable pour tout $\A$ efficace.
+\end{thmbox}
+
+\subsection{Exemples de PRG}
+
+\textbf{À COMPLÉTER} :
+\begin{itemize}
+    \item Linear Congruential Generators (LCG) - INSÉCURISÉS !
+    \item Blum-Blum-Shub (théoriquement sûr mais lent)
+    \item ChaCha20 (moderne, très rapide)
+    \item AES-CTR mode (standard)
+    \item Hash functions (SHA-256, SHA-3) en mode DRBG
+\end{itemize}
+
+%=============================================================================
+\section{Stream Ciphers}
+%=============================================================================
+
+\subsection{Construction à partir de PRG}
+
+\begin{defbox}
+\textbf{Stream Cipher depuis PRG}
+
+Soit $G : \bits^\lambda \to \bits^n$ un PRG. On définit :
+\begin{itemize}
+    \item $\K = \bits^\lambda$ : espace des clés
+    \item $\M = \C = \bits^n$ : messages et ciphertexts
+    \item $\Enc_k(m) = m \xor G(k)$
+    \item $\Dec_k(c) = c \xor G(k)$
+\end{itemize}
+
+\textbf{Intuition} : Remplacer le OTP avec pad vraiment aléatoire par un pad pseudoaléatoire $G(k)$.
+\end{defbox}
+
+\subsection{Sécurité}
+
+\begin{theorem}
+Si $G$ est un PRG sécurisé, alors le stream cipher construit ci-dessus est sémantiquement sécurisé contre les attaques passives.
+\end{theorem}
+
+\begin{proof}[Idée]
+Réduction : Si un adversaire $\A$ distingue les chiffrements, alors on peut construire un adversaire $\mathcal{B}$ qui distingue $G(s)$ de l'aléatoire, contredisant la sécurité de $G$. (Preuve formelle détaillée dans exercices)
+\end{proof}
+
+\subsection{Limitations}
+
+\begin{warnbox}
+\textbf{Stream ciphers : Pas de réutilisation de clé !}
+
+Comme le OTP, les stream ciphers ne doivent \textbf{JAMAIS} réutiliser la même clé $k$ pour chiffrer deux messages différents :
+\[
+c_1 \xor c_2 = (m_1 \xor G(k)) \xor (m_2 \xor G(k)) = m_1 \xor m_2
+\]
+
+\textbf{Solution} : Utiliser des nonces (numbers used once) - voir modes opératoires.
+\end{warnbox}
+
+%=============================================================================
+\section{Block Ciphers}
+%=============================================================================
+
+\subsection{Abstraction : Permutation pseudoaléatoire (PRP)}
+
+Un block cipher est une permutation paramétrée par une clé.
+
+\begin{defbox}
+\textbf{Block Cipher (PRP)}
+
+Un block cipher sur $\bits^n$ est une famille de permutations $\{E_k : \bits^n \to \bits^n\}_{k \in \K}$ telle que :
+\begin{enumerate}
+    \item $E_k$ est une permutation pour tout $k$
+    \item $E_k$ et $E_k^{-1}$ sont calculables efficacement
+    \item $E_k$ est indistinguable d'une permutation aléatoire (PRP security)
+\end{enumerate}
+
+\textbf{Notation} :
+\begin{itemize}
+    \item $n$ : taille du bloc (ex: 128 bits pour AES)
+    \item $\lambda$ : taille de la clé (ex: 128, 192, 256 bits)
+    \item $E_k(m)$ : chiffrement du bloc $m$
+    \item $E_k^{-1}(c)$ : déchiffrement du bloc $c$
+\end{itemize}
+\end{defbox}
+
+\subsection{Jeu PRP-IND}
+
+\textbf{À COMPLÉTER} : Formalisation du jeu d'indistinguabilité pour PRP (similaire à PRG mais avec oracle)
+
+%=============================================================================
+\section{Modes opératoires}
+%=============================================================================
+
+Un block cipher chiffre des blocs de taille fixe (ex: 128 bits). Pour chiffrer des messages longs, on utilise des \textbf{modes opératoires}.
+
+\subsection{Mode ECB (Electronic Codebook) - INSÉCURISÉ}
+
+\textbf{Principe} : Chiffrer chaque bloc indépendamment.
+\[
+c_i = E_k(m_i) \quad \text{pour } i = 1, \ldots, t
+\]
+
+\begin{warnbox}
+\textbf{ECB est DANGEREUSEMENT INSÉCURISÉ}
+
+\textbf{Problème} : Blocs identiques $\to$ ciphertexts identiques. Révèle la structure du message !
+
+\textbf{Exemple célèbre} : Chiffrer une image avec ECB conserve les contours visibles (voir notebook).
+\end{warnbox}
+
+\subsection{Mode CBC (Cipher Block Chaining)}
+
+\textbf{Principe} : Chaîner les blocs avec XOR.
+
+\begin{algorithm}
+\caption{CBC Encryption}
+\begin{algorithmic}
+\REQUIRE Message $m = m_1 \| m_2 \| \cdots \| m_t$, clé $k$, IV aléatoire
+\STATE $c_0 \gets \text{IV}$ (Initialization Vector)
+\FOR{$i = 1$ to $t$}
+    \STATE $c_i \gets E_k(m_i \xor c_{i-1})$
+\ENDFOR
+\RETURN $c = c_0 \| c_1 \| \cdots \| c_t$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Déchiffrement CBC} :
+\[
+m_i = D_k(c_i) \xor c_{i-1}
+\]
+
+\textbf{Propriété} : CBC est CPA-sécurisé si IV est aléatoire et unique.
+
+\subsection{Mode CTR (Counter)}
+
+\textbf{Principe} : Transformer un block cipher en stream cipher.
+
+\[
+c_i = m_i \xor E_k(\text{nonce} \| i)
+\]
+
+\textbf{Avantages} :
+\begin{itemize}
+    \item Parallélisable (contrairement à CBC)
+    \item Pas besoin de padding
+    \item Accès aléatoire aux blocs
+    \item CPA-sécurisé avec nonce unique
+\end{itemize}
+
+\subsection{Mode OFB (Output Feedback)}
+
+\textbf{À COMPLÉTER} : Description OFB
+
+\subsection{Comparaison des modes}
+
+\textbf{Tableau à compléter} :
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+Mode & CPA-sécurisé & Parallélisable & Padding & Usage \\
+\hline
+ECB & ❌ NON & ✅ Oui & Non & ❌ JAMAIS \\
+CBC & ✅ Oui (IV aléatoire) & ❌ Non (déchiffrement oui) & Oui & Legacy \\
+CTR & ✅ Oui (nonce unique) & ✅ Oui & Non & ✅ Recommandé \\
+OFB & ✅ Oui & ❌ Non & Non & Rare \\
+\hline
+\end{tabular}
+\end{center}
+
+%=============================================================================
+\section{Advanced Encryption Standard (AES)}
+%=============================================================================
+
+\subsection{Historique}
+
+\begin{itemize}
+    \item \textbf{1997} : NIST lance concours pour remplacer DES
+    \item \textbf{2000} : Rijndael (Daemen \& Rijmen) sélectionné
+    \item \textbf{2001} : Standardisé comme AES (FIPS 197)
+    \item \textbf{Aujourd'hui} : Standard mondial de facto
+\end{itemize}
+
+\subsection{Paramètres}
+
+\begin{itemize}
+    \item \textbf{Taille de bloc} : 128 bits (fixe)
+    \item \textbf{Tailles de clé} : 128, 192, ou 256 bits
+    \item \textbf{Nombre de rounds} : 10 (AES-128), 12 (AES-192), 14 (AES-256)
+\end{itemize}
+
+\subsection{Structure (aperçu)}
+
+AES est un \textbf{Substitution-Permutation Network (SPN)} avec 4 opérations par round :
+
+\begin{enumerate}
+    \item \textbf{SubBytes} : Substitution non-linéaire (S-box)
+    \item \textbf{ShiftRows} : Permutation des lignes de la matrice d'état
+    \item \textbf{MixColumns} : Transformation linéaire des colonnes
+    \item \textbf{AddRoundKey} : XOR avec la sous-clé du round
+\end{enumerate}
+
+\textbf{Détails mathématiques} : À COMPLÉTER (corps de Galois $\text{GF}(2^8)$, S-box, key schedule)
+
+\subsection{Sécurité d'AES}
+
+\begin{itemize}
+    \item Aucune attaque pratique connue sur AES complet
+    \item Meilleure attaque théorique : $2^{126}$ pour AES-128 (négligeable)
+    \item AES-256 résistant aux ordinateurs quantiques (algorithme de Grover)
+    \item Vulnérabilités possibles : implémentations (side-channels, timing attacks)
+\end{itemize}
+
+%=============================================================================
+\section{Sécurité CPA (Chosen Plaintext Attack)}
+%=============================================================================
+
+\subsection{Modèle de l'adversaire}
+
+\begin{defbox}
+\textbf{CPA (Chosen Plaintext Attack)}
+
+L'adversaire peut :
+\begin{itemize}
+    \item Choisir des plaintexts $m_1, m_2, \ldots, m_q$ de son choix
+    \item Obtenir les ciphertexts correspondants $c_i = \Enc_k(m_i)$
+    \item Tenter de briser le système (distinguer chiffrements, retrouver clé, etc.)
+\end{itemize}
+
+\textbf{Contexte pratique} : Attaquant peut injecter des messages dans un système (ex: email chiffré)
+\end{defbox}
+
+\subsection{Jeu CPA-IND}
+
+\begin{thmbox}
+\textbf{Jeu d'indistinguabilité CPA (IND-CPA)}
+
+\begin{algorithmic}
+\STATE Challenger génère $k \xleftarrow{\$} \K$
+\STATE \textbf{Phase 1} : $\A$ interroge oracle $\Enc_k(\cdot)$ sur $m_1, \ldots, m_q$ (obtient $c_1, \ldots, c_q$)
+\STATE \textbf{Challenge} : $\A$ envoie $m_0^*, m_1^*$ avec $|m_0^*| = |m_1^*|$
+\STATE Challenger choisit $b \xleftarrow{\$} \{0,1\}$, envoie $c^* = \Enc_k(m_b^*)$
+\STATE \textbf{Phase 2} : $\A$ continue à interroger $\Enc_k(\cdot)$ (sauf sur $m_0^*, m_1^*$)
+\STATE $\A$ retourne $b' \in \{0,1\}$
+\end{algorithmic}
+
+\textbf{Avantage} :
+\[
+\Adv_{\Pi}^{\text{CPA}}(\A) = \left| \Pr[b' = b] - \frac{1}{2} \right|
+\]
+
+Un système est \textbf{CPA-sécurisé} si $\Adv_{\Pi}^{\text{CPA}}(\A) \leq \epsilon$ négligeable.
+\end{thmbox}
+
+\subsection{Théorèmes de sécurité}
+
+\begin{theorem}
+CBC avec IV aléatoire est CPA-sécurisé si le block cipher sous-jacent est une PRP sécurisée.
+\end{theorem}
+
+\begin{theorem}
+CTR avec nonce unique est CPA-sécurisé si le block cipher sous-jacent est une PRF sécurisée.
+\end{theorem}
+
+\textbf{Preuves} : À COMPLÉTER (voir Katz-Lindell chapitre 3)
+
+%=============================================================================
+\section{Notebooks pratiques}
+%=============================================================================
+
+Les notebooks suivants illustrent les concepts :
+
+\begin{itemize}
+    \item \texttt{02_demo_stream_cipher.ipynb} : Stream cipher avec ChaCha20
+    \item \texttt{02_demo_aes_modes.ipynb} : Comparaison ECB, CBC, CTR
+    \item \texttt{02_demo_cpa_attack.ipynb} : Attaque CPA sur ECB mode
+    \item \texttt{02_exercices.ipynb} : Exercices guidés
+\end{itemize}
+
+%=============================================================================
+\section{Exercices}
+%=============================================================================
+
+\subsection{Exercices théoriques}
+
+\begin{enumerate}
+    \item Montrer que ECB n'est pas CPA-sécurisé
+    \item Prouver que CBC avec IV prévisible n'est pas CPA-sécurisé
+    \item Analyser la sécurité de CTR avec compteur qui part de 0 à chaque message
+    \item Démontrer la réduction PRG $\to$ stream cipher sécurisé
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+
+Voir notebooks.
+
+%=============================================================================
+\section{Conclusion}
+%=============================================================================
+
+Ce chapitre a introduit les chiffrements symétriques modernes :
+
+\begin{itemize}
+    \item \textbf{Sécurité computationnelle} : Compromis pratique vs sécurité parfaite
+    \item \textbf{PRG} : Fondation théorique des stream ciphers
+    \item \textbf{Block ciphers} : Permutations pseudoaléatoires (AES)
+    \item \textbf{Modes opératoires} : ECB (insécurisé), CBC, CTR (recommandé)
+    \item \textbf{Sécurité CPA} : Modèle d'attaque réaliste
+\end{itemize}
+
+\textbf{Limitation importante} : Les chiffrements de ce chapitre assurent seulement la \textbf{confidentialité}, pas l'\textbf{intégrité}. Un attaquant peut modifier les ciphertexts !
+
+Le chapitre suivant introduira les \textbf{MAC} et l'\textbf{authenticated encryption} pour garantir à la fois confidentialité et intégrité.
+
+\end{document}
