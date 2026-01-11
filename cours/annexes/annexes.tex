@@ -1,0 +1,951 @@
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=2cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.1}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, pdftitle={Annexes - Cours ML}}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Annexes - Cours ML}
+\fancyhead[R]{\small Sandbox-ML}
+\fancyfoot[C]{\thepage}
+
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+}
+\lstset{style=pythonstyle}
+
+\newtcolorbox{formbox}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=#1,
+    breakable
+}
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+    \vspace{1cm}
+    {\LARGE Annexes}\\[0.3cm]
+    {\LARGE Aide-mémoire, Glossaire, Ressources}\\[2cm]
+    \vfill
+    {\large
+    \textbf{Contenu :}\\[0.5cm]
+    \begin{itemize}
+        \item Aide-mémoire : Formules essentielles
+        \item Glossaire : Terminologie ML
+        \item Ressources : Bibliothèques, datasets, liens
+        \item FAQ : Pièges courants et solutions
+    \end{itemize}
+    }
+    \vfill
+    {\large Cours ML - Sandbox-ML\\ Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===== AIDE-MÉMOIRE =====
+\section{Aide-Mémoire : Formules Essentielles}
+
+\subsection{Algèbre Linéaire}
+
+\begin{formbox}{Produit Matriciel}
+\begin{align*}
+\mat{C} &= \mat{A}\mat{B} \quad \text{où } C_{ij} = \sum_{k} A_{ik}B_{kj} \\
+\text{Dimensions} &: (m \times n) \cdot (n \times p) = (m \times p)
+\end{align*}
+\end{formbox}
+
+\begin{formbox}{Valeurs Propres}
+\begin{equation*}
+\mat{A}\vect{v} = \lambda \vect{v} \quad \Leftrightarrow \quad \det(\mat{A} - \lambda \mat{I}) = 0
+\end{equation*}
+\end{formbox}
+
+\begin{formbox}{SVD (Singular Value Decomposition)}
+\begin{equation*}
+\mat{A} = \mat{U}\mat{\Sigma}\mat{V}^T
+\end{equation*}
+où $\mat{U}, \mat{V}$ orthogonales, $\mat{\Sigma}$ diagonale (valeurs singulières)
+\end{formbox}
+
+\subsection{Probabilités}
+
+\begin{formbox}{Théorème de Bayes}
+\begin{equation*}
+P(A|B) = \frac{P(B|A) \cdot P(A)}{P(B)}
+\end{equation*}
+\end{formbox}
+
+\begin{formbox}{Loi Normale}
+\begin{equation*}
+\mathcal{N}(\mu, \sigma^2) : \quad f(x) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)
+\end{equation*}
+\end{formbox}
+
+\subsection{Régression}
+
+\begin{formbox}{Régression Linéaire}
+\begin{align*}
+\text{Modèle} &: \hat{y} = \vect{w}^T\vect{x} + b \\
+\text{Solution} &: \vect{w}^* = (\mat{X}^T\mat{X})^{-1}\mat{X}^T\vect{y} \\
+\text{MSE} &: \frac{1}{m}\sum_{i=1}^m (y_i - \hat{y}_i)^2
+\end{align*}
+\end{formbox}
+
+\begin{formbox}{Ridge (L2)}
+\begin{equation*}
+\vect{w}^* = (\mat{X}^T\mat{X} + \lambda\mat{I})^{-1}\mat{X}^T\vect{y}
+\end{equation*}
+\end{formbox}
+
+\begin{formbox}{Lasso (L1)}
+\begin{equation*}
+\min_{\vect{w}} \|\mat{X}\vect{w} - \vect{y}\|_2^2 + \lambda\|\vect{w}\|_1
+\end{equation*}
+\end{formbox}
+
+\subsection{Classification}
+
+\begin{formbox}{Logistic Regression}
+\begin{align*}
+\sigma(z) &= \frac{1}{1 + e^{-z}} \\
+P(y=1|\vect{x}) &= \sigma(\vect{w}^T\vect{x} + b) \\
+\text{Loss} &: -\frac{1}{m}\sum_{i=1}^m [y_i\log\hat{y}_i + (1-y_i)\log(1-\hat{y}_i)]
+\end{align*}
+\end{formbox}
+
+\begin{formbox}{Softmax}
+\begin{equation*}
+P(y=k|\vect{x}) = \frac{e^{z_k}}{\sum_{j=1}^K e^{z_j}}
+\end{equation*}
+\end{formbox}
+
+\subsection{Métriques}
+
+\begin{formbox}{Classification}
+\begin{align*}
+\text{Accuracy} &= \frac{\text{TP + TN}}{\text{Total}} \\
+\text{Precision} &= \frac{\text{TP}}{\text{TP + FP}} \\
+\text{Recall} &= \frac{\text{TP}}{\text{TP + FN}} \\
+\text{F1-score} &= 2 \cdot \frac{\text{Precision} \times \text{Recall}}{\text{Precision + Recall}}
+\end{align*}
+\end{formbox}
+
+\subsection{Clustering}
+
+\begin{formbox}{K-Means}
+\begin{equation*}
+\min_{\mu_1,\ldots,\mu_K} \sum_{i=1}^n \min_{k=1,\ldots,K} \|\vect{x}_i - \mu_k\|^2
+\end{equation*}
+\end{formbox}
+
+\subsection{Réseaux de Neurones}
+
+\begin{formbox}{Forward Pass}
+\begin{align*}
+\vect{z}^{[l]} &= \mat{W}^{[l]}\vect{a}^{[l-1]} + \vect{b}^{[l]} \\
+\vect{a}^{[l]} &= \sigma^{[l]}(\vect{z}^{[l]})
+\end{align*}
+\end{formbox}
+
+\begin{formbox}{Backpropagation}
+\begin{align*}
+\delta^{[l]} &= \frac{\partial L}{\partial \vect{z}^{[l]}} \\
+\frac{\partial L}{\partial \mat{W}^{[l]}} &= \delta^{[l]}(\vect{a}^{[l-1]})^T \\
+\frac{\partial L}{\partial \vect{b}^{[l]}} &= \delta^{[l]}
+\end{align*}
+\end{formbox}
+
+\begin{formbox}{Optimiseurs}
+\begin{align*}
+\text{SGD} &: \vect{\theta} \leftarrow \vect{\theta} - \alpha\nabla L \\
+\text{Momentum} &: \vect{v} = \beta\vect{v} + (1-\beta)\nabla L, \quad \vect{\theta} \leftarrow \vect{\theta} - \alpha\vect{v} \\
+\text{Adam} &: \text{Combine momentum + RMSprop}
+\end{align*}
+\end{formbox}
+
+\subsection{CNN}
+
+\begin{formbox}{Convolution 2D}
+\begin{align*}
+\text{Output}[i,j] &= \sum_m \sum_n \text{Input}[i+m, j+n] \cdot \text{Kernel}[m,n] \\
+\text{Taille sortie} &: \left\lfloor\frac{H + 2p - k}{s}\right\rfloor + 1
+\end{align*}
+\end{formbox}
+
+\subsection{RNN/LSTM}
+
+\begin{formbox}{RNN}
+\begin{equation*}
+\vect{h}_t = \tanh(\mat{W}_{hh}\vect{h}_{t-1} + \mat{W}_{xh}\vect{x}_t + \vect{b})
+\end{equation*}
+\end{formbox}
+
+\begin{formbox}{LSTM (simplifié)}
+\begin{align*}
+\vect{f}_t &= \sigma(\mat{W}_f[\vect{h}_{t-1}, \vect{x}_t]) \quad \text{(forget)} \\
+\vect{i}_t &= \sigma(\mat{W}_i[\vect{h}_{t-1}, \vect{x}_t]) \quad \text{(input)} \\
+\vect{c}_t &= \vect{f}_t \odot \vect{c}_{t-1} + \vect{i}_t \odot \tilde{\vect{c}}_t
+\end{align*}
+\end{formbox}
+
+\begin{formbox}{Attention}
+\begin{equation*}
+\text{Attention}(\mat{Q}, \mat{K}, \mat{V}) = \text{softmax}\left(\frac{\mat{Q}\mat{K}^T}{\sqrt{d_k}}\right)\mat{V}
+\end{equation*}
+\end{formbox}
+
+\subsection{Reinforcement Learning}
+
+\begin{formbox}{Q-Learning}
+\begin{equation*}
+Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma\max_{a'}Q(s',a') - Q(s,a)]
+\end{equation*}
+\end{formbox}
+
+% ===== GLOSSAIRE =====
+\section{Glossaire}
+
+\begin{longtable}{p{4cm}p{11cm}}
+\toprule
+\textbf{Terme} & \textbf{Définition} \\
+\midrule
+\endhead
+
+\textbf{Accuracy} & Proportion de prédictions correctes \\
+\textbf{Activation Function} & Fonction non-linéaire appliquée aux neurones (ReLU, sigmoid, etc.) \\
+\textbf{Adam} & Optimiseur adaptatif combinant momentum et RMSprop \\
+\textbf{Backpropagation} & Algorithme pour calculer gradients dans réseaux de neurones \\
+\textbf{Batch} & Sous-ensemble de données utilisé pour une mise à jour \\
+\textbf{Batch Normalization} & Normalisation des activations par batch \\
+\textbf{Bias} & Biais (intercept) ou biais statistique (erreur systématique) \\
+\textbf{Bias-Variance Tradeoff} & Compromis entre underfitting et overfitting \\
+\textbf{BPTT} & Backpropagation Through Time (pour RNN) \\
+\textbf{CNN} & Convolutional Neural Network (réseau convolutif) \\
+\textbf{Confusion Matrix} & Tableau TP/TN/FP/FN pour classification \\
+\textbf{Cross-Entropy} & Fonction de perte pour classification \\
+\textbf{Cross-Validation} & Validation croisée (K-Fold) \\
+\textbf{Data Augmentation} & Augmentation artificielle du dataset \\
+\textbf{Data Leakage} & Fuite d'info du test vers train (erreur grave) \\
+\textbf{Dropout} & Désactivation aléatoire de neurones (régularisation) \\
+\textbf{Early Stopping} & Arrêt si validation loss n'améliore plus \\
+\textbf{Embedding} & Représentation vectorielle dense (mots, etc.) \\
+\textbf{Ensemble} & Combinaison de plusieurs modèles \\
+\textbf{Epoch} & Une passe complète sur le dataset d'entraînement \\
+\textbf{F1-Score} & Moyenne harmonique de Precision et Recall \\
+\textbf{Feature Engineering} & Création/transformation de features \\
+\textbf{Fine-Tuning} & Ajustement d'un modèle pré-entraîné \\
+\textbf{Gradient Descent} & Optimisation itérative par descente de gradient \\
+\textbf{GRU} & Gated Recurrent Unit (variante LSTM) \\
+\textbf{Hyperparameter} & Paramètre fixé avant entraînement (LR, etc.) \\
+\textbf{L1/L2 Regularization} & Pénalisation sur poids (Lasso/Ridge) \\
+\textbf{Learning Rate} & Taille du pas de gradient descent \\
+\textbf{LSTM} & Long Short-Term Memory (RNN avec mémoire) \\
+\textbf{MLP} & Multi-Layer Perceptron (réseau fully-connected) \\
+\textbf{MSE} & Mean Squared Error \\
+\textbf{Overfitting} & Modèle trop complexe, bon sur train, mauvais sur test \\
+\textbf{PCA} & Principal Component Analysis (réduction dim) \\
+\textbf{Pooling} & Sous-échantillonnage (Max/Average) \\
+\textbf{Precision} & TP / (TP + FP) \\
+\textbf{Recall} & TP / (TP + FN) \\
+\textbf{Regularization} & Techniques contre overfitting (L1, L2, dropout) \\
+\textbf{ReLU} & Rectified Linear Unit : $\max(0, x)$ \\
+\textbf{RNN} & Recurrent Neural Network (séquences) \\
+\textbf{SGD} & Stochastic Gradient Descent \\
+\textbf{Softmax} & Fonction de sortie pour multi-classe \\
+\textbf{Transfer Learning} & Réutilisation modèle pré-entraîné \\
+\textbf{Transformer} & Architecture attention pour NLP \\
+\textbf{Underfitting} & Modèle trop simple \\
+\textbf{Vanishing Gradient} & Gradients → 0 dans réseaux profonds \\
+\textbf{Validation Set} & Données pour tuner hyperparamètres \\
+\bottomrule
+\end{longtable}
+
+% ===== RESSOURCES =====
+\section{Ressources}
+
+\subsection{Bibliothèques Python}
+
+\subsubsection{ML Classique}
+\begin{itemize}
+    \item \textbf{scikit-learn} : ML complet (classification, régression, clustering)
+    \item \textbf{XGBoost} : Gradient Boosting haute performance
+    \item \textbf{LightGBM} : Gradient Boosting rapide (Microsoft)
+    \item \textbf{CatBoost} : Gradient Boosting pour catégorielles (Yandex)
+\end{itemize}
+
+\subsubsection{Deep Learning}
+\begin{itemize}
+    \item \textbf{PyTorch} : Framework DL flexible (recherche)
+    \item \textbf{TensorFlow/Keras} : Framework DL production
+    \item \textbf{FastAI} : Haut niveau sur PyTorch
+\end{itemize}
+
+\subsubsection{NLP}
+\begin{itemize}
+    \item \textbf{Transformers (HuggingFace)} : BERT, GPT, T5, etc.
+    \item \textbf{spaCy} : NLP industriel
+    \item \textbf{NLTK} : NLP pédagogique
+\end{itemize}
+
+\subsubsection{Data Science}
+\begin{itemize}
+    \item \textbf{NumPy} : Calcul numérique
+    \item \textbf{Pandas} : Manipulation données tabulaires
+    \item \textbf{Matplotlib/Seaborn} : Visualisation
+    \item \textbf{Plotly} : Visualisation interactive
+\end{itemize}
+
+\subsubsection{Outils}
+\begin{itemize}
+    \item \textbf{Jupyter} : Notebooks interactifs
+    \item \textbf{MLflow} : Tracking expériences
+    \item \textbf{Optuna} : Hyperparameter tuning
+    \item \textbf{Weights \& Biases} : Expérience tracking
+    \item \textbf{DVC} : Version control données
+\end{itemize}
+
+\subsection{Datasets}
+
+\subsubsection{Débutant}
+\begin{itemize}
+    \item \textbf{MNIST} : Chiffres manuscrits (10 classes, 60K images)
+    \item \textbf{Iris} : Classification florale (150 samples, 4 features)
+    \item \textbf{Titanic} : Survie passagers (Kaggle)
+    \item \textbf{Boston Housing} : Prédiction prix immobilier
+\end{itemize}
+
+\subsubsection{Intermédiaire}
+\begin{itemize}
+    \item \textbf{CIFAR-10/100} : Images couleur (10/100 classes)
+    \item \textbf{IMDB Reviews} : Sentiment analysis
+    \item \textbf{Fashion-MNIST} : Vêtements (alternative MNIST)
+\end{itemize}
+
+\subsubsection{Avancé}
+\begin{itemize}
+    \item \textbf{ImageNet} : 1.2M images, 1000 classes
+    \item \textbf{COCO} : Détection objets, segmentation
+    \item \textbf{SQuAD} : Question answering
+    \item \textbf{Kaggle Competitions} : Datasets réels variés
+\end{itemize}
+
+\subsection{Environnements RL}
+\begin{itemize}
+    \item \textbf{OpenAI Gym} : Environnements RL standards
+    \item \textbf{Stable Baselines3} : Implémentations RL
+    \item \textbf{PettingZoo} : Multi-agent RL
+\end{itemize}
+
+\subsection{Cours en Ligne}
+
+\begin{itemize}
+    \item \textbf{Fast.ai} : Deep Learning pratique
+    \item \textbf{CS231n (Stanford)} : CNN pour vision
+    \item \textbf{CS224n (Stanford)} : NLP avec Deep Learning
+    \item \textbf{Coursera - Andrew Ng} : ML et DL
+    \item \textbf{DeepLearning.AI} : Spécialisations DL
+\end{itemize}
+
+\subsection{Livres}
+
+\begin{itemize}
+    \item Géron - \textit{Hands-On Machine Learning (3rd ed, 2023)}
+    \item Goodfellow et al. - \textit{Deep Learning}
+    \item Bishop - \textit{Pattern Recognition and Machine Learning}
+    \item Hastie et al. - \textit{The Elements of Statistical Learning}
+    \item Sutton \& Barto - \textit{Reinforcement Learning}
+    \item Chollet - \textit{Deep Learning with Python (2nd ed)}
+\end{itemize}
+
+% ===== FAQ =====
+\section{FAQ : Pièges Courants}
+
+\subsection{Données}
+
+\textbf{Q : Dois-je normaliser mes données ?}
+
+A : Oui, pour la plupart des algorithmes (SVM, réseaux de neurones, K-Means). Non pour les arbres de décision. Utiliser StandardScaler ou MinMaxScaler selon le contexte.
+
+\vspace{0.3cm}
+
+\textbf{Q : Comment gérer les valeurs manquantes ?}
+
+A : (1) Supprimer si < 5\%, (2) Imputer médiane/moyenne pour numériques, (3) Mode pour catégorielles, (4) Créer indicateur "missing".
+
+\vspace{0.3cm}
+
+\textbf{Q : Qu'est-ce que le data leakage ?}
+
+A : Utiliser des informations du test set pendant l'entraînement. Erreurs courantes :
+\begin{itemize}
+    \item Scaler fit sur toutes les données
+    \item Features du futur dans séries temporelles
+    \item Duplicatas entre train et test
+\end{itemize}
+
+\subsection{Modélisation}
+
+\textbf{Q : Mon modèle a 99\% d'accuracy mais ne marche pas bien ?}
+
+A : Classes probablement déséquilibrées. Utiliser F1-score, Precision/Recall ou AUC-ROC au lieu d'accuracy.
+
+\vspace{0.3cm}
+
+\textbf{Q : Overfitting vs Underfitting ?}
+
+A :
+\begin{itemize}
+    \item \textbf{Overfitting} : Train error faible, val error élevé → Régularisation, plus de données
+    \item \textbf{Underfitting} : Train et val errors élevés → Modèle plus complexe
+\end{itemize}
+
+\vspace{0.3cm}
+
+\textbf{Q : Combien de données faut-il ?}
+
+A : Règle empirique :
+\begin{itemize}
+    \item ML classique : 10× le nombre de features minimum
+    \item Deep Learning : 1000+ par classe minimum
+    \item Transfer Learning : 100+ par classe peut suffire
+\end{itemize}
+
+\subsection{Entraînement}
+
+\textbf{Q : Mon loss est NaN ?}
+
+A : (1) Learning rate trop élevé, (2) Explosion gradients → gradient clipping, (3) Données non normalisées.
+
+\vspace{0.3cm}
+
+\textbf{Q : Mon modèle n'apprend pas (loss stagne) ?}
+
+A : (1) Learning rate trop faible, (2) Mauvaise initialisation, (3) Dead ReLU (tous neurones inactifs).
+
+\vspace{0.3cm}
+
+\textbf{Q : Quelle taille de batch ?}
+
+A : 32-128 généralement. Plus grand = plus rapide mais moins de généralisation. Plus petit = meilleure généralisation mais plus lent.
+
+\subsection{Évaluation}
+
+\textbf{Q : Puis-je utiliser le test set plusieurs fois ?}
+
+A : \textbf{NON !} Le test set ne doit être utilisé qu'\textbf{une seule fois} pour l'évaluation finale. Utiliser validation set pour tuning.
+
+\vspace{0.3cm}
+
+\textbf{Q : Cross-validation ou simple train/val/test ?}
+
+A :
+\begin{itemize}
+    \item CV : Petites données (< 10K), évaluation robuste
+    \item Train/Val/Test : Grandes données, DL
+\end{itemize}
+
+\subsection{Production}
+
+\textbf{Q : Comment déployer mon modèle ?}
+
+A : (1) Sauvegarder avec joblib/pickle, (2) API REST (FastAPI/Flask), (3) Containeriser (Docker), (4) Monitoring.
+
+\vspace{0.3cm}
+
+\textbf{Q : Mon modèle se dégrade en production ?}
+
+A : Distribution shift (data drift). Solution : Monitoring, réentraînement périodique, détection d'anomalies.
+
+% ===== COMMANDES PYTHON ESSENTIELLES =====
+\section{Commandes Python Essentielles}
+
+\subsection{scikit-learn Workflow}
+
+\begin{lstlisting}
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+
+# Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# Scale
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)  # Pas de fit!
+
+# Train
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train_scaled, y_train)
+
+# Evaluate
+y_pred = model.predict(X_test_scaled)
+print(classification_report(y_test, y_pred))
+\end{lstlisting}
+
+\subsection{PyTorch Workflow}
+
+\begin{lstlisting}
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+# Model
+model = nn.Sequential(
+    nn.Linear(input_dim, 128),
+    nn.ReLU(),
+    nn.Dropout(0.2),
+    nn.Linear(128, output_dim)
+)
+
+# Loss et optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# Training loop
+for epoch in range(num_epochs):
+    model.train()
+    for X_batch, y_batch in train_loader:
+        optimizer.zero_grad()
+        outputs = model(X_batch)
+        loss = criterion(outputs, y_batch)
+        loss.backward()
+        optimizer.step()
+\end{lstlisting}
+
+% ===== ANNEXE D : CHEAT SHEETS PAR FRAMEWORK =====
+\section{Annexe D : Cheat Sheets par Framework}
+
+\subsection{scikit-learn : Workflow Complet}
+
+\begin{lstlisting}
+# Pipeline scikit-learn classique
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+
+# 1. Split des données
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# 2. Pipeline avec preprocessing
+pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('clf', RandomForestClassifier(random_state=42))
+])
+
+# 3. Grid Search pour hyperparameters
+param_grid = {
+    'clf__n_estimators': [100, 200, 300],
+    'clf__max_depth': [10, 20, None],
+    'clf__min_samples_split': [2, 5, 10]
+}
+
+grid = GridSearchCV(pipeline, param_grid, cv=5,
+                    scoring='f1_weighted', n_jobs=-1)
+grid.fit(X_train, y_train)
+
+# 4. Evaluation
+print(f"Best params: {grid.best_params_}")
+print(f"Best CV score: {grid.best_score_:.3f}")
+y_pred = grid.predict(X_test)
+print(classification_report(y_test, y_pred))
+\end{lstlisting}
+
+\subsection{PyTorch : Training Loop Standard}
+
+\begin{lstlisting}
+# Training loop PyTorch typique
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+
+# 1. Préparation des données
+train_dataset = TensorDataset(
+    torch.tensor(X_train, dtype=torch.float32),
+    torch.tensor(y_train, dtype=torch.long)
+)
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+# 2. Définition du modèle
+model = nn.Sequential(
+    nn.Linear(input_dim, 128),
+    nn.ReLU(),
+    nn.Dropout(0.3),
+    nn.Linear(128, 64),
+    nn.ReLU(),
+    nn.Linear(64, num_classes)
+)
+
+# 3. Loss et optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5)
+
+# 4. Training loop
+for epoch in range(num_epochs):
+    model.train()
+    total_loss = 0
+    for batch_X, batch_y in train_loader:
+        optimizer.zero_grad()
+        outputs = model(batch_X)
+        loss = criterion(outputs, batch_y)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+
+    # Validation
+    model.eval()
+    with torch.no_grad():
+        val_outputs = model(X_val)
+        val_loss = criterion(val_outputs, y_val)
+
+    scheduler.step(val_loss)
+    print(f"Epoch {epoch+1}/{num_epochs} | "
+          f"Train Loss: {total_loss/len(train_loader):.4f} | "
+          f"Val Loss: {val_loss:.4f}")
+\end{lstlisting}
+
+\subsection{Hugging Face Transformers : Fine-tuning}
+
+\begin{lstlisting}
+# Fine-tuning BERT avec Hugging Face
+from transformers import (BertTokenizer, BertForSequenceClassification,
+                          Trainer, TrainingArguments)
+
+# 1. Tokenizer et modèle
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertForSequenceClassification.from_pretrained(
+    'bert-base-uncased', num_labels=2
+)
+
+# 2. Tokenization
+train_encodings = tokenizer(train_texts, truncation=True,
+                            padding=True, max_length=128)
+val_encodings = tokenizer(val_texts, truncation=True,
+                          padding=True, max_length=128)
+
+# 3. Dataset PyTorch
+class CustomDataset(torch.utils.data.Dataset):
+    def __init__(self, encodings, labels):
+        self.encodings = encodings
+        self.labels = labels
+
+    def __getitem__(self, idx):
+        item = {key: torch.tensor(val[idx])
+                for key, val in self.encodings.items()}
+        item['labels'] = torch.tensor(self.labels[idx])
+        return item
+
+    def __len__(self):
+        return len(self.labels)
+
+train_dataset = CustomDataset(train_encodings, train_labels)
+val_dataset = CustomDataset(val_encodings, val_labels)
+
+# 4. Training arguments
+training_args = TrainingArguments(
+    output_dir='./results',
+    num_train_epochs=3,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=16,
+    warmup_steps=500,
+    weight_decay=0.01,
+    logging_dir='./logs',
+    logging_steps=100,
+    evaluation_strategy="epoch",
+    save_strategy="epoch",
+    load_best_model_at_end=True
+)
+
+# 5. Trainer
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset,
+    eval_dataset=val_dataset
+)
+
+# 6. Fine-tuning
+trainer.train()
+\end{lstlisting}
+
+% ===== ANNEXE E : GUIDE HARDWARE ET CLOUD =====
+\section{Annexe E : Guide Hardware et Cloud}
+
+\subsection{Choix de GPU pour ML/DL}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\textbf{GPU} & \textbf{VRAM} & \textbf{Prix} & \textbf{Use Case} & \textbf{Performance} \\
+\hline
+GTX 1660 Ti & 6 GB & \$280 & Apprentissage & Entrée de gamme \\
+RTX 3060 & 12 GB & \$330 & ML léger & Bon rapport qualité/prix \\
+RTX 3080 & 10 GB & \$700 & DL moyen & Très bon pour entraînement \\
+RTX 4090 & 24 GB & \$1600 & DL lourd & Top performance \\
+A100 (40GB) & 40 GB & \$10k+ & Production & Datacenters \\
+\hline
+\end{tabular}
+\caption{Comparaison GPUs pour Machine Learning (2024)}
+\end{table}
+
+\textbf{Recommandations selon budget :}
+\begin{itemize}
+    \item \textbf{Budget < 500\$} : RTX 3060 (12GB) - Excellent pour débuter
+    \item \textbf{Budget 500-1000\$} : RTX 3080/4070 - Bon pour projets sérieux
+    \item \textbf{Budget 1000-2000\$} : RTX 4090 - Top pour recherche/production
+    \item \textbf{Budget illimité} : Multiple A100 ou H100 - Datacenters
+\end{itemize}
+
+\textbf{VRAM nécessaire selon modèle :}
+\begin{itemize}
+    \item ResNet-50 : 4-6 GB
+    \item BERT-base : 8-12 GB
+    \item BERT-large : 16-20 GB
+    \item GPT-2 (1.5B) : 20-24 GB
+    \item Fine-tuning LLaMA 7B : 40+ GB (ou quantization)
+\end{itemize}
+
+\subsection{Plateformes Cloud pour ML}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Plateforme} & \textbf{GPU disponibles} & \textbf{Prix/h} & \textbf{Avantages} \\
+\hline
+Google Colab Pro+ & T4, A100 & Gratuit-\$50/mois & Simple, notebooks \\
+AWS SageMaker & P3, P4 & \$3-10/h & Complet, scalable \\
+Google Cloud AI & V100, A100, TPU & \$2-8/h & TPUs puissants \\
+Azure ML & NC, ND series & \$2-10/h & Intégration Microsoft \\
+Lambda Labs & A100, H100 & \$1-3/h & Moins cher \\
+Paperspace Gradient & RTX 4000-A100 & \$0.5-3/h & Simple, abordable \\
+\hline
+\end{tabular}
+\caption{Comparaison plateformes Cloud ML (2024)}
+\end{table}
+
+\textbf{Recommandations :}
+\begin{itemize}
+    \item \textbf{Débutants} : Google Colab Pro (gratuit tier généreux)
+    \item \textbf{Prototyping} : Paperspace Gradient (rapport qualité/prix)
+    \item \textbf{Production} : AWS SageMaker ou GCP AI Platform (robustesse)
+    \item \textbf{Recherche} : Lambda Labs (GPUs puissants, moins cher)
+\end{itemize}
+
+% ===== ANNEXE F : CARRIÈRES ET CERTIFICATIONS =====
+\section{Annexe F : Carrières en Machine Learning}
+
+\subsection{Parcours Professionnels}
+
+\textbf{1. ML Engineer}
+\begin{itemize}
+    \item \textbf{Rôle} : Développer et déployer des modèles ML en production
+    \item \textbf{Compétences} : Python, ML libs, MLOps, CI/CD, cloud
+    \item \textbf{Salaire (France)} : 45k-70k€ (junior), 70k-110k€ (senior)
+    \item \textbf{Demande} : Très forte (croissance 40\%/an)
+\end{itemize}
+
+\textbf{2. Data Scientist}
+\begin{itemize}
+    \item \textbf{Rôle} : Analyser données, créer modèles prédictifs, insights business
+    \item \textbf{Compétences} : Stats, Python/R, ML, visualisation, communication
+    \item \textbf{Salaire} : 40k-65k€ (junior), 65k-100k€ (senior)
+    \item \textbf{Demande} : Forte mais saturation dans certaines régions
+\end{itemize}
+
+\textbf{3. Research Scientist (ML/DL)}
+\begin{itemize}
+    \item \textbf{Rôle} : Recherche fondamentale, publications, nouveaux algorithmes
+    \item \textbf{Compétences} : PhD, mathématiques avancées, PyTorch, publications
+    \item \textbf{Salaire} : 60k-90k€ (postdoc), 90k-150k€+ (senior, FAANG)
+    \item \textbf{Demande} : Modérée mais très compétitive
+\end{itemize}
+
+\textbf{4. MLOps Engineer}
+\begin{itemize}
+    \item \textbf{Rôle} : Infrastructure ML, CI/CD, monitoring, scalabilité
+    \item \textbf{Compétences} : DevOps, Kubernetes, Docker, ML frameworks
+    \item \textbf{Salaire} : 50k-75k€ (junior), 75k-120k€ (senior)
+    \item \textbf{Demande} : En forte croissance (nouveau métier)
+\end{itemize}
+
+\subsection{Certifications Recommandées}
+
+\textbf{Certifications Cloud ML :}
+\begin{itemize}
+    \item \textbf{AWS Certified Machine Learning - Specialty} (difficulté : élevée)
+    \item \textbf{Google Cloud Professional ML Engineer} (difficulté : élevée)
+    \item \textbf{Microsoft Azure AI Engineer Associate} (difficulté : moyenne)
+\end{itemize}
+
+\textbf{Certifications Académiques :}
+\begin{itemize}
+    \item \textbf{deeplearning.ai Specializations} (Coursera) : 5 spécialisations excellentes
+    \item \textbf{fast.ai Practical Deep Learning} : Gratuit, très pratique
+    \item \textbf{Stanford CS229 (Machine Learning)} : Théorique et rigoureux
+\end{itemize}
+
+\subsection{Roadmap de Progression}
+
+\textbf{Niveau Débutant (0-6 mois) :}
+\begin{enumerate}
+    \item Maîtriser Python et NumPy/Pandas
+    \item Comprendre ML supervisé (regression, classification)
+    \item Implémenter algorithmes from scratch
+    \item Compléter ce cours ML (chapitres 00-05)
+\end{enumerate}
+
+\textbf{Niveau Intermédiaire (6-18 mois) :}
+\begin{enumerate}
+    \item Deep Learning (PyTorch ou TensorFlow)
+    \item Projets Kaggle (top 25\%)
+    \item Compléter chapitres 06-10 de ce cours
+    \item Contribuer à projets open-source
+\end{enumerate}
+
+\textbf{Niveau Avancé (18+ mois) :}
+\begin{enumerate}
+    \item Spécialisation (NLP, CV, RL, etc.)
+    \item Publications ou projets significatifs
+    \item MLOps et déploiement production
+    \item Compléter chapitres 11-14 + applications avancées
+\end{enumerate}
+
+% ===== ANNEXE G : OUTILS ET LIBRAIRIES ESSENTIELS =====
+\section{Annexe G : Outils et Librairies Essentiels}
+
+\subsection{Stack ML Complète}
+
+\textbf{Data Processing :}
+\begin{itemize}
+    \item \textbf{Pandas} : Manipulation de DataFrames
+    \item \textbf{Polars} : Alternative ultra-rapide à Pandas
+    \item \textbf{Dask} : DataFrames distribués pour big data
+    \item \textbf{PySpark} : Processing distribué à grande échelle
+\end{itemize}
+
+\textbf{Machine Learning :}
+\begin{itemize}
+    \item \textbf{scikit-learn} : ML classique (must-have)
+    \item \textbf{XGBoost, LightGBM, CatBoost} : Gradient boosting
+    \item \textbf{PyTorch} : Deep Learning (recommandé)
+    \item \textbf{TensorFlow/Keras} : Deep Learning (alternative)
+    \item \textbf{Hugging Face Transformers} : NLP state-of-the-art
+\end{itemize}
+
+\textbf{Visualisation :}
+\begin{itemize}
+    \item \textbf{Matplotlib} : Base, flexible
+    \item \textbf{Seaborn} : Statistical plots, esthétique
+    \item \textbf{Plotly} : Interactif, dashboards
+    \item \textbf{Weights \& Biases} : Experiment tracking
+\end{itemize}
+
+\textbf{MLOps :}
+\begin{itemize}
+    \item \textbf{MLflow} : Experiment tracking, model registry
+    \item \textbf{DVC} : Version control pour données/modèles
+    \item \textbf{Docker} : Conteneurisation
+    \item \textbf{Kubernetes} : Orchestration à grande échelle
+    \item \textbf{FastAPI} : APIs REST performantes
+\end{itemize}
+
+\subsection{Commandes Essentielles}
+
+\subsubsection{Installation Rapide}
+
+\begin{lstlisting}[language=bash]
+# ML Stack minimal
+pip install numpy pandas scikit-learn matplotlib
+
+# Deep Learning (PyTorch)
+pip install torch torchvision torchaudio
+
+# Deep Learning (TensorFlow)
+pip install tensorflow
+
+# NLP moderne
+pip install transformers datasets tokenizers
+
+# MLOps
+pip install mlflow dvc fastapi uvicorn
+
+# Gradient Boosting
+pip install xgboost lightgbm catboost
+\end{lstlisting}
+
+\subsubsection{Vérifier GPU PyTorch}
+
+\begin{lstlisting}
+import torch
+print(f"CUDA disponible : {torch.cuda.is_available()}")
+print(f"GPU : {torch.cuda.get_device_name(0)}")
+print(f"VRAM : {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+\end{lstlisting}
+
+% ===== CONCLUSION =====
+\section*{Conclusion}
+
+Ce document d'annexes complète le cours complet de Machine Learning. Utilisez-le comme référence rapide pendant vos projets.
+
+\textbf{Points clés à retenir :}
+\begin{itemize}
+    \item Toujours commencer simple (baseline)
+    \item Éviter le data leakage à tout prix
+    \item Choisir la bonne métrique selon le problème
+    \item Valider rigoureusement (CV ou train/val/test)
+    \item Test set = une seule utilisation finale
+    \item Documenter et versionner (code, données, modèles)
+\end{itemize}
+
+\vspace{1cm}
+
+\begin{center}
+\Large\textbf{Bon apprentissage et bons projets ML !}
+\end{center}
+
+\end{document}

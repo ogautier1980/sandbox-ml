@@ -1,0 +1,489 @@
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, pdftitle={Chapitre 14 - Best Practices ML}}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 11 - Best Practices ML}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    frame=single,
+}
+\lstset{style=pythonstyle}
+
+\newtcolorbox{astuce}{colback=yellow!10!white, colframe=yellow!75!black, fonttitle=\bfseries, title=💡 Bonne Pratique, breakable}
+\newtcolorbox{attention}{colback=red!5!white, colframe=red!75!black, fonttitle=\bfseries, title=⚠️ À Éviter, breakable}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+    \vspace{1cm}
+    {\LARGE Chapitre 11}\\[0.3cm]
+    {\LARGE\bfseries Best Practices en Machine Learning}\\[2cm]
+    \vfill
+    {\large
+    \textbf{Objectifs :}\\[0.5cm]
+    \begin{itemize}
+        \item Maîtriser le workflow ML de bout en bout
+        \item Éviter les pièges courants
+        \item Optimiser performances et reproductibilité
+        \item Déployer des modèles en production
+    \end{itemize}
+    }
+    \vfill
+    {\large Cours ML - Sandbox-ML\\ Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Workflow ML}
+
+\subsection{Pipeline standard}
+
+\begin{enumerate}
+    \item \textbf{Définir le problème} : Classification, régression, clustering ?
+    \item \textbf{Collecter les données} : Qualité > Quantité
+    \item \textbf{EDA (Exploratory Data Analysis)} : Visualisations, statistiques
+    \item \textbf{Preprocessing} : Nettoyage, features engineering
+    \item \textbf{Train/Val/Test Split} : 60/20/20 ou 70/15/15
+    \item \textbf{Baseline Model} : Modèle simple de référence
+    \item \textbf{Itération} : Modèles plus complexes, hyperparameter tuning
+    \item \textbf{Évaluation finale} : Test set (une seule fois !)
+    \item \textbf{Déploiement} : API, monitoring
+\end{enumerate}
+
+\subsection{Checklist avant entraînement}
+
+\begin{itemize}
+    \item[$\square$] Données équilibrées (ou stratifiées) ?
+    \item[$\square$] Features normalisées/standardisées ?
+    \item[$\square$] Train/val/test splits fixés avec random seed ?
+    \item[$\square$] Baseline défini ?
+    \item[$\square$] Métrique d'évaluation choisie ?
+\end{itemize}
+
+\section{Traitement des Données}
+
+\subsection{Nettoyage}
+
+\begin{astuce}
+\textbf{Valeurs manquantes :}
+\begin{itemize}
+    \item Numériques : Imputation médiane/moyenne, ou indicateur manquant
+    \item Catégorielles : Mode ou catégorie "Unknown"
+    \item Supprimer si < 5\% de données manquantes
+\end{itemize}
+\end{astuce}
+
+\begin{lstlisting}[caption=Gestion des NaN]
+import pandas as pd
+from sklearn.impute import SimpleImputer
+
+# Imputation numérique
+imputer_num = SimpleImputer(strategy='median')
+df[num_cols] = imputer_num.fit_transform(df[num_cols])
+
+# Imputation catégorielle
+imputer_cat = SimpleImputer(strategy='most_frequent')
+df[cat_cols] = imputer_cat.fit_transform(df[cat_cols])
+\end{lstlisting}
+
+\subsection{Feature Scaling}
+
+\begin{table}[h]
+\centering
+\caption{Méthodes de scaling}
+\begin{tabular}{lll}
+\toprule
+\textbf{Méthode} & \textbf{Formule} & \textbf{Quand} \\
+\midrule
+StandardScaler & $(x - \mu) / \sigma$ & Gaussian-like, SVM, NN \\
+MinMaxScaler & $(x - \min) / (\max - \min)$ & Features bornées [0,1] \\
+RobustScaler & $(x - \text{median}) / \text{IQR}$ & Présence outliers \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{attention}
+\textbf{Erreur Data Leakage :} Toujours fit le scaler sur le train set uniquement !
+\begin{lstlisting}
+# MAUVAIS
+scaler.fit(X)  # Contient test set !
+X_train_scaled = scaler.transform(X_train)
+
+# BON
+scaler.fit(X_train)
+X_train_scaled = scaler.transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+\end{lstlisting}
+\end{attention}
+
+\subsection{Feature Engineering}
+
+\begin{itemize}
+    \item \textbf{Encoding catégorielles}
+    \begin{itemize}
+        \item One-Hot : $< 10$ catégories
+        \item Label Encoding : Arbres de décision
+        \item Target Encoding : High cardinality
+    \end{itemize}
+
+    \item \textbf{Interactions} : $x_1 \times x_2$, $x^2$
+
+    \item \textbf{Features temporelles} : Jour semaine, mois, heure
+
+    \item \textbf{Aggregations} : Mean, std, count par groupe
+\end{itemize}
+
+\section{Sélection de Modèle}
+
+\subsection{Guide de choix}
+
+\begin{table}[h]
+\centering
+\caption{Quel algorithme choisir ?}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Contexte} & \textbf{Algorithme recommandé} \\
+\midrule
+Petites données (< 1K) & Logistic Regression, SVM \\
+Données tabulaires moyennes & Random Forest, XGBoost \\
+Images & CNN (ResNet, EfficientNet) \\
+Texte & Transformers (BERT, GPT) \\
+Séries temporelles & LSTM, Transformers \\
+Interprétabilité requise & Arbres de décision, Régression linéaire \\
+Temps réel critique & Modèles légers (LR, Small NN) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Baseline Models}
+
+Toujours commencer par un modèle simple :
+\begin{itemize}
+    \item \textbf{Classification} : Logistic Regression, Dummy Classifier
+    \item \textbf{Régression} : Linear Regression, Mean Predictor
+\end{itemize}
+
+\begin{lstlisting}[caption=Baseline simple]
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+# Baseline
+baseline = LogisticRegression(max_iter=1000)
+baseline.fit(X_train, y_train)
+y_pred = baseline.predict(X_test)
+print(f"Baseline Accuracy: {accuracy_score(y_test, y_pred):.3f}")
+\end{lstlisting}
+
+\section{Validation et Métriques}
+
+\subsection{Cross-Validation}
+
+\begin{astuce}
+Utiliser \textbf{StratifiedKFold} pour classification déséquilibrée.
+\begin{lstlisting}
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(model, X_train, y_train, cv=cv, scoring='f1')
+print(f"CV F1: {scores.mean():.3f} +/- {scores.std():.3f}")
+\end{lstlisting}
+\end{astuce}
+
+\subsection{Choix de métrique}
+
+\begin{table}[h]
+\centering
+\caption{Métriques selon le contexte}
+\begin{tabular}{lp{7cm}}
+\toprule
+\textbf{Contexte} & \textbf{Métrique} \\
+\midrule
+Classes équilibrées & Accuracy \\
+Classes déséquilibrées & F1-score, AUC-ROC \\
+Faux négatifs coûteux & Recall \\
+Faux positifs coûteux & Precision \\
+Régression & MSE, MAE, $R^2$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Hyperparameter Tuning}
+
+\subsection{Stratégies}
+
+\begin{enumerate}
+    \item \textbf{Grid Search} : Exhaustif, lent
+    \item \textbf{Random Search} : Plus efficace (Bergstra \& Bengio 2012)
+    \item \textbf{Bayesian Optimization} : Optuna, Hyperopt
+\end{enumerate}
+
+\begin{lstlisting}[caption=Random Search]
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import uniform, randint
+
+param_dist = {
+    'max_depth': randint(3, 20),
+    'n_estimators': randint(50, 500),
+    'learning_rate': uniform(0.01, 0.3)
+}
+
+search = RandomizedSearchCV(
+    model, param_dist, n_iter=50, cv=3,
+    scoring='f1', random_state=42, n_jobs=-1
+)
+
+search.fit(X_train, y_train)
+print(f"Best params: {search.best_params_}")
+print(f"Best CV score: {search.best_score_:.3f}")
+\end{lstlisting}
+
+\section{Overfitting et Régularisation}
+
+\subsection{Diagnostic}
+
+\begin{itemize}
+    \item \textbf{Underfitting} : Train error ET val error élevés → Modèle trop simple
+    \item \textbf{Overfitting} : Train error faible, val error élevé → Modèle trop complexe
+    \item \textbf{Good fit} : Train error $\approx$ val error, tous deux faibles
+\end{itemize}
+
+\subsection{Solutions overfitting}
+
+\begin{astuce}
+\textbf{Arsenal anti-overfitting :}
+\begin{enumerate}
+    \item Plus de données (data augmentation)
+    \item Régularisation L1/L2
+    \item Dropout (NN)
+    \item Early stopping
+    \item Réduire complexité modèle
+    \item Ensembling
+\end{enumerate}
+\end{astuce}
+
+\section{Déploiement}
+
+\subsection{Sauvegarder le modèle}
+
+\begin{lstlisting}[caption=Persistence avec joblib]
+import joblib
+
+# Sauvegarder
+joblib.dump(model, 'model.pkl')
+joblib.dump(scaler, 'scaler.pkl')
+
+# Charger
+model = joblib.load('model.pkl')
+scaler = joblib.load('scaler.pkl')
+\end{lstlisting}
+
+\subsection{API REST avec FastAPI}
+
+\begin{lstlisting}[caption=API simple]
+from fastapi import FastAPI
+import joblib
+import numpy as np
+
+app = FastAPI()
+model = joblib.load('model.pkl')
+
+@app.post("/predict")
+def predict(features: list[float]):
+    X = np.array(features).reshape(1, -1)
+    prediction = model.predict(X)[0]
+    proba = model.predict_proba(X)[0].tolist()
+    return {"prediction": int(prediction), "probabilities": proba}
+
+# Lancer : uvicorn main:app --reload
+\end{lstlisting}
+
+\subsection{Monitoring}
+
+\begin{itemize}
+    \item Tracker performance en production (drift)
+    \item Logger prédictions et features
+    \item Alertes si dégradation
+    \item Réentraîner périodiquement
+\end{itemize}
+
+\section{Reproductibilité}
+
+\subsection{Random seeds}
+
+\begin{lstlisting}[caption=Fixer tous les seeds]
+import random
+import numpy as np
+import torch
+
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)
+\end{lstlisting}
+
+\subsection{Version control}
+
+\begin{itemize}
+    \item Code : Git
+    \item Données : DVC (Data Version Control)
+    \item Modèles : MLflow, Weights \& Biases
+    \item Environnement : Docker, requirements.txt, conda env
+\end{itemize}
+
+\section{Checklist Production}
+
+\begin{itemize}
+    \item[$\square$] Modèle validé sur test set indépendant
+    \item[$\square$] Pipeline complet (preprocessing + model) sauvegardé
+    \item[$\square$] Tests unitaires sur preprocessing
+    \item[$\square$] Logging configuré
+    \item[$\square$] Monitoring des performances
+    \item[$\square$] Documentation : features, métriques, limites
+    \item[$\square$] Fallback si modèle échoue
+    \item[$\square$] Plan de réentraînement
+\end{itemize}
+
+\section{Pièges courants}
+
+\subsection{Data Leakage}
+
+\begin{attention}
+\textbf{Exemples de leakage :}
+\begin{itemize}
+    \item Scaler fit sur toutes les données (inclut test)
+    \item Features dérivées du target
+    \item Features du futur dans séries temporelles
+    \item Duplicatas entre train et test
+\end{itemize}
+\end{attention}
+
+\subsection{Optimisation sur test set}
+
+\begin{attention}
+\textbf{NE JAMAIS} :
+\begin{itemize}
+    \item Tuner hyperparamètres sur test set
+    \item Regarder test set avant validation finale
+    \item Réentraîner après avoir vu test performance
+\end{itemize}
+
+Le test set doit rester \textbf{inviolé} jusqu'à l'évaluation finale !
+\end{attention}
+
+\subsection{Sélection de features sur tout le dataset}
+
+Sélectionner features UNIQUEMENT sur train set, puis appliquer à val/test.
+
+\section{Ressources}
+
+\subsection{Outils}
+
+\begin{itemize}
+    \item \textbf{scikit-learn} : ML classique
+    \item \textbf{PyTorch/TensorFlow} : Deep Learning
+    \item \textbf{XGBoost/LightGBM/CatBoost} : Gradient Boosting
+    \item \textbf{Optuna} : Hyperparameter tuning
+    \item \textbf{MLflow} : Experiment tracking
+    \item \textbf{FastAPI} : API deployment
+    \item \textbf{Docker} : Containerization
+\end{itemize}
+
+\subsection{Lectures}
+
+\begin{itemize}
+    \item Géron - \textit{Hands-On Machine Learning}
+    \item Hastie et al. - \textit{The Elements of Statistical Learning}
+    \item Chollet - \textit{Deep Learning with Python}
+\end{itemize}
+
+\section{Résumé}
+
+\subsection{Règles d'or}
+
+\begin{enumerate}
+    \item Toujours commencer simple (baseline)
+    \item Train/val/test splits stricts
+    \item Pas de data leakage
+    \item Cross-validation systématique
+    \item Métriques adaptées au problème
+    \item Test set : une seule évaluation finale
+    \item Reproductibilité (seeds, versions)
+    \item Monitoring en production
+\end{enumerate}
+
+\subsection{Workflow résumé}
+
+\begin{equation*}
+\boxed{\text{EDA}} \to \boxed{\text{Preprocessing}} \to \boxed{\text{Baseline}} \to \boxed{\text{Tuning}} \to \boxed{\text{Test}} \to \boxed{\text{Deploy}}
+\end{equation*}
+
+\section{Notebooks Pratiques}
+
+Ce chapitre est accompagné des notebooks suivants :
+
+\begin{itemize}
+    \item \texttt{14_demo_pipeline_complet.ipynb} : Pipeline ML de bout en bout
+    \begin{itemize}
+        \item Exploration des données (EDA)
+        \item Feature engineering et preprocessing
+        \item Sélection de modèle avec validation croisée
+        \item Pipeline scikit-learn complet
+    \end{itemize}
+
+    \item \texttt{14_demo_deployment_fastapi.ipynb} : Déploiement avec FastAPI
+    \begin{itemize}
+        \item Création d'une API REST
+        \item Validation avec Pydantic
+        \item Conteneurisation Docker
+        \item Tests et documentation automatique
+    \end{itemize}
+
+    \item \texttt{14_demo_monitoring_mlflow.ipynb} : Tracking et monitoring avec MLflow
+    \begin{itemize}
+        \item Configuration MLflow Tracking Server
+        \item Logging des hyperparamètres et métriques
+        \item Model Registry
+        \item Comparaison de runs et reproductibilité
+    \end{itemize}
+\end{itemize}
+
+\vfill
+
+\begin{center}
+\Large\textbf{Fin du Cours Machine Learning}\\[0.5cm]
+\large Félicitations ! Vous maîtrisez maintenant les fondamentaux et techniques avancées du ML.\\[0.3cm]
+Continuez à pratiquer sur des projets réels et à vous tenir à jour avec les dernières avancées.
+\end{center}
+
+\end{document}

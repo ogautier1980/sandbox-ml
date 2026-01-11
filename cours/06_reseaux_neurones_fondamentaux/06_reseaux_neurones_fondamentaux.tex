@@ -1,0 +1,1439 @@
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 06 - Réseaux de Neurones Fondamentaux},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 06 - Réseaux de Neurones Fondamentaux}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS (code Python) =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=⚠️ Attention,
+    breakable
+}
+
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=💡 Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+\newcommand{\sigmoid}{\operatorname{sigmoid}}
+\newcommand{\relu}{\operatorname{ReLU}}
+\newcommand{\softmax}{\operatorname{softmax}}
+
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 06}\\[0.3cm]
+    {\LARGE\bfseries Réseaux de Neurones Fondamentaux}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Comprendre le fonctionnement du perceptron et du perceptron multi-couches (MLP)
+        \item Maîtriser le forward pass et le backpropagation
+        \item Découvrir les fonctions d'activation et leur rôle
+        \item Implémenter un réseau de neurones from scratch
+        \item Appliquer les techniques de régularisation (dropout, batch norm)
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitres 01 (Math), 02 (Métriques), 03 (Régression)\\[0.3cm]
+    \textbf{Durée estimée :} 6-8 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{06_demo_*.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: INTRODUCTION =====
+\section{Introduction aux Réseaux de Neurones}
+
+\subsection{Motivation}
+
+Les réseaux de neurones artificiels sont inspirés du fonctionnement du cerveau humain. Ils permettent de modéliser des relations non-linéaires complexes entre les données d'entrée et les sorties.
+
+\begin{exemple}{Classification d'images manuscrites}
+Reconnaître des chiffres manuscrits (MNIST) : chaque pixel est une entrée, et le réseau doit prédire le chiffre (0-9). Une régression logistique simple obtient ~92\% de précision, tandis qu'un réseau de neurones atteint ~98\%.
+\end{exemple}
+
+\subsection{Historique}
+
+\begin{itemize}
+    \item \textbf{1943} : McCulloch-Pitts - premier modèle de neurone formel
+    \item \textbf{1958} : Rosenblatt - Perceptron (classification binaire linéaire)
+    \item \textbf{1969} : Minsky \& Papert - limites du perceptron (XOR)
+    \item \textbf{1986} : Rumelhart, Hinton, Williams - Backpropagation
+    \item \textbf{2012} : AlexNet - révolution deep learning (ImageNet)
+\end{itemize}
+
+\subsection{Analogie biologique}
+
+Un neurone artificiel est une simplification extrême d'un neurone biologique :
+
+\begin{itemize}
+    \item \textbf{Dendrites} → Entrées pondérées ($\vect{x} \odot \vect{w}$)
+    \item \textbf{Corps cellulaire} → Sommation ($\sum w_i x_i + b$)
+    \item \textbf{Axone} → Fonction d'activation ($\sigma(z)$)
+    \item \textbf{Synapses} → Poids ajustables ($\vect{w}$)
+\end{itemize}
+
+% ===== SECTION 2: LE PERCEPTRON =====
+\section{Le Perceptron}
+
+\subsection{Définition}
+
+\begin{definition}{Perceptron}
+Le perceptron est un modèle de classification binaire linéaire. Pour une entrée $\vect{x} \in \R^d$, il calcule :
+\begin{equation}
+    y = \begin{cases}
+        1 & \text{si } \vect{w}^T \vect{x} + b > 0 \\
+        0 & \text{sinon}
+    \end{cases}
+\end{equation}
+où $\vect{w} \in \R^d$ sont les poids et $b \in \R$ est le biais.
+\end{definition}
+
+Le perceptron définit un \textbf{hyperplan de séparation} dans l'espace des features :
+\begin{equation}
+    \vect{w}^T \vect{x} + b = 0
+\end{equation}
+
+\subsection{Algorithme d'apprentissage}
+
+\begin{algorithm}[H]
+\caption{Perceptron Learning Algorithm}
+\label{alg:perceptron}
+\begin{algorithmic}[1]
+\REQUIRE Données $\{(\vect{x}_i, y_i)\}_{i=1}^n$, $y_i \in \{0, 1\}$
+\REQUIRE Learning rate $\alpha$, nombre d'epochs $T$
+\ENSURE Poids $\vect{w}$, biais $b$
+\STATE Initialiser $\vect{w} = \vect{0}$, $b = 0$
+\FOR{$epoch = 1$ \TO $T$}
+    \FOR{$i = 1$ \TO $n$}
+        \STATE Prédire : $\hat{y}_i = \mathbb{1}[\vect{w}^T \vect{x}_i + b > 0]$
+        \IF{$\hat{y}_i \neq y_i$}
+            \STATE $\vect{w} \leftarrow \vect{w} + \alpha (y_i - \hat{y}_i) \vect{x}_i$
+            \STATE $b \leftarrow b + \alpha (y_i - \hat{y}_i)$
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\RETURN $\vect{w}, b$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Théorème de convergence}
+
+\begin{theoreme}{Convergence du Perceptron}
+Si les données sont linéairement séparables, l'algorithme du perceptron converge en un nombre fini d'itérations.
+\end{theoreme}
+
+\begin{attention}
+Le perceptron \textbf{ne peut pas} résoudre le problème XOR (non linéairement séparable). C'est une limitation majeure qui a motivé le développement des réseaux multi-couches.
+\end{attention}
+
+\subsection{Implémentation}
+
+\begin{lstlisting}[language=Python, caption=Perceptron from scratch]
+import numpy as np
+
+class Perceptron:
+    def __init__(self, learning_rate=0.01, n_epochs=100):
+        self.lr = learning_rate
+        self.n_epochs = n_epochs
+        self.w = None
+        self.b = 0
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self.w = np.zeros(n_features)
+
+        for epoch in range(self.n_epochs):
+            for i in range(n_samples):
+                # Forward pass
+                z = np.dot(X[i], self.w) + self.b
+                y_pred = 1 if z > 0 else 0
+
+                # Update weights si erreur
+                if y_pred != y[i]:
+                    update = self.lr * (y[i] - y_pred)
+                    self.w += update * X[i]
+                    self.b += update
+
+        return self
+
+    def predict(self, X):
+        z = np.dot(X, self.w) + self.b
+        return (z > 0).astype(int)
+\end{lstlisting}
+
+% ===== SECTION 3: FONCTIONS D'ACTIVATION =====
+\section{Fonctions d'Activation}
+
+Les fonctions d'activation introduisent la \textbf{non-linéarité} dans les réseaux de neurones. Sans elles, un réseau multi-couches serait équivalent à une régression linéaire.
+
+\subsection{Sigmoid}
+
+\begin{definition}{Fonction Sigmoid}
+\begin{equation}
+    \sigma(z) = \frac{1}{1 + e^{-z}}
+\end{equation}
+Propriétés :
+\begin{itemize}
+    \item Sortie entre 0 et 1 (interprétable comme probabilité)
+    \item Dérivée : $\sigma'(z) = \sigma(z)(1 - \sigma(z))$
+    \item Problème : \textbf{vanishing gradient} pour $|z|$ grand
+\end{itemize}
+\end{definition}
+
+\subsection{Tanh (Tangente Hyperbolique)}
+
+\begin{equation}
+    \tanh(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}} = 2\sigma(2z) - 1
+\end{equation}
+
+Propriétés :
+\begin{itemize}
+    \item Sortie entre -1 et 1 (centré à 0, meilleur que sigmoid)
+    \item Dérivée : $\tanh'(z) = 1 - \tanh^2(z)$
+    \item Aussi sujet au vanishing gradient
+\end{itemize}
+
+\subsection{ReLU (Rectified Linear Unit)}
+
+\begin{definition}{ReLU}
+\begin{equation}
+    \relu(z) = \max(0, z) = \begin{cases}
+        z & \text{si } z > 0 \\
+        0 & \text{sinon}
+    \end{cases}
+\end{equation}
+Propriétés :
+\begin{itemize}
+    \item Calcul très rapide
+    \item Pas de vanishing gradient pour $z > 0$
+    \item Dérivée : $\relu'(z) = \mathbb{1}[z > 0]$
+    \item Problème : \textbf{dying ReLU} (neurones inactifs si $z < 0$)
+\end{itemize}
+\end{definition}
+
+\textbf{ReLU est la fonction d'activation par défaut} dans les réseaux modernes.
+
+\subsection{Variantes de ReLU}
+
+\textbf{Leaky ReLU :}
+\begin{equation}
+    \text{LeakyReLU}(z) = \begin{cases}
+        z & \text{si } z > 0 \\
+        \alpha z & \text{sinon}
+    \end{cases} \quad (\alpha \approx 0.01)
+\end{equation}
+
+\textbf{ELU (Exponential Linear Unit) :}
+\begin{equation}
+    \text{ELU}(z) = \begin{cases}
+        z & \text{si } z > 0 \\
+        \alpha(e^z - 1) & \text{sinon}
+    \end{cases}
+\end{equation}
+
+\textbf{Swish / SiLU :}
+\begin{equation}
+    \text{Swish}(z) = z \cdot \sigma(z)
+\end{equation}
+
+\subsection{Softmax (pour classification multi-classe)}
+
+\begin{definition}{Softmax}
+Pour un vecteur $\vect{z} \in \R^K$, la fonction softmax renvoie un vecteur de probabilités :
+\begin{equation}
+    \softmax(\vect{z})_j = \frac{e^{z_j}}{\sum_{k=1}^K e^{z_k}} \quad \text{pour } j = 1, \ldots, K
+\end{equation}
+Propriété : $\sum_{j=1}^K \softmax(\vect{z})_j = 1$ (distribution de probabilité)
+\end{definition}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des fonctions d'activation}
+\label{tab:activations}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Fonction} & \textbf{Plage} & \textbf{Vanishing Gradient} & \textbf{Usage} \\
+\midrule
+Sigmoid & $(0, 1)$ & ✗ Oui & Output binaire \\
+Tanh & $(-1, 1)$ & ✗ Oui & RNN (historique) \\
+ReLU & $[0, \infty)$ & ✓ Non & Hidden layers (défaut) \\
+Leaky ReLU & $(-\infty, \infty)$ & ✓ Non & Alternative ReLU \\
+Softmax & $[0, 1]^K$ & - & Output multi-classe \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 4: MLP (MULTI-LAYER PERCEPTRON) =====
+\section{Perceptron Multi-Couches (MLP)}
+
+\subsection{Architecture}
+
+Un MLP est composé de plusieurs couches de neurones :
+\begin{itemize}
+    \item \textbf{Couche d'entrée (input layer)} : reçoit les features $\vect{x}$
+    \item \textbf{Couches cachées (hidden layers)} : transformations non-linéaires
+    \item \textbf{Couche de sortie (output layer)} : prédictions $\hat{y}$
+\end{itemize}
+
+\begin{definition}{MLP à $L$ couches}
+Pour une entrée $\vect{x} \in \R^{d_0}$, un MLP calcule :
+\begin{align}
+    \vect{a}^{[0]} &= \vect{x} \\
+    \vect{z}^{[l]} &= \mat{W}^{[l]} \vect{a}^{[l-1]} + \vect{b}^{[l]} \quad \text{pour } l = 1, \ldots, L \\
+    \vect{a}^{[l]} &= \sigma^{[l]}(\vect{z}^{[l]}) \\
+    \hat{y} &= \vect{a}^{[L]}
+\end{align}
+où :
+\begin{itemize}
+    \item $\mat{W}^{[l]} \in \R^{d_l \times d_{l-1}}$ : matrice de poids de la couche $l$
+    \item $\vect{b}^{[l]} \in \R^{d_l}$ : vecteur de biais de la couche $l$
+    \item $\sigma^{[l]}$ : fonction d'activation de la couche $l$
+    \item $\vect{a}^{[l]}$ : activations de la couche $l$
+    \item $\vect{z}^{[l]}$ : pré-activations (avant fonction d'activation)
+\end{itemize}
+\end{definition}
+
+\subsection{Théorème d'approximation universelle}
+
+\begin{theoreme}{Approximation Universelle}
+Un MLP avec une seule couche cachée de taille suffisante et une fonction d'activation non-linéaire peut approximer n'importe quelle fonction continue sur un compact de $\R^d$ avec une précision arbitraire.
+\end{theoreme}
+
+\begin{attention}
+Ce théorème est \textbf{théorique} : en pratique, les réseaux profonds (deep learning) avec plusieurs couches sont plus efficaces et nécessitent moins de neurones.
+\end{attention}
+
+\subsection{Exemple : MLP 3 couches}
+
+Architecture : 784 (input) → 128 (hidden) → 64 (hidden) → 10 (output)
+
+\begin{align}
+    \vect{x} &\in \R^{784} \quad \text{(image 28×28)} \\
+    \vect{z}^{[1]} &= \mat{W}^{[1]} \vect{x} + \vect{b}^{[1]} \quad (\mat{W}^{[1]} \in \R^{128 \times 784}) \\
+    \vect{a}^{[1]} &= \relu(\vect{z}^{[1]}) \quad \in \R^{128} \\
+    \vect{z}^{[2]} &= \mat{W}^{[2]} \vect{a}^{[1]} + \vect{b}^{[2]} \quad (\mat{W}^{[2]} \in \R^{64 \times 128}) \\
+    \vect{a}^{[2]} &= \relu(\vect{z}^{[2]}) \quad \in \R^{64} \\
+    \vect{z}^{[3]} &= \mat{W}^{[3]} \vect{a}^{[2]} + \vect{b}^{[3]} \quad (\mat{W}^{[3]} \in \R^{10 \times 64}) \\
+    \hat{\vect{y}} &= \softmax(\vect{z}^{[3]}) \quad \in \R^{10}
+\end{align}
+
+Nombre total de paramètres :
+\begin{equation}
+    (784 \times 128 + 128) + (128 \times 64 + 64) + (64 \times 10 + 10) = 109{,}386
+\end{equation}
+
+% ===== SECTION 5: FORWARD PASS =====
+\section{Forward Pass (Propagation Avant)}
+
+\subsection{Principe}
+
+Le forward pass consiste à calculer la sortie du réseau pour une entrée donnée en propageant les activations couche par couche.
+
+\begin{algorithm}[H]
+\caption{Forward Pass}
+\label{alg:forward}
+\begin{algorithmic}[1]
+\REQUIRE Entrée $\vect{x}$, poids $\{\mat{W}^{[l]}, \vect{b}^{[l]}\}_{l=1}^L$
+\ENSURE Prédiction $\hat{y}$, cache des activations $\{\vect{a}^{[l]}, \vect{z}^{[l]}\}$
+\STATE $\vect{a}^{[0]} = \vect{x}$
+\FOR{$l = 1$ \TO $L$}
+    \STATE $\vect{z}^{[l]} = \mat{W}^{[l]} \vect{a}^{[l-1]} + \vect{b}^{[l]}$ \quad \COMMENT{Combinaison linéaire}
+    \STATE $\vect{a}^{[l]} = \sigma^{[l]}(\vect{z}^{[l]})$ \quad \COMMENT{Activation non-linéaire}
+    \STATE Stocker $\vect{z}^{[l]}, \vect{a}^{[l]}$ dans le cache \quad \COMMENT{Pour backprop}
+\ENDFOR
+\STATE $\hat{y} = \vect{a}^{[L]}$
+\RETURN $\hat{y}$, cache
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Implémentation vectorisée}
+
+Pour un batch de $m$ exemples $\mat{X} \in \R^{m \times d_0}$ :
+
+\begin{align}
+    \mat{A}^{[0]} &= \mat{X} \quad \in \R^{m \times d_0} \\
+    \mat{Z}^{[l]} &= \mat{A}^{[l-1]} (\mat{W}^{[l]})^T + \vect{b}^{[l]} \quad \in \R^{m \times d_l} \\
+    \mat{A}^{[l]} &= \sigma^{[l]}(\mat{Z}^{[l]})
+\end{align}
+
+\begin{lstlisting}[language=Python, caption=Forward pass vectorisé]
+def forward_pass(X, parameters):
+    """
+    X : (m, d0) - batch de m exemples
+    parameters : dict avec W[l], b[l] pour chaque couche l
+    """
+    cache = {}
+    A = X
+    L = len(parameters) // 2  # Nombre de couches
+
+    for l in range(1, L + 1):
+        A_prev = A
+        W = parameters[f'W{l}']
+        b = parameters[f'b{l}']
+
+        # Linear forward
+        Z = np.dot(A_prev, W.T) + b
+
+        # Activation
+        if l < L:  # Hidden layers : ReLU
+            A = np.maximum(0, Z)
+        else:  # Output layer : softmax
+            A = softmax(Z)
+
+        # Cache pour backprop
+        cache[f'Z{l}'] = Z
+        cache[f'A{l}'] = A
+        cache[f'A{l-1}'] = A_prev
+
+    return A, cache
+\end{lstlisting}
+
+% ===== SECTION 6: FONCTION DE COÛT =====
+\section{Fonctions de Coût}
+
+\subsection{Pour la régression : MSE}
+
+\begin{equation}
+    L(\vect{\theta}) = \frac{1}{m} \sum_{i=1}^m (\hat{y}_i - y_i)^2
+\end{equation}
+
+\subsection{Pour classification binaire : Binary Cross-Entropy}
+
+\begin{equation}
+    L(\vect{\theta}) = -\frac{1}{m} \sum_{i=1}^m \left[ y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right]
+\end{equation}
+
+\subsection{Pour classification multi-classe : Categorical Cross-Entropy}
+
+\begin{definition}{Cross-Entropy Loss}
+Pour $K$ classes, avec labels one-hot $\vect{y} \in \{0, 1\}^K$ :
+\begin{equation}
+    L(\vect{\theta}) = -\frac{1}{m} \sum_{i=1}^m \sum_{k=1}^K y_{i,k} \log(\hat{y}_{i,k})
+\end{equation}
+où $\hat{\vect{y}}_i = \softmax(\vect{z}_i^{[L]})$.
+\end{definition}
+
+En pratique, on utilise souvent la formulation :
+\begin{equation}
+    L = -\frac{1}{m} \sum_{i=1}^m \log(\hat{y}_{i, c_i})
+\end{equation}
+où $c_i$ est la classe correcte pour l'exemple $i$.
+
+% ===== SECTION 7: BACKPROPAGATION =====
+\section{Backpropagation}
+
+\subsection{Principe}
+
+La \textbf{backpropagation} (rétropropagation) est l'algorithme qui permet de calculer efficacement les gradients de la fonction de coût par rapport à tous les paramètres du réseau.
+
+\textbf{Idée clé :} Utiliser la \textbf{règle de la chaîne (chain rule)} pour propager les gradients de la sortie vers l'entrée.
+
+\subsection{Notations}
+
+Définissons :
+\begin{align}
+    \delta^{[l]} &= \frac{\partial L}{\partial \vect{z}^{[l]}} \quad \text{(gradient par rapport aux pré-activations)} \\
+    \frac{\partial L}{\partial \mat{W}^{[l]}} &\quad \text{(gradient par rapport aux poids)} \\
+    \frac{\partial L}{\partial \vect{b}^{[l]}} &\quad \text{(gradient par rapport aux biais)}
+\end{align}
+
+\subsection{Dérivation des équations}
+
+\textbf{Couche de sortie ($l = L$) :}
+
+Pour cross-entropy avec softmax :
+\begin{equation}
+    \delta^{[L]} = \hat{\vect{y}} - \vect{y} \quad \text{(formule simplifiée !)}
+\end{equation}
+
+\textbf{Couches cachées ($l < L$) :}
+
+Par la règle de la chaîne :
+\begin{align}
+    \delta^{[l]} &= \frac{\partial L}{\partial \vect{z}^{[l]}} \\
+    &= \frac{\partial L}{\partial \vect{a}^{[l]}} \odot \frac{\partial \vect{a}^{[l]}}{\partial \vect{z}^{[l]}} \\
+    &= \left[ (\mat{W}^{[l+1]})^T \delta^{[l+1]} \right] \odot \sigma'^{[l]}(\vect{z}^{[l]})
+\end{align}
+
+où $\odot$ est le produit élément par élément (Hadamard).
+
+\textbf{Gradients des paramètres :}
+\begin{align}
+    \frac{\partial L}{\partial \mat{W}^{[l]}} &= \delta^{[l]} (\vect{a}^{[l-1]})^T \\
+    \frac{\partial L}{\partial \vect{b}^{[l]}} &= \delta^{[l]}
+\end{align}
+
+Pour un batch de $m$ exemples :
+\begin{align}
+    \frac{\partial L}{\partial \mat{W}^{[l]}} &= \frac{1}{m} \mat{\Delta}^{[l]} (\mat{A}^{[l-1]})^T \\
+    \frac{\partial L}{\partial \vect{b}^{[l]}} &= \frac{1}{m} \sum_{i=1}^m \delta_i^{[l]}
+\end{align}
+
+\subsection{Algorithme complet}
+
+\begin{algorithm}[H]
+\caption{Backpropagation}
+\label{alg:backprop}
+\begin{algorithmic}[1]
+\REQUIRE Cache du forward pass $\{\vect{a}^{[l]}, \vect{z}^{[l]}\}$
+\REQUIRE Gradient de la loss $\frac{\partial L}{\partial \vect{a}^{[L]}}$
+\ENSURE Gradients $\{\frac{\partial L}{\partial \mat{W}^{[l]}}, \frac{\partial L}{\partial \vect{b}^{[l]}}\}$
+\STATE Calculer $\delta^{[L]} = \hat{\vect{y}} - \vect{y}$ \quad \COMMENT{Output layer}
+\FOR{$l = L$ \TO $1$} \COMMENT{Parcourir en sens inverse}
+    \STATE $\frac{\partial L}{\partial \mat{W}^{[l]}} = \frac{1}{m} \delta^{[l]} (\vect{a}^{[l-1]})^T$
+    \STATE $\frac{\partial L}{\partial \vect{b}^{[l]}} = \frac{1}{m} \sum_i \delta_i^{[l]}$
+    \IF{$l > 1$}
+        \STATE $\delta^{[l-1]} = [(\mat{W}^{[l]})^T \delta^{[l]}] \odot \sigma'^{[l-1]}(\vect{z}^{[l-1]})$
+    \ENDIF
+\ENDFOR
+\RETURN Gradients
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Dérivées des fonctions d'activation}
+
+\begin{itemize}
+    \item \textbf{Sigmoid :} $\sigma'(z) = \sigma(z)(1 - \sigma(z))$
+    \item \textbf{Tanh :} $\tanh'(z) = 1 - \tanh^2(z)$
+    \item \textbf{ReLU :} $\relu'(z) = \mathbb{1}[z > 0]$
+    \item \textbf{Leaky ReLU :} $\text{LReLU}'(z) = \begin{cases} 1 & z > 0 \\ \alpha & z \leq 0 \end{cases}$
+\end{itemize}
+
+\subsection{Implémentation}
+
+\begin{lstlisting}[language=Python, caption=Backpropagation]
+def backward_pass(y_true, cache, parameters):
+    """
+    y_true : (m, K) - labels one-hot
+    cache : dict des activations du forward pass
+    parameters : dict des poids W[l], b[l]
+    """
+    m = y_true.shape[0]
+    grads = {}
+    L = len(parameters) // 2
+
+    # Output layer gradient (cross-entropy + softmax)
+    y_pred = cache[f'A{L}']
+    dZ = y_pred - y_true  # Shape: (m, K)
+
+    # Backprop à travers les couches
+    for l in reversed(range(1, L + 1)):
+        A_prev = cache[f'A{l-1}']
+
+        # Gradients des paramètres
+        grads[f'dW{l}'] = (1/m) * np.dot(dZ.T, A_prev)
+        grads[f'db{l}'] = (1/m) * np.sum(dZ, axis=0, keepdims=True)
+
+        if l > 1:
+            # Gradient pour la couche précédente
+            W = parameters[f'W{l}']
+            dA_prev = np.dot(dZ, W)
+
+            # Gradient à travers l'activation (ReLU)
+            Z_prev = cache[f'Z{l-1}']
+            dZ = dA_prev * (Z_prev > 0)  # ReLU derivative
+
+    return grads
+\end{lstlisting}
+
+% ===== SECTION 8: ENTRAÎNEMENT =====
+\section{Entraînement d'un MLP}
+
+\subsection{Optimiseurs}
+
+\subsubsection{Gradient Descent}
+
+\begin{equation}
+    \vect{\theta}_{t+1} = \vect{\theta}_t - \alpha \nabla L(\vect{\theta}_t)
+\end{equation}
+
+\subsubsection{Stochastic Gradient Descent (SGD)}
+
+Mise à jour sur un seul exemple (ou un mini-batch) :
+\begin{equation}
+    \vect{\theta}_{t+1} = \vect{\theta}_t - \alpha \nabla L_i(\vect{\theta}_t)
+\end{equation}
+
+\textbf{Avec momentum :}
+\begin{align}
+    \vect{v}_t &= \beta \vect{v}_{t-1} + (1 - \beta) \nabla L(\vect{\theta}_t) \\
+    \vect{\theta}_{t+1} &= \vect{\theta}_t - \alpha \vect{v}_t
+\end{align}
+
+Typiquement $\beta = 0.9$.
+
+\subsubsection{Adam (Adaptive Moment Estimation)}
+
+Combine momentum et RMSprop :
+\begin{align}
+    \vect{m}_t &= \beta_1 \vect{m}_{t-1} + (1 - \beta_1) \nabla L(\vect{\theta}_t) \quad \text{(1st moment)} \\
+    \vect{v}_t &= \beta_2 \vect{v}_{t-1} + (1 - \beta_2) (\nabla L(\vect{\theta}_t))^2 \quad \text{(2nd moment)} \\
+    \hat{\vect{m}}_t &= \frac{\vect{m}_t}{1 - \beta_1^t} \quad \text{(bias correction)} \\
+    \hat{\vect{v}}_t &= \frac{\vect{v}_t}{1 - \beta_2^t} \\
+    \vect{\theta}_{t+1} &= \vect{\theta}_t - \alpha \frac{\hat{\vect{m}}_t}{\sqrt{\hat{\vect{v}}_t} + \epsilon}
+\end{align}
+
+Hyperparamètres par défaut : $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\epsilon = 10^{-8}$.
+
+\begin{astuce}
+\textbf{Adam est l'optimiseur par défaut} pour la plupart des problèmes deep learning. Il est robuste et nécessite peu de tuning.
+\end{astuce}
+
+\subsection{Algorithme d'entraînement complet}
+
+\begin{algorithm}[H]
+\caption{Entraînement MLP}
+\label{alg:mlp_training}
+\begin{algorithmic}[1]
+\REQUIRE Dataset $(X, y)$, architecture $\{d_0, d_1, \ldots, d_L\}$
+\REQUIRE Learning rate $\alpha$, batch size $B$, nombre d'epochs $T$
+\ENSURE Paramètres entraînés $\vect{\theta}^*$
+\STATE Initialiser aléatoirement $\mat{W}^{[l]}, \vect{b}^{[l]}$ pour $l = 1, \ldots, L$
+\FOR{$epoch = 1$ \TO $T$}
+    \STATE Mélanger les données
+    \FOR{chaque mini-batch $(X_{batch}, y_{batch})$}
+        \STATE \COMMENT{Forward pass}
+        \STATE $\hat{y}_{batch}, cache = \text{forward\_pass}(X_{batch}, \vect{\theta})$
+        \STATE $L_{batch} = \text{compute\_loss}(\hat{y}_{batch}, y_{batch})$
+        \STATE \COMMENT{Backward pass}
+        \STATE $grads = \text{backward\_pass}(y_{batch}, cache, \vect{\theta})$
+        \STATE \COMMENT{Update parameters}
+        \FOR{chaque paramètre $\theta$}
+            \STATE $\theta \leftarrow \theta - \alpha \cdot \frac{\partial L}{\partial \theta}$
+        \ENDFOR
+    \ENDFOR
+    \STATE Évaluer sur validation set
+\ENDFOR
+\RETURN $\vect{\theta}^*$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Initialisation des poids}
+
+\begin{attention}
+Ne JAMAIS initialiser tous les poids à 0 ! Les neurones seraient tous identiques (symétrie).
+\end{attention}
+
+\textbf{Xavier/Glorot initialization (pour Sigmoid/Tanh) :}
+\begin{equation}
+    W^{[l]}_{ij} \sim \mathcal{N}\left(0, \frac{2}{d_{l-1} + d_l}\right)
+\end{equation}
+
+\textbf{He initialization (pour ReLU) :}
+\begin{equation}
+    W^{[l]}_{ij} \sim \mathcal{N}\left(0, \frac{2}{d_{l-1}}\right)
+\end{equation}
+
+\begin{lstlisting}[language=Python, caption=Initialisation He]
+def initialize_parameters(layer_dims):
+    """
+    layer_dims : [d0, d1, d2, ..., dL]
+    """
+    parameters = {}
+    L = len(layer_dims) - 1
+
+    for l in range(1, L + 1):
+        # He initialization
+        parameters[f'W{l}'] = np.random.randn(
+            layer_dims[l], layer_dims[l-1]
+        ) * np.sqrt(2 / layer_dims[l-1])
+
+        parameters[f'b{l}'] = np.zeros((1, layer_dims[l]))
+
+    return parameters
+\end{lstlisting}
+
+% ===== SECTION 9: RÉGULARISATION =====
+\section{Régularisation}
+
+\subsection{L2 Regularization (Weight Decay)}
+
+Ajouter un terme de pénalité sur les poids :
+\begin{equation}
+    L_{reg}(\vect{\theta}) = L(\vect{\theta}) + \frac{\lambda}{2m} \sum_{l=1}^L \|\mat{W}^{[l]}\|_F^2
+\end{equation}
+
+où $\|\mat{W}\|_F^2 = \sum_{i,j} W_{ij}^2$ est la norme de Frobenius.
+
+Le gradient devient :
+\begin{equation}
+    \frac{\partial L_{reg}}{\partial \mat{W}^{[l]}} = \frac{\partial L}{\partial \mat{W}^{[l]}} + \frac{\lambda}{m} \mat{W}^{[l]}
+\end{equation}
+
+\subsection{Dropout}
+
+\begin{definition}{Dropout}
+Pendant l'entraînement, chaque neurone est désactivé avec probabilité $p$ (typiquement $p = 0.5$). Au test, on utilise tous les neurones mais on multiplie les sorties par $(1-p)$.
+\end{definition}
+
+\textbf{Implémentation (inverted dropout) :}
+\begin{lstlisting}[language=Python]
+def dropout_forward(A, keep_prob=0.5, training=True):
+    if training:
+        mask = np.random.rand(*A.shape) < keep_prob
+        A = A * mask / keep_prob  # Inverted dropout
+        return A, mask
+    else:
+        return A, None
+\end{lstlisting}
+
+\begin{astuce}
+Le dropout agit comme un \textbf{ensemble de réseaux} : à chaque itération, on entraîne un sous-réseau différent.
+\end{astuce}
+
+\subsection{Batch Normalization}
+
+Normaliser les activations à chaque couche :
+\begin{align}
+    \mu_B &= \frac{1}{m} \sum_{i=1}^m z_i^{[l]} \\
+    \sigma_B^2 &= \frac{1}{m} \sum_{i=1}^m (z_i^{[l]} - \mu_B)^2 \\
+    \hat{z}_i^{[l]} &= \frac{z_i^{[l]} - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}} \\
+    \tilde{z}_i^{[l]} &= \gamma \hat{z}_i^{[l]} + \beta
+\end{align}
+
+où $\gamma, \beta$ sont des paramètres apprenables.
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Accélère l'entraînement (learning rates plus élevés)
+    \item Réduit la sensibilité à l'initialisation
+    \item Effet régularisant (similaire au dropout)
+\end{itemize}
+
+\subsection{Early Stopping}
+
+Surveiller la loss sur le validation set et arrêter l'entraînement quand elle commence à augmenter.
+
+\begin{lstlisting}[language=Python]
+best_val_loss = float('inf')
+patience = 10
+counter = 0
+
+for epoch in range(n_epochs):
+    train_model()
+    val_loss = evaluate_validation()
+
+    if val_loss < best_val_loss:
+        best_val_loss = val_loss
+        save_checkpoint()
+        counter = 0
+    else:
+        counter += 1
+        if counter >= patience:
+            print("Early stopping")
+            break
+\end{lstlisting}
+
+% ===== SECTION 10: IMPLÉMENTATION COMPLÈTE =====
+\section{Implémentation Complète avec NumPy}
+
+\begin{lstlisting}[language=Python, caption=MLP complet from scratch]
+import numpy as np
+
+class MLP:
+    def __init__(self, layer_dims, learning_rate=0.01):
+        self.layer_dims = layer_dims
+        self.lr = learning_rate
+        self.parameters = self._initialize_parameters()
+        self.L = len(layer_dims) - 1
+
+    def _initialize_parameters(self):
+        """He initialization"""
+        params = {}
+        for l in range(1, len(self.layer_dims)):
+            params[f'W{l}'] = np.random.randn(
+                self.layer_dims[l], self.layer_dims[l-1]
+            ) * np.sqrt(2 / self.layer_dims[l-1])
+            params[f'b{l}'] = np.zeros((1, self.layer_dims[l]))
+        return params
+
+    def _relu(self, Z):
+        return np.maximum(0, Z)
+
+    def _softmax(self, Z):
+        expZ = np.exp(Z - np.max(Z, axis=1, keepdims=True))
+        return expZ / np.sum(expZ, axis=1, keepdims=True)
+
+    def forward(self, X):
+        """Forward pass"""
+        cache = {'A0': X}
+        A = X
+
+        for l in range(1, self.L + 1):
+            Z = np.dot(A, self.parameters[f'W{l}'].T) + \
+                self.parameters[f'b{l}']
+
+            if l < self.L:
+                A = self._relu(Z)
+            else:
+                A = self._softmax(Z)
+
+            cache[f'Z{l}'] = Z
+            cache[f'A{l}'] = A
+
+        return A, cache
+
+    def backward(self, y_true, cache):
+        """Backpropagation"""
+        m = y_true.shape[0]
+        grads = {}
+
+        # Output layer
+        dZ = cache[f'A{self.L}'] - y_true
+
+        for l in reversed(range(1, self.L + 1)):
+            A_prev = cache[f'A{l-1}']
+            grads[f'dW{l}'] = (1/m) * np.dot(dZ.T, A_prev)
+            grads[f'db{l}'] = (1/m) * np.sum(dZ, axis=0, keepdims=True)
+
+            if l > 1:
+                W = self.parameters[f'W{l}']
+                dA_prev = np.dot(dZ, W)
+                dZ = dA_prev * (cache[f'Z{l-1}'] > 0)
+
+        return grads
+
+    def update_parameters(self, grads):
+        """Gradient descent update"""
+        for l in range(1, self.L + 1):
+            self.parameters[f'W{l}'] -= self.lr * grads[f'dW{l}']
+            self.parameters[f'b{l}'] -= self.lr * grads[f'db{l}']
+
+    def compute_loss(self, y_pred, y_true):
+        """Cross-entropy loss"""
+        m = y_true.shape[0]
+        loss = -np.sum(y_true * np.log(y_pred + 1e-8)) / m
+        return loss
+
+    def fit(self, X, y, epochs=100, batch_size=32, verbose=True):
+        """Training loop"""
+        m = X.shape[0]
+        history = {'loss': []}
+
+        for epoch in range(epochs):
+            # Shuffle
+            indices = np.random.permutation(m)
+            X_shuffled = X[indices]
+            y_shuffled = y[indices]
+
+            epoch_loss = 0
+            n_batches = m // batch_size
+
+            for i in range(n_batches):
+                start = i * batch_size
+                end = start + batch_size
+                X_batch = X_shuffled[start:end]
+                y_batch = y_shuffled[start:end]
+
+                # Forward
+                y_pred, cache = self.forward(X_batch)
+                loss = self.compute_loss(y_pred, y_batch)
+                epoch_loss += loss
+
+                # Backward
+                grads = self.backward(y_batch, cache)
+
+                # Update
+                self.update_parameters(grads)
+
+            avg_loss = epoch_loss / n_batches
+            history['loss'].append(avg_loss)
+
+            if verbose and (epoch + 1) % 10 == 0:
+                print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
+
+        return history
+
+    def predict(self, X):
+        """Predictions"""
+        y_pred, _ = self.forward(X)
+        return np.argmax(y_pred, axis=1)
+
+# Exemple d'utilisation
+if __name__ == "__main__":
+    from sklearn.datasets import load_digits
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import OneHotEncoder
+
+    # Charger données
+    digits = load_digits()
+    X, y = digits.data, digits.target
+
+    # Normaliser
+    X = X / 16.0
+
+    # One-hot encoding
+    y_onehot = np.zeros((len(y), 10))
+    y_onehot[np.arange(len(y)), y] = 1
+
+    # Split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y_onehot, test_size=0.2, random_state=42
+    )
+
+    # Entraîner
+    mlp = MLP(layer_dims=[64, 128, 64, 10], learning_rate=0.1)
+    history = mlp.fit(X_train, y_train, epochs=100, batch_size=32)
+
+    # Évaluer
+    y_pred = mlp.predict(X_test)
+    y_test_labels = np.argmax(y_test, axis=1)
+    accuracy = np.mean(y_pred == y_test_labels)
+    print(f"\nTest Accuracy: {accuracy:.4f}")
+\end{lstlisting}
+
+% ===== SECTION 11: AVEC PYTORCH =====
+\section{Implémentation avec PyTorch}
+
+\begin{lstlisting}[language=Python, caption=MLP avec PyTorch]
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+
+class MLP_PyTorch(nn.Module):
+    def __init__(self, input_dim, hidden_dims, output_dim):
+        super(MLP_PyTorch, self).__init__()
+
+        layers = []
+        prev_dim = input_dim
+
+        # Hidden layers
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(prev_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(0.2))
+            prev_dim = hidden_dim
+
+        # Output layer
+        layers.append(nn.Linear(prev_dim, output_dim))
+
+        self.network = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.network(x)
+
+# Exemple d'utilisation
+model = MLP_PyTorch(input_dim=64, hidden_dims=[128, 64], output_dim=10)
+
+# Loss et optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# Training loop
+def train_pytorch(model, train_loader, epochs=50):
+    model.train()
+    for epoch in range(epochs):
+        total_loss = 0
+        for X_batch, y_batch in train_loader:
+            # Forward
+            outputs = model(X_batch)
+            loss = criterion(outputs, y_batch)
+
+            # Backward
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+
+        if (epoch + 1) % 10 == 0:
+            print(f"Epoch {epoch+1}, Loss: {total_loss/len(train_loader):.4f}")
+
+# Utilisation
+X_train_tensor = torch.FloatTensor(X_train)
+y_train_tensor = torch.LongTensor(np.argmax(y_train, axis=1))
+
+train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+
+train_pytorch(model, train_loader, epochs=50)
+\end{lstlisting}
+
+% ===== SECTION 12: DIAGNOSTIC =====
+\section{Diagnostic et Debugging}
+
+\subsection{Problèmes courants}
+
+\begin{table}[h]
+\centering
+\caption{Diagnostic des problèmes d'entraînement}
+\label{tab:debugging}
+\begin{tabular}{lll}
+\toprule
+\textbf{Symptôme} & \textbf{Cause probable} & \textbf{Solution} \\
+\midrule
+Loss = NaN & Explosion gradients & Réduire learning rate \\
+ & & Gradient clipping \\
+ & & Vérifier normalisation \\
+\midrule
+Loss ne diminue pas & Learning rate trop faible & Augmenter LR \\
+ & Mauvaise init & He/Xavier init \\
+ & Architecture inadaptée & Changer nb couches \\
+\midrule
+Overfitting & Trop de paramètres & Dropout, L2 reg \\
+ & Pas assez de données & Data augmentation \\
+ & & Early stopping \\
+\midrule
+Underfitting & Modèle trop simple & Ajouter couches/neurones \\
+ & Régularisation trop forte & Réduire $\lambda$, dropout \\
+\midrule
+Vanishing gradients & Sigmoid/Tanh profond & Utiliser ReLU \\
+ & & Batch normalization \\
+ & & Residual connections \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Gradient checking}
+
+Vérifier l'implémentation de backprop en comparant avec gradient numérique :
+\begin{equation}
+    \frac{\partial L}{\partial \theta} \approx \frac{L(\theta + \epsilon) - L(\theta - \epsilon)}{2\epsilon}
+\end{equation}
+
+\begin{lstlisting}[language=Python, caption=Gradient checking]
+def gradient_check(model, X, y, epsilon=1e-7):
+    """Vérifie backprop avec gradients numériques"""
+    # Calculer gradients analytiques (backprop)
+    y_pred, cache = model.forward(X)
+    grads_analytic = model.backward(y, cache)
+
+    # Calculer gradients numériques
+    for param_name in model.parameters:
+        param = model.parameters[param_name]
+        grad_numeric = np.zeros_like(param)
+
+        it = np.nditer(param, flags=['multi_index'])
+        while not it.finished:
+            idx = it.multi_index
+            old_value = param[idx]
+
+            # f(theta + epsilon)
+            param[idx] = old_value + epsilon
+            y_pred_plus, _ = model.forward(X)
+            loss_plus = model.compute_loss(y_pred_plus, y)
+
+            # f(theta - epsilon)
+            param[idx] = old_value - epsilon
+            y_pred_minus, _ = model.forward(X)
+            loss_minus = model.compute_loss(y_pred_minus, y)
+
+            # Gradient numérique
+            grad_numeric[idx] = (loss_plus - loss_minus) / (2 * epsilon)
+
+            param[idx] = old_value
+            it.iternext()
+
+        # Comparer
+        grad_analytic = grads_analytic[f'd{param_name}']
+        diff = np.linalg.norm(grad_numeric - grad_analytic) / \
+               (np.linalg.norm(grad_numeric) + np.linalg.norm(grad_analytic))
+
+        print(f"{param_name}: diff = {diff:.2e}")
+        if diff < 1e-7:
+            print("  ✓ Gradient correct")
+        else:
+            print("  ✗ Erreur dans backprop!")
+\end{lstlisting}
+
+% ===== SECTION 13: AVANTAGES ET LIMITES =====
+\section{Avantages et Limites}
+
+\subsection{Avantages}
+\begin{itemize}
+    \item ✅ Modèle les relations non-linéaires complexes
+    \item ✅ Approximation universelle (théoriquement)
+    \item ✅ Flexible : régression, classification, séries temporelles
+    \item ✅ Apprentissage de représentations (features automatiques)
+    \item ✅ Parallélisation sur GPU
+\end{itemize}
+
+\subsection{Limites}
+\begin{itemize}
+    \item ❌ Boîte noire (difficile à interpréter)
+    \item ❌ Nécessite beaucoup de données
+    \item ❌ Sensible aux hyperparamètres
+    \item ❌ Risque d'overfitting
+    \item ❌ Temps d'entraînement long
+    \item ❌ Optima locaux (pas de garantie de convergence globale)
+\end{itemize}
+
+\subsection{Quand utiliser un MLP ?}
+
+\begin{astuce}
+Un MLP est particulièrement adapté quand :
+\begin{itemize}
+    \item Les données sont tabulaires (non structurées spatialement)
+    \item Relations non-linéaires complexes
+    \item Beaucoup de données disponibles
+    \item Performance > interprétabilité
+\end{itemize}
+\end{astuce}
+
+\begin{attention}
+Préférer d'autres modèles dans les cas suivants :
+\begin{itemize}
+    \item Petites données ($< 1000$ exemples) → Random Forest, SVM
+    \item Images → CNN (Chapitre 07)
+    \item Séquences/texte → RNN, Transformers (Chapitre 08)
+    \item Besoin d'interprétabilité → Arbres de décision, régression linéaire
+\end{itemize}
+\end{attention}
+
+% ===== SECTION 14: HYPERPARAMÈTRES =====
+\section{Hyperparamètres et Tuning}
+
+\begin{table}[h]
+\centering
+\caption{Hyperparamètres principaux d'un MLP}
+\label{tab:hyperparams_mlp}
+\begin{tabular}{lll}
+\toprule
+\textbf{Paramètre} & \textbf{Valeurs typiques} & \textbf{Impact} \\
+\midrule
+\textbf{Architecture} & & \\
+Nombre de couches & 2-5 & Capacité du modèle \\
+Neurones par couche & 64, 128, 256, 512 & Capacité, overfitting \\
+\midrule
+\textbf{Optimisation} & & \\
+Learning rate & $10^{-4}$ à $10^{-1}$ & Vitesse/stabilité \\
+Batch size & 32, 64, 128, 256 & Vitesse, généralisation \\
+Optimizer & SGD, Adam & Convergence \\
+\midrule
+\textbf{Régularisation} & & \\
+Dropout & 0.2, 0.5 & Overfitting \\
+L2 weight decay & $10^{-5}$ à $10^{-3}$ & Overfitting \\
+\midrule
+\textbf{Autres} & & \\
+Activation & ReLU, Leaky ReLU & Gradient flow \\
+Initialisation & He, Xavier & Convergence initiale \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Stratégies de tuning}
+
+\begin{enumerate}
+    \item \textbf{Grid Search} : Tester toutes les combinaisons (coûteux)
+    \item \textbf{Random Search} : Échantillonner aléatoirement (souvent meilleur)
+    \item \textbf{Bayesian Optimization} : Optimisation intelligente (Optuna, Hyperopt)
+\end{enumerate}
+
+\begin{lstlisting}[language=Python, caption=Random search avec scikit-learn]
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.neural_network import MLPClassifier
+
+param_distributions = {
+    'hidden_layer_sizes': [(64,), (128,), (64, 32), (128, 64)],
+    'activation': ['relu', 'tanh'],
+    'alpha': [0.0001, 0.001, 0.01],  # L2 regularization
+    'learning_rate_init': [0.001, 0.01, 0.1],
+    'batch_size': [32, 64, 128]
+}
+
+mlp = MLPClassifier(max_iter=100)
+random_search = RandomizedSearchCV(
+    mlp, param_distributions, n_iter=20, cv=3, n_jobs=-1
+)
+
+random_search.fit(X_train, y_train)
+print("Best params:", random_search.best_params_)
+\end{lstlisting}
+
+% ===== SECTION 15: APPLICATIONS =====
+\section{Applications Pratiques}
+
+\begin{enumerate}
+    \item \textbf{Classification d'images} : MNIST, CIFAR-10 (avant CNN)
+    \item \textbf{Reconnaissance vocale} : Phonèmes, commandes vocales
+    \item \textbf{Prédiction de séries temporelles} : Finance, météo
+    \item \textbf{Systèmes de recommandation} : Collaborative filtering
+    \item \textbf{Détection de fraude} : Transactions bancaires
+    \item \textbf{Diagnostic médical} : Prédiction de maladies à partir de biomarqueurs
+    \item \textbf{NLP} : Sentiment analysis, classification de textes
+\end{enumerate}
+
+% ===== SECTION 16: RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+\begin{itemize}
+    \item \textbf{Perceptron} : Classification binaire linéaire (limité au linéairement séparable)
+    \item \textbf{MLP} : Empilage de couches avec activations non-linéaires (approximation universelle)
+    \item \textbf{Forward pass} : Propagation des activations de l'entrée à la sortie
+    \item \textbf{Backpropagation} : Calcul efficace des gradients via la chaîne rule
+    \item \textbf{Fonctions d'activation} : ReLU (défaut), sigmoid (output binaire), softmax (multi-classe)
+    \item \textbf{Optimiseurs} : SGD, Adam (défaut), momentum
+    \item \textbf{Régularisation} : Dropout, L2, batch norm, early stopping
+    \item \textbf{Initialisation} : He (ReLU), Xavier (sigmoid/tanh)
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\textbf{Forward pass (couche $l$) :}
+\begin{align*}
+    \vect{z}^{[l]} &= \mat{W}^{[l]} \vect{a}^{[l-1]} + \vect{b}^{[l]} \\
+    \vect{a}^{[l]} &= \sigma^{[l]}(\vect{z}^{[l]})
+\end{align*}
+
+\textbf{Backpropagation :}
+\begin{align*}
+    \delta^{[l]} &= [(\mat{W}^{[l+1]})^T \delta^{[l+1]}] \odot \sigma'^{[l]}(\vect{z}^{[l]}) \\
+    \frac{\partial L}{\partial \mat{W}^{[l]}} &= \delta^{[l]} (\vect{a}^{[l-1]})^T \\
+    \frac{\partial L}{\partial \vect{b}^{[l]}} &= \delta^{[l]}
+\end{align*}
+
+\textbf{Cross-Entropy + Softmax :}
+\begin{align*}
+    L &= -\frac{1}{m} \sum_{i=1}^m \sum_{k=1}^K y_{i,k} \log(\hat{y}_{i,k}) \\
+    \delta^{[L]} &= \hat{\vect{y}} - \vect{y}
+\end{align*}
+
+\textbf{Gradient Descent :}
+\begin{equation*}
+    \vect{\theta} \leftarrow \vect{\theta} - \alpha \nabla L(\vect{\theta})
+\end{equation*}
+\end{tcolorbox}
+
+% ===== SECTION 17: EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de compréhension}
+\begin{enumerate}
+    \item Pourquoi le perceptron ne peut-il pas résoudre le problème XOR ?
+    \item Que se passe-t-il si on initialise tous les poids à 0 ?
+    \item Expliquer le problème du vanishing gradient avec la fonction sigmoid.
+    \item Pourquoi ReLU est-il préféré à sigmoid dans les couches cachées ?
+    \item Quelle est la différence entre batch, epoch et iteration ?
+    \item Pourquoi utilise-t-on softmax + cross-entropy pour la classification multi-classe ?
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+
+\begin{enumerate}
+    \item \textbf{Perceptron from scratch}
+    \begin{itemize}
+        \item Implémenter le perceptron en NumPy
+        \item Tester sur un dataset linéairement séparable (make\_classification)
+        \item Visualiser la frontière de décision
+    \end{itemize}
+
+    \item \textbf{MLP pour MNIST}
+    \begin{itemize}
+        \item Charger le dataset MNIST (sklearn.datasets.load\_digits)
+        \item Entraîner un MLP from scratch (architecture libre)
+        \item Comparer avec MLPClassifier de scikit-learn
+        \item Objectif : > 95\% accuracy
+    \end{itemize}
+
+    \item \textbf{Gradient checking}
+    \begin{itemize}
+        \item Implémenter le gradient checking
+        \item Vérifier votre implémentation de backprop
+    \end{itemize}
+
+    \item \textbf{Régularisation}
+    \begin{itemize}
+        \item Comparer MLP avec/sans dropout
+        \item Tester différentes valeurs de L2 regularization
+        \item Tracer les courbes d'apprentissage
+    \end{itemize}
+
+    \item \textbf{Hyperparameter tuning}
+    \begin{itemize}
+        \item Utiliser RandomizedSearchCV pour trouver les meilleurs hyperparamètres
+        \item Comparer GridSearch vs RandomSearch
+    \end{itemize}
+\end{enumerate}
+
+\textit{Solutions disponibles dans} \texttt{06_exercices.ipynb} \textit{(solutions intégrées dans le notebook)}
+
+% ===== SECTION 18: POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+\begin{itemize}
+    \item \textbf{Deep Learning Book} (Goodfellow et al., 2016) - Chapitres 6-8
+    \item \textbf{Neural Networks and Deep Learning} (Michael Nielsen) - En ligne gratuit
+    \item Rumelhart et al. (1986) - "Learning representations by back-propagating errors"
+    \item Glorot \& Bengio (2010) - "Understanding the difficulty of training deep feedforward neural networks"
+\end{itemize}
+
+\subsection{Ressources en Ligne}
+\begin{itemize}
+    \item Playground TensorFlow : \url{https://playground.tensorflow.org/}
+    \item 3Blue1Brown - Neural Networks : \url{https://www.youtube.com/watch?v=aircAruvnKk}
+    \item Documentation scikit-learn MLP : \url{https://scikit-learn.org/stable/modules/neural_networks_supervised.html}
+    \item PyTorch Tutorials : \url{https://pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html}
+\end{itemize}
+
+\subsection{Extensions}
+\begin{itemize}
+    \item \textbf{Residual Networks (ResNet)} : Connexions résiduelles pour réseaux très profonds
+    \item \textbf{Batch Normalization} : Normalisation des activations
+    \item \textbf{Autoencoders} : Apprentissage de représentations non supervisé
+    \item \textbf{Transfer Learning} : Réutilisation de réseaux pré-entraînés
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+Chapitre suivant recommandé : \textbf{Chapitre 07 - Deep Learning : Réseaux de Neurones Convolutifs (CNN)}
+
+Les CNN sont une architecture spécialisée pour les données spatiales (images) qui exploite la localité et l'invariance par translation.
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+\begin{enumerate}
+    \item Goodfellow, I., Bengio, Y., \& Courville, A. (2016). \textit{Deep Learning}. MIT Press.
+    \item Rumelhart, D. E., Hinton, G. E., \& Williams, R. J. (1986). "Learning representations by back-propagating errors". \textit{Nature}, 323(6088), 533-536.
+    \item LeCun, Y., Bengio, Y., \& Hinton, G. (2015). "Deep learning". \textit{Nature}, 521(7553), 436-444.
+    \item Kingma, D. P., \& Ba, J. (2014). "Adam: A method for stochastic optimization". \textit{arXiv preprint arXiv:1412.6980}.
+    \item Srivastava, N., et al. (2014). "Dropout: A simple way to prevent neural networks from overfitting". \textit{JMLR}, 15(1), 1929-1958.
+    \item He, K., et al. (2015). "Delving deep into rectifiers: Surpassing human-level performance on ImageNet classification". \textit{ICCV}.
+\end{enumerate}
+
+\end{document}

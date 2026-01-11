@@ -1,0 +1,1627 @@
+% Chapitre 12 - Vision par Ordinateur Avancée
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 12 - Vision par Ordinateur Avancée},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 13 - Vision par Ordinateur Avancée}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS (code Python) =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=⚠️ Attention,
+    breakable
+}
+
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=💡 Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+% ===== DÉBUT DU DOCUMENT =====
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 13}\\[0.3cm]
+    {\LARGE\bfseries Vision par Ordinateur Avancée}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Maîtriser les architectures de détection d'objets (R-CNN, YOLO, Faster R-CNN)
+        \item Comprendre la segmentation sémantique et d'instances (U-Net, Mask R-CNN)
+        \item Découvrir les Vision Transformers (ViT) et leur application
+        \item Comprendre les modèles vision-langage (CLIP)
+        \item Implémenter des pipelines de détection et segmentation
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitres 06 (MLP), 07 (CNN), 08 (Transformers)\\[0.3cm]
+    \textbf{Durée estimée :} 8-10 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{12_demo_*.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+% ===== TABLE DES MATIÈRES =====
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: MOTIVATION =====
+\section{Motivation}
+
+La vision par ordinateur classique (chapitre 07) nous a permis de classifier des images avec des CNN. Cependant, de nombreuses applications réelles nécessitent bien plus qu'une simple classification :
+
+\begin{exemple}{Applications nécessitant la vision avancée}
+\begin{itemize}
+    \item \textbf{Conduite autonome} : Détecter et localiser les voitures, piétons, panneaux
+    \item \textbf{Imagerie médicale} : Segmenter précisément les tumeurs, organes
+    \item \textbf{Surveillance} : Suivre et identifier les personnes dans une vidéo
+    \item \textbf{Commerce électronique} : Rechercher des produits par image
+    \item \textbf{Robotique} : Manipuler des objets détectés dans une scène
+\end{itemize}
+\end{exemple}
+
+Ces problèmes requièrent trois capacités avancées :
+
+\begin{enumerate}
+    \item \textbf{Object Detection} : Où sont les objets ? (bounding boxes)
+    \item \textbf{Semantic Segmentation} : Quel est le label de chaque pixel ?
+    \item \textbf{Instance Segmentation} : Identifier chaque instance individuelle d'un objet
+\end{enumerate}
+
+Ce chapitre explore les architectures deep learning qui résolvent ces tâches complexes.
+
+% ===== SECTION 2: OBJECT DETECTION =====
+\section{Détection d'Objets (Object Detection)}
+
+\subsection{Définition du Problème}
+
+\begin{definition}{Object Detection}
+La détection d'objets consiste à localiser et classifier simultanément plusieurs objets dans une image. Pour chaque objet, on prédit :
+\begin{itemize}
+    \item Une \textbf{bounding box} : $(x, y, w, h)$ où $(x,y)$ est le coin supérieur gauche, $w$ la largeur, $h$ la hauteur
+    \item Une \textbf{classe} : probabilités $P(c_i | \text{box})$ pour chaque classe $c_i$
+    \item Un \textbf{score de confiance} : probabilité qu'il y ait un objet dans la box
+\end{itemize}
+\end{definition}
+
+\subsection{Métriques d'Évaluation}
+
+\subsubsection{Intersection over Union (IoU)}
+
+L'IoU mesure le chevauchement entre la box prédite et la ground truth :
+
+\begin{equation}
+\text{IoU} = \frac{\text{Aire}(\text{Box}_{\text{pred}} \cap \text{Box}_{\text{gt}})}{\text{Aire}(\text{Box}_{\text{pred}} \cup \text{Box}_{\text{gt}})}
+\end{equation}
+
+\begin{itemize}
+    \item $\text{IoU} = 1.0$ : chevauchement parfait
+    \item $\text{IoU} = 0.0$ : aucun chevauchement
+    \item $\text{IoU} \geq 0.5$ : généralement considéré comme une détection correcte
+\end{itemize}
+
+\subsubsection{Mean Average Precision (mAP)}
+
+La métrique standard pour évaluer les détecteurs :
+
+\begin{enumerate}
+    \item Pour chaque classe $c$, calculer la courbe Precision-Recall
+    \item Calculer l'aire sous la courbe (Average Precision, AP)
+    \item Faire la moyenne sur toutes les classes : $\text{mAP} = \frac{1}{C} \sum_{c=1}^{C} AP_c$
+\end{enumerate}
+
+\begin{itemize}
+    \item \textbf{mAP@0.5} : seuil IoU = 0.5
+    \item \textbf{mAP@0.5:0.95} : moyenne sur seuils IoU de 0.5 à 0.95 (par pas de 0.05)
+\end{itemize}
+
+\subsection{R-CNN (2014) - Région-based CNN}
+
+\begin{definition}{R-CNN}
+R-CNN propose de combiner :
+\begin{enumerate}
+    \item \textbf{Selective Search} : algorithme traditionnel proposant ~2000 régions candidates
+    \item \textbf{CNN} : extraction de features pour chaque région
+    \item \textbf{SVM} : classification de chaque région
+    \item \textbf{Régression} : ajustement des bounding boxes
+\end{enumerate}
+\end{definition}
+
+\subsubsection{Pipeline R-CNN}
+
+\begin{algorithm}[H]
+\caption{R-CNN}
+\label{alg:rcnn}
+\begin{algorithmic}[1]
+\REQUIRE Image $I$
+\ENSURE Liste de détections (boxes, classes, scores)
+\STATE Générer ~2000 région proposals avec Selective Search
+\FOR{chaque région $R$}
+    \STATE Redimensionner $R$ en $227 \times 227$
+    \STATE Extraire features : $f_R = \text{CNN}(R)$
+    \STATE Classifier : $c = \text{SVM}(f_R)$
+    \STATE Ajuster box : $b' = \text{Regressor}(f_R)$
+\ENDFOR
+\STATE Appliquer Non-Maximum Suppression (NMS)
+\RETURN Détections filtrées
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Limites de R-CNN}
+
+\begin{itemize}
+    \item ❌ \textbf{Très lent} : 47 secondes par image (2000 forward passes CNN)
+    \item ❌ \textbf{Entraînement en 3 étapes} : CNN, SVM, régression (séparément)
+    \item ❌ \textbf{Stockage important} : features extraites pour toutes les régions
+\end{itemize}
+
+\subsection{Fast R-CNN (2015)}
+
+\textbf{Idée clé} : Ne calculer les features CNN qu'une seule fois pour toute l'image.
+
+\begin{definition}{RoI Pooling}
+Le \textbf{Region of Interest (RoI) Pooling} permet d'extraire des features de taille fixe depuis n'importe quelle région de la feature map :
+\begin{enumerate}
+    \item Projeter la région proposal sur la feature map
+    \item Diviser la région en $H \times W$ sous-régions
+    \item Appliquer max pooling sur chaque sous-région
+\end{enumerate}
+Résultat : un vecteur de features de taille fixe $H \times W \times C$ pour chaque RoI.
+\end{definition}
+
+\subsubsection{Architecture Fast R-CNN}
+
+\begin{algorithm}[H]
+\caption{Fast R-CNN}
+\label{alg:fast-rcnn}
+\begin{algorithmic}[1]
+\REQUIRE Image $I$, régions proposals $\{R_i\}$
+\ENSURE Détections
+\STATE Calculer feature map : $F = \text{CNN}(I)$ \quad (une seule fois !)
+\FOR{chaque région $R_i$}
+    \STATE Extraire features : $f_i = \text{RoIPool}(F, R_i)$
+    \STATE Prédire classe : $P(c | R_i) = \text{FC}(f_i)$
+    \STATE Ajuster box : $\Delta b_i = \text{FC}(f_i)$
+\ENDFOR
+\STATE Appliquer NMS
+\RETURN Détections
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Améliorations} :
+\begin{itemize}
+    \item ✅ \textbf{25x plus rapide} que R-CNN (0.32s par image)
+    \item ✅ \textbf{Entraînement end-to-end} : une seule loss combinée
+    \item ✅ \textbf{Multi-task loss} : classification + régression de box
+\end{itemize}
+
+\subsection{Faster R-CNN (2015)}
+
+\textbf{Idée clé} : Remplacer Selective Search par un réseau de neurones.
+
+\begin{definition}{Region Proposal Network (RPN)}
+Le RPN est un petit réseau fully convolutional qui prédit des région proposals directement depuis la feature map :
+\begin{enumerate}
+    \item Faire glisser une fenêtre $3 \times 3$ sur la feature map
+    \item Pour chaque position, prédire $k$ anchors boxes (différentes tailles/ratios)
+    \item Pour chaque anchor : prédire score objectness + ajustement de box
+\end{enumerate}
+\end{definition}
+
+\subsubsection{Architecture Faster R-CNN}
+
+\begin{enumerate}
+    \item \textbf{Backbone CNN} : ResNet-50, VGG, etc. $\rightarrow$ feature map
+    \item \textbf{RPN} : propose des régions candidates
+    \item \textbf{RoI Pooling} : extrait features pour chaque proposition
+    \item \textbf{Têtes de classification/régression} : prédictions finales
+\end{enumerate}
+
+\subsubsection{Loss Function}
+
+Loss multi-task combinant RPN et détection :
+
+\begin{equation}
+L = L_{\text{RPN}}(\{p_i\}, \{t_i\}) + L_{\text{det}}(\{p_i'\}, \{t_i'\})
+\end{equation}
+
+où :
+\begin{itemize}
+    \item $L_{\text{RPN}} = L_{\text{cls}}(p_i, p_i^*) + \lambda L_{\text{reg}}(t_i, t_i^*)$ : loss du RPN
+    \item $L_{\text{det}}$ : loss de détection (similaire)
+    \item $p_i$ : probabilité objectness, $t_i$ : coordonnées box
+\end{itemize}
+
+\textbf{Améliorations} :
+\begin{itemize}
+    \item ✅ \textbf{10x plus rapide} que Fast R-CNN (0.2s par image, 5 FPS)
+    \item ✅ \textbf{Entièrement appris} : plus besoin de Selective Search
+    \item ✅ \textbf{État de l'art} en précision (mAP ~70\% sur COCO)
+\end{itemize}
+
+\subsection{YOLO (You Only Look Once)}
+
+\textbf{Philosophie différente} : Faster R-CNN fait deux passes (RPN puis détection). YOLO fait tout en une seule passe forward !
+
+\begin{definition}{YOLO}
+YOLO divise l'image en une grille $S \times S$ et prédit directement, pour chaque cellule :
+\begin{itemize}
+    \item $B$ bounding boxes avec leurs coordonnées $(x, y, w, h)$
+    \item Un score de confiance par box : $P(\text{object}) \times \text{IoU}$
+    \item Des probabilités de classe : $P(c_i | \text{object})$
+\end{itemize}
+Le réseau produit un tenseur de taille $S \times S \times (B \cdot 5 + C)$.
+\end{definition}
+
+\subsubsection{Architecture YOLO (v1, 2016)}
+
+\begin{enumerate}
+    \item 24 couches convolutionnelles (inspirées de GoogLeNet)
+    \item 2 couches fully connected
+    \item Sortie : $7 \times 7 \times 30$ (pour $S=7$, $B=2$, $C=20$)
+\end{enumerate}
+
+\subsubsection{Loss Function YOLO}
+
+Loss complexe combinant 3 termes :
+
+\begin{align}
+L = &\lambda_{\text{coord}} \sum_{i=0}^{S^2} \sum_{j=0}^{B} \mathbb{1}_{ij}^{\text{obj}} [(x_i - \hat{x}_i)^2 + (y_i - \hat{y}_i)^2] \\
+    &+ \lambda_{\text{coord}} \sum_{i=0}^{S^2} \sum_{j=0}^{B} \mathbb{1}_{ij}^{\text{obj}} [(\sqrt{w_i} - \sqrt{\hat{w}_i})^2 + (\sqrt{h_i} - \sqrt{\hat{h}_i})^2] \\
+    &+ \sum_{i=0}^{S^2} \sum_{j=0}^{B} \mathbb{1}_{ij}^{\text{obj}} (C_i - \hat{C}_i)^2 \\
+    &+ \lambda_{\text{noobj}} \sum_{i=0}^{S^2} \sum_{j=0}^{B} \mathbb{1}_{ij}^{\text{noobj}} (C_i - \hat{C}_i)^2 \\
+    &+ \sum_{i=0}^{S^2} \mathbb{1}_{i}^{\text{obj}} \sum_{c \in \text{classes}} (p_i(c) - \hat{p}_i(c))^2
+\end{align}
+
+où $\mathbb{1}_{ij}^{\text{obj}}$ indique si un objet est présent dans la cellule $i$, box $j$.
+
+\subsubsection{YOLOv2 et YOLOv3 (2017-2018)}
+
+\textbf{YOLOv2 (YOLO9000)} :
+\begin{itemize}
+    \item Batch Normalization dans toutes les couches
+    \item Anchor boxes (comme Faster R-CNN)
+    \item Haute résolution : $416 \times 416$ au lieu de $448 \times 448$
+    \item Multi-scale training
+    \item Darknet-19 backbone (19 couches)
+\end{itemize}
+
+\textbf{YOLOv3} :
+\begin{itemize}
+    \item Darknet-53 backbone (53 couches + residual connections)
+    \item Prédictions multi-échelles (3 échelles : $13 \times 13$, $26 \times 26$, $52 \times 52$)
+    \item Meilleure détection des petits objets
+    \item Logistic regression pour objectness
+\end{itemize}
+
+\subsubsection{YOLOv5, YOLOv8 (2020-2023)}
+
+\textbf{YOLOv5} (Ultralytics) :
+\begin{itemize}
+    \item Implémentation PyTorch moderne
+    \item CSPDarknet backbone
+    \item Auto-anchor, auto-learning bounding box anchors
+    \item Mosaic augmentation
+    \item \textbf{Très rapide} : 140 FPS sur GPU
+\end{itemize}
+
+\textbf{YOLOv8} (2023) :
+\begin{itemize}
+    \item Architecture améliorée (anchor-free)
+    \item Meilleure précision (mAP 53\% sur COCO)
+    \item API simplifiée : \texttt{from ultralytics import YOLO}
+    \item Support natif de la segmentation d'instances
+\end{itemize}
+
+\subsection{Comparaison R-CNN vs YOLO}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des architectures de détection}
+\label{tab:detection-comparison}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Modèle} & \textbf{mAP (\%)} & \textbf{FPS} & \textbf{Approche} & \textbf{Temps réel} \\
+\midrule
+R-CNN & 66.0 & 0.02 & Two-stage & ❌ \\
+Fast R-CNN & 70.0 & 3.1 & Two-stage & ❌ \\
+Faster R-CNN & 73.2 & 5 & Two-stage & ❌ \\
+YOLOv1 & 63.4 & 45 & One-stage & ✅ \\
+YOLOv3 & 57.9 & 65 & One-stage & ✅ \\
+YOLOv5 & 50.7 & 140 & One-stage & ✅ \\
+YOLOv8 & 53.9 & 80 & One-stage & ✅ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{astuce}
+\textbf{Quand utiliser quoi ?}
+\begin{itemize}
+    \item \textbf{Faster R-CNN} : Précision maximale, applications non temps réel (imagerie médicale)
+    \item \textbf{YOLO} : Temps réel, vidéo, applications embarquées (conduite autonome, surveillance)
+\end{itemize}
+\end{astuce}
+
+\subsection{Non-Maximum Suppression (NMS)}
+
+Problème : Les détecteurs produisent souvent plusieurs boxes pour le même objet.
+
+\begin{algorithm}[H]
+\caption{Non-Maximum Suppression}
+\label{alg:nms}
+\begin{algorithmic}[1]
+\REQUIRE Boxes $B = \{b_1, \dots, b_n\}$, scores $S = \{s_1, \dots, s_n\}$, seuil IoU $\tau$
+\ENSURE Boxes filtrées $D$
+\STATE $D \leftarrow \emptyset$
+\WHILE{$B \neq \emptyset$}
+    \STATE $b^* \leftarrow \argmax_{b \in B} S(b)$ \quad (box avec le score max)
+    \STATE $D \leftarrow D \cup \{b^*\}$
+    \STATE $B \leftarrow B \setminus \{b^*\}$
+    \FOR{chaque box $b_i \in B$}
+        \IF{$\text{IoU}(b^*, b_i) > \tau$}
+            \STATE $B \leftarrow B \setminus \{b_i\}$ \quad (supprimer box chevauchante)
+        \ENDIF
+    \ENDFOR
+\ENDWHILE
+\RETURN $D$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Variantes} :
+\begin{itemize}
+    \item \textbf{Soft NMS} : Au lieu de supprimer, réduire le score proportionnellement à l'IoU
+    \item \textbf{DIoU-NMS} : Utiliser la Distance-IoU au lieu de l'IoU standard
+\end{itemize}
+
+% ===== SECTION 3: SEGMENTATION SÉMANTIQUE =====
+\section{Segmentation Sémantique}
+
+\subsection{Définition du Problème}
+
+\begin{definition}{Segmentation Sémantique}
+La segmentation sémantique consiste à assigner une étiquette de classe à chaque pixel de l'image. Pour une image $I \in \R^{H \times W \times 3}$, on prédit une carte de segmentation $S \in \{1, \dots, C\}^{H \times W}$ où $S_{ij}$ est la classe du pixel $(i,j)$.
+\end{definition}
+
+\textbf{Différence avec la détection} :
+\begin{itemize}
+    \item Détection : boxes rectangulaires
+    \item Segmentation sémantique : contours précis au pixel près
+    \item Segmentation d'instances : distingue les instances individuelles d'une même classe
+\end{itemize}
+
+\subsection{Métriques d'Évaluation}
+
+\subsubsection{Intersection over Union (IoU) par classe}
+
+\begin{equation}
+\text{IoU}_c = \frac{TP_c}{TP_c + FP_c + FN_c}
+\end{equation}
+
+où $TP_c$ = pixels correctement prédits de classe $c$, $FP_c$ = pixels faussement prédits, $FN_c$ = pixels manqués.
+
+\subsubsection{Mean IoU (mIoU)}
+
+Moyenne de l'IoU sur toutes les classes :
+
+\begin{equation}
+\text{mIoU} = \frac{1}{C} \sum_{c=1}^{C} \text{IoU}_c
+\end{equation}
+
+\subsubsection{Dice Coefficient}
+
+Particulièrement utilisé en imagerie médicale :
+
+\begin{equation}
+\text{Dice} = \frac{2 \cdot |A \cap B|}{|A| + |B|} = \frac{2 \cdot TP}{2 \cdot TP + FP + FN}
+\end{equation}
+
+Le Dice est équivalent à la F1-score pour la segmentation.
+
+\subsection{Fully Convolutional Networks (FCN, 2015)}
+
+\textbf{Idée clé} : Remplacer les couches fully connected par des convolutions pour produire une carte de segmentation.
+
+\begin{definition}{FCN}
+Un FCN transforme un réseau de classification (VGG, ResNet) en réseau de segmentation :
+\begin{enumerate}
+    \item Encoder : extraire features avec convolutions + pooling
+    \item Decoder : upsampling progressif pour retrouver la résolution originale
+    \item Skip connections : combiner features haute et basse résolution
+\end{enumerate}
+\end{definition}
+
+\subsubsection{Architecture FCN}
+
+\begin{enumerate}
+    \item \textbf{Convolutionalization} : Remplacer FC layers par convolutions $1 \times 1$
+    \item \textbf{Upsampling} : Transposed convolutions (deconvolutions) pour augmenter la résolution
+    \item \textbf{Skip connections} : Additionner les features du decoder avec celles de l'encoder
+\end{enumerate}
+
+\textbf{Variantes} :
+\begin{itemize}
+    \item \textbf{FCN-32s} : upsampling x32 en une seule étape
+    \item \textbf{FCN-16s} : skip connection de pool4
+    \item \textbf{FCN-8s} : skip connections de pool3 et pool4 (meilleur)
+\end{itemize}
+
+\subsection{U-Net (2015)}
+
+\textbf{Architecture emblématique} pour la segmentation médicale.
+
+\begin{definition}{U-Net}
+U-Net a une architecture en U symétrique :
+\begin{itemize}
+    \item \textbf{Contracting path} (encoder) : Convolutions + max pooling $\downarrow$
+    \item \textbf{Expansive path} (decoder) : Transposed convolutions $\uparrow$
+    \item \textbf{Skip connections} : Concaténation (pas addition) des features
+\end{itemize}
+\end{definition}
+
+\subsubsection{Architecture Détaillée}
+
+\begin{verbatim}
+Encoder (Contracting Path):
+  Input (572x572x1)
+    → Conv 3x3 ReLU (570x570x64)
+    → Conv 3x3 ReLU (568x568x64)
+    → MaxPool 2x2 (284x284x64)
+    → Conv 3x3 ReLU (282x282x128)
+    → Conv 3x3 ReLU (280x280x128)
+    → MaxPool 2x2 (140x140x128)
+    → ... (4 niveaux au total)
+
+Bottleneck:
+    → Conv 3x3 ReLU (28x28x1024)
+    → Conv 3x3 ReLU (28x28x1024)
+
+Decoder (Expansive Path):
+    → UpConv 2x2 (56x56x512)
+    → Concatenate avec skip connection de l'encoder
+    → Conv 3x3 ReLU
+    → Conv 3x3 ReLU
+    → ... (4 niveaux au total)
+
+Output:
+    → Conv 1x1 (388x388xC) pour C classes
+\end{verbatim}
+
+\textbf{Points clés} :
+\begin{itemize}
+    \item \textbf{Skip connections par concaténation} : préserve mieux les détails que l'addition
+    \item \textbf{Data augmentation intensive} : rotations, déformations élastiques
+    \item \textbf{Weighted loss} : pondérer la loss aux frontières entre cellules
+\end{itemize}
+
+\subsubsection{Loss Function U-Net}
+
+Weighted cross-entropy pour gérer le déséquilibre de classes :
+
+\begin{equation}
+L = \sum_{x \in \Omega} w(x) \log(p_{l(x)}(x))
+\end{equation}
+
+où :
+\begin{itemize}
+    \item $w(x)$ : poids du pixel $x$ (plus élevé aux frontières)
+    \item $p_{l(x)}(x)$ : probabilité softmax de la classe $l(x)$ au pixel $x$
+\end{itemize}
+
+Poids calculé pour séparer les instances proches :
+
+\begin{equation}
+w(x) = w_c(x) + w_0 \cdot \exp\left(-\frac{(d_1(x) + d_2(x))^2}{2\sigma^2}\right)
+\end{equation}
+
+où $d_1(x)$, $d_2(x)$ sont les distances aux deux instances les plus proches.
+
+\subsection{DeepLab (v1-v3, 2015-2018)}
+
+\textbf{Idée clé} : Utiliser des \textbf{atrous convolutions} (dilated convolutions) pour augmenter le champ réceptif sans réduire la résolution.
+
+\begin{definition}{Atrous Convolution}
+Une convolution atrous avec taux de dilatation $r$ insère $r-1$ zéros entre chaque poids du filtre :
+\begin{equation}
+y[i] = \sum_{k} x[i + r \cdot k] \cdot w[k]
+\end{equation}
+Cela permet d'augmenter le champ réceptif de manière exponentielle sans augmenter le nombre de paramètres.
+\end{definition}
+
+\subsubsection{Atrous Spatial Pyramid Pooling (ASPP)}
+
+Module clé de DeepLab v2/v3 :
+
+\begin{enumerate}
+    \item Appliquer des convolutions atrous avec différents taux : $r = \{6, 12, 18, 24\}$
+    \item Appliquer global average pooling
+    \item Concaténer toutes les features
+    \item Convolution $1 \times 1$ pour fusion
+\end{enumerate}
+
+Cela capture le contexte à plusieurs échelles.
+
+\subsubsection{DeepLab v3+}
+
+Amélioration avec un decoder :
+
+\begin{itemize}
+    \item Encoder : ResNet + ASPP
+    \item Decoder : Upsampling progressif avec skip connections
+    \item État de l'art sur PASCAL VOC (mIoU 89\%)
+\end{itemize}
+
+\subsection{Mask R-CNN (2017)}
+
+Extension de Faster R-CNN pour la segmentation d'instances.
+
+\begin{definition}{Mask R-CNN}
+Mask R-CNN ajoute une branche de segmentation parallèle à Faster R-CNN :
+\begin{enumerate}
+    \item Backbone + RPN + RoI Align (amélioration de RoI Pooling)
+    \item Branche de classification + régression de box (comme Faster R-CNN)
+    \item \textbf{Branche de masque} : FCN qui prédit un masque binaire pour chaque RoI
+\end{enumerate}
+\end{definition}
+
+\subsubsection{RoI Align}
+
+\textbf{Problème de RoI Pooling} : quantification qui cause un misalignment pixel-level.
+
+\textbf{Solution RoI Align} :
+\begin{itemize}
+    \item Ne pas quantifier les coordonnées de la RoI
+    \item Utiliser une interpolation bilinéaire pour échantillonner les features
+    \item Précision au sub-pixel level
+\end{itemize}
+
+\subsubsection{Loss Function}
+
+Multi-task loss :
+
+\begin{equation}
+L = L_{\text{cls}} + L_{\text{box}} + L_{\text{mask}}
+\end{equation}
+
+où :
+\begin{itemize}
+    \item $L_{\text{cls}}$ : classification loss
+    \item $L_{\text{box}}$ : bounding box regression loss
+    \item $L_{\text{mask}}$ : binary cross-entropy par pixel pour le masque
+\end{itemize}
+
+\textbf{Astuce} : La loss du masque est calculée uniquement pour la classe prédite, ce qui découple classification et segmentation.
+
+\subsection{Comparaison des Architectures de Segmentation}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des architectures de segmentation}
+\label{tab:segmentation-comparison}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Modèle} & \textbf{Type} & \textbf{mIoU (\%)} & \textbf{Application} \\
+\midrule
+FCN-8s & Sémantique & 62.2 & Scènes générales \\
+U-Net & Sémantique & 92.0 & Imagerie médicale \\
+DeepLab v3+ & Sémantique & 89.0 & Scènes générales \\
+Mask R-CNN & Instance & 37.1 & Détection + seg. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 4: VISION TRANSFORMERS =====
+\section{Vision Transformers (ViT)}
+
+\subsection{Motivation}
+
+Les CNN ont dominé la vision par ordinateur depuis 2012. Cependant, les Transformers (chapitre 08) ont révolutionné le NLP. Peut-on appliquer les Transformers à la vision ?
+
+\textbf{Défis} :
+\begin{itemize}
+    \item Une image $224 \times 224$ a 50,176 pixels (vs ~100 tokens en NLP)
+    \item Attention sur tous les pixels : complexité $O(n^2)$ prohibitive
+\end{itemize}
+
+\subsection{Architecture Vision Transformer (ViT, 2020)}
+
+\begin{definition}{Vision Transformer}
+ViT découpe l'image en patches et les traite comme des tokens :
+\begin{enumerate}
+    \item Diviser l'image en patches $16 \times 16$ (ou $32 \times 32$)
+    \item Aplatir chaque patch en vecteur
+    \item Embedding linéaire + positional encoding
+    \item Transformer encoder standard
+    \item Classification via un token [CLS]
+\end{enumerate}
+\end{definition}
+
+\subsubsection{Patchification}
+
+Pour une image $I \in \R^{H \times W \times C}$ et taille de patch $P$ :
+
+\begin{enumerate}
+    \item Nombre de patches : $N = \frac{H \cdot W}{P^2}$
+    \item Chaque patch : $x_p \in \R^{P^2 \cdot C}$ (vecteur aplati)
+    \item Embedding linéaire : $z_p = E \cdot x_p$ où $E \in \R^{D \times (P^2 \cdot C)}$
+\end{enumerate}
+
+\subsubsection{Architecture Complète}
+
+\begin{algorithm}[H]
+\caption{Vision Transformer (ViT)}
+\label{alg:vit}
+\begin{algorithmic}[1]
+\REQUIRE Image $I \in \R^{H \times W \times 3}$
+\ENSURE Prédiction de classe $y$
+\STATE Découper $I$ en $N$ patches de taille $P \times P$
+\STATE Aplatir chaque patch : $\{x_p^1, \dots, x_p^N\}$
+\STATE Embedding linéaire : $z_p^i = E \cdot x_p^i$ pour $i=1, \dots, N$
+\STATE Ajouter token [CLS] : $z_0 = z_{\text{cls}}$
+\STATE Ajouter positional encoding : $z_i \leftarrow z_i + E_{pos}^i$
+\STATE Passer dans $L$ couches de Transformer Encoder
+\STATE Extraire $z_0^L$ (état final du token [CLS])
+\STATE Classification : $y = \text{MLP}(z_0^L)$
+\RETURN $y$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Positional Encoding}
+
+Contrairement au NLP, on utilise des \textbf{positional embeddings appris} :
+
+\begin{equation}
+E_{pos} \in \R^{(N+1) \times D}
+\end{equation}
+
+Chaque position (patch) a son embedding de position appris durant l'entraînement.
+
+\textbf{Alternative} : 2D positional encodings qui encodent séparément les coordonnées $x$ et $y$ du patch.
+
+\subsection{Variantes de ViT}
+
+\subsubsection{ViT-Base, ViT-Large, ViT-Huge}
+
+\begin{table}[h]
+\centering
+\caption{Variantes de ViT}
+\label{tab:vit-variants}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Modèle} & \textbf{Layers} & \textbf{Hidden Size} & \textbf{Heads} \\
+\midrule
+ViT-Base & 12 & 768 & 12 \\
+ViT-Large & 24 & 1024 & 16 \\
+ViT-Huge & 32 & 1280 & 16 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{DeiT (Data-efficient image Transformers)}
+
+Améliore l'entraînement de ViT :
+\begin{itemize}
+    \item \textbf{Distillation token} : apprendre d'un CNN teacher
+    \item Augmentations agressives
+    \item Entraînement plus efficace (moins de données)
+\end{itemize}
+
+\subsubsection{Swin Transformer (2021)}
+
+\textbf{Idée clé} : Attention locale dans des fenêtres décalées (shifted windows).
+
+\begin{enumerate}
+    \item Diviser l'image en fenêtres non-chevauchantes
+    \item Appliquer self-attention uniquement dans chaque fenêtre
+    \item Décaler les fenêtres entre couches pour capturer interactions cross-window
+    \item Hierarchical architecture (comme CNN) avec downsampling progressif
+\end{enumerate}
+
+\textbf{Avantages} :
+\begin{itemize}
+    \item ✅ Complexité linéaire : $O(H \cdot W)$ au lieu de $O((H \cdot W)^2)$
+    \item ✅ Pyramidal features (multi-scale)
+    \item ✅ État de l'art sur détection et segmentation
+\end{itemize}
+
+\subsection{CNN vs ViT}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison CNN vs ViT}
+\label{tab:cnn-vs-vit}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Propriété} & \textbf{CNN} & \textbf{ViT} \\
+\midrule
+Inductive bias & Fort (localité, translation) & Faible \\
+Données requises & Moins (ImageNet) & Plus (JFT-300M) \\
+Précision (ImageNet) & 88.5\% (EfficientNet) & 90.4\% (ViT-Huge) \\
+Complexité & $O(H \cdot W)$ & $O((H \cdot W)^2)$ \\
+Interprétabilité & Filtres, feature maps & Attention maps \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{astuce}
+\textbf{Quand utiliser ViT ?}
+\begin{itemize}
+    \item Beaucoup de données disponibles (pré-entraînement sur large dataset)
+    \item Besoin de capturer des dépendances globales (pas seulement locales)
+    \item Ressources GPU importantes
+\end{itemize}
+\textbf{Quand utiliser CNN ?}
+\begin{itemize}
+    \item Dataset modeste (< 100k images)
+    \item Contraintes computationnelles (edge devices)
+    \item Tâches où la localité est importante
+\end{itemize}
+\end{astuce}
+
+% ===== SECTION 5: VISION-LANGAGE (CLIP) =====
+\section{Modèles Vision-Langage : CLIP}
+
+\subsection{Motivation}
+
+Les modèles de vision classiques apprennent à classifier des images en classes fixes. CLIP (Contrastive Language-Image Pre-training) apprend à associer images et textes libres.
+
+\textbf{Applications} :
+\begin{itemize}
+    \item Zero-shot classification : classifier sans entraînement spécifique
+    \item Image retrieval : chercher des images par description textuelle
+    \item Vision-language reasoning
+\end{itemize}
+
+\subsection{Architecture CLIP}
+
+\begin{definition}{CLIP}
+CLIP entraîne conjointement un encodeur d'images et un encodeur de texte pour aligner leurs représentations dans un espace latent commun.
+\end{definition}
+
+\subsubsection{Composants}
+
+\begin{enumerate}
+    \item \textbf{Image Encoder} : ViT ou ResNet $\rightarrow$ vecteur $v_I \in \R^D$
+    \item \textbf{Text Encoder} : Transformer $\rightarrow$ vecteur $v_T \in \R^D$
+    \item \textbf{Contrastive Learning} : maximiser similarité cosinus pour paires correctes
+\end{enumerate}
+
+\subsubsection{Loss Contrastive}
+
+Pour un batch de $N$ paires (image, texte) :
+
+\begin{equation}
+L = -\frac{1}{N} \sum_{i=1}^{N} \left[ \log \frac{\exp(v_I^i \cdot v_T^i / \tau)}{\sum_{j=1}^{N} \exp(v_I^i \cdot v_T^j / \tau)} + \log \frac{\exp(v_I^i \cdot v_T^i / \tau)}{\sum_{j=1}^{N} \exp(v_I^j \cdot v_T^i / \tau)} \right]
+\end{equation}
+
+où $\tau$ est une température apprise.
+
+\textbf{Intuition} : Maximiser la similarité entre image $i$ et texte $i$, minimiser avec les autres.
+
+\subsection{Zero-Shot Classification}
+
+\begin{algorithm}[H]
+\caption{CLIP Zero-Shot Classification}
+\label{alg:clip-zeroshot}
+\begin{algorithmic}[1]
+\REQUIRE Image $I$, classes $\{c_1, \dots, c_K\}$
+\ENSURE Classe prédite
+\STATE Encoder l'image : $v_I = \text{ImageEncoder}(I)$
+\FOR{chaque classe $c_k$}
+    \STATE Créer prompt : $t_k = $ "A photo of a \{$c_k$\}"
+    \STATE Encoder le texte : $v_T^k = \text{TextEncoder}(t_k)$
+    \STATE Calculer similarité : $s_k = v_I \cdot v_T^k$
+\ENDFOR
+\STATE Softmax : $P(c_k) = \frac{\exp(s_k / \tau)}{\sum_j \exp(s_j / \tau)}$
+\RETURN $\argmax_k P(c_k)$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Avantage} : Pas besoin de réentraîner pour de nouvelles classes, il suffit de changer les prompts !
+
+\subsection{Résultats CLIP}
+
+\begin{itemize}
+    \item Entraîné sur 400M paires (image, texte) du web
+    \item Zero-shot sur ImageNet : 76.2\% (comparable à ResNet-50 entraîné supervisé)
+    \item Très robuste aux distribution shifts (ImageNet-A, ImageNet-R)
+    \item Généralisation impressionnante à de nouveaux domaines
+\end{itemize}
+
+% ===== SECTION 6: IMPLÉMENTATION =====
+\section{Implémentation}
+
+\subsection{Détection d'Objets avec YOLOv8}
+
+\begin{lstlisting}[language=Python, caption=YOLOv8 avec Ultralytics]
+from ultralytics import YOLO
+import cv2
+
+# Charger modèle pré-entraîné
+model = YOLO('yolov8n.pt')  # n, s, m, l, x
+
+# Inférence sur une image
+results = model('image.jpg')
+
+# Afficher résultats
+for r in results:
+    boxes = r.boxes  # Bounding boxes
+    for box in boxes:
+        x1, y1, x2, y2 = box.xyxy[0]
+        conf = box.conf[0]
+        cls = int(box.cls[0])
+        label = model.names[cls]
+        print(f"{label} ({conf:.2f}): [{x1:.0f}, {y1:.0f}, {x2:.0f}, {y2:.0f}]")
+
+# Entraîner sur custom dataset (COCO format)
+model.train(
+    data='custom_dataset.yaml',
+    epochs=100,
+    imgsz=640,
+    batch=16,
+    name='yolov8_custom'
+)
+
+# Évaluation
+metrics = model.val()
+print(f"mAP50: {metrics.box.map50}")
+print(f"mAP50-95: {metrics.box.map}")
+\end{lstlisting}
+
+\subsection{Segmentation avec U-Net (PyTorch)}
+
+\begin{lstlisting}[language=Python, caption=U-Net implémentation]
+import torch
+import torch.nn as nn
+
+class UNet(nn.Module):
+    def __init__(self, in_channels=3, out_channels=1):
+        super().__init__()
+
+        # Encoder
+        self.enc1 = self.conv_block(in_channels, 64)
+        self.enc2 = self.conv_block(64, 128)
+        self.enc3 = self.conv_block(128, 256)
+        self.enc4 = self.conv_block(256, 512)
+
+        # Bottleneck
+        self.bottleneck = self.conv_block(512, 1024)
+
+        # Decoder
+        self.upconv4 = nn.ConvTranspose2d(1024, 512, 2, stride=2)
+        self.dec4 = self.conv_block(1024, 512)
+
+        self.upconv3 = nn.ConvTranspose2d(512, 256, 2, stride=2)
+        self.dec3 = self.conv_block(512, 256)
+
+        self.upconv2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+        self.dec2 = self.conv_block(256, 128)
+
+        self.upconv1 = nn.ConvTranspose2d(128, 64, 2, stride=2)
+        self.dec1 = self.conv_block(128, 64)
+
+        # Output
+        self.out = nn.Conv2d(64, out_channels, 1)
+
+        self.pool = nn.MaxPool2d(2)
+
+    def conv_block(self, in_ch, out_ch):
+        return nn.Sequential(
+            nn.Conv2d(in_ch, out_ch, 3, padding=1),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_ch, out_ch, 3, padding=1),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(inplace=True)
+        )
+
+    def forward(self, x):
+        # Encoder
+        enc1 = self.enc1(x)
+        enc2 = self.enc2(self.pool(enc1))
+        enc3 = self.enc3(self.pool(enc2))
+        enc4 = self.enc4(self.pool(enc3))
+
+        # Bottleneck
+        bottleneck = self.bottleneck(self.pool(enc4))
+
+        # Decoder with skip connections
+        dec4 = self.upconv4(bottleneck)
+        dec4 = torch.cat([dec4, enc4], dim=1)
+        dec4 = self.dec4(dec4)
+
+        dec3 = self.upconv3(dec4)
+        dec3 = torch.cat([dec3, enc3], dim=1)
+        dec3 = self.dec3(dec3)
+
+        dec2 = self.upconv2(dec3)
+        dec2 = torch.cat([dec2, enc2], dim=1)
+        dec2 = self.dec2(dec2)
+
+        dec1 = self.upconv1(dec2)
+        dec1 = torch.cat([dec1, enc1], dim=1)
+        dec1 = self.dec1(dec1)
+
+        return self.out(dec1)
+
+# Entraînement
+model = UNet(in_channels=3, out_channels=1).cuda()
+criterion = nn.BCEWithLogitsLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+
+for epoch in range(epochs):
+    for images, masks in train_loader:
+        images, masks = images.cuda(), masks.cuda()
+
+        outputs = model(images)
+        loss = criterion(outputs, masks)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+\end{lstlisting}
+
+\subsection{Vision Transformer avec timm}
+
+\begin{lstlisting}[language=Python, caption=ViT avec timm]
+import timm
+import torch
+
+# Charger modèle pré-entraîné
+model = timm.create_model('vit_base_patch16_224', pretrained=True)
+
+# Voir tous les modèles ViT disponibles
+vit_models = timm.list_models('vit*')
+print(f"Modèles ViT disponibles: {len(vit_models)}")
+
+# Fine-tuning sur dataset custom
+model = timm.create_model('vit_base_patch16_224',
+                          pretrained=True,
+                          num_classes=10)
+
+# Geler l'encoder, entraîner seulement la tête
+for param in model.parameters():
+    param.requires_grad = False
+for param in model.head.parameters():
+    param.requires_grad = True
+
+# Entraînement
+optimizer = torch.optim.AdamW(model.head.parameters(), lr=1e-3)
+criterion = torch.nn.CrossEntropyLoss()
+
+model.train()
+for images, labels in train_loader:
+    outputs = model(images)
+    loss = criterion(outputs, labels)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+# Visualiser attention maps
+attention_weights = model.blocks[-1].attn.get_attention_map()
+\end{lstlisting}
+
+\subsection{CLIP Zero-Shot}
+
+\begin{lstlisting}[language=Python, caption=CLIP avec OpenAI]
+import torch
+import clip
+from PIL import Image
+
+# Charger modèle CLIP
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model, preprocess = clip.load("ViT-B/32", device=device)
+
+# Préparer image
+image = preprocess(Image.open("cat.jpg")).unsqueeze(0).to(device)
+
+# Définir classes possibles
+text_prompts = [
+    "a photo of a cat",
+    "a photo of a dog",
+    "a photo of a bird",
+    "a photo of a car"
+]
+text = clip.tokenize(text_prompts).to(device)
+
+# Inférence
+with torch.no_grad():
+    image_features = model.encode_image(image)
+    text_features = model.encode_text(text)
+
+    # Normaliser
+    image_features /= image_features.norm(dim=-1, keepdim=True)
+    text_features /= text_features.norm(dim=-1, keepdim=True)
+
+    # Calculer similarités
+    similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+    values, indices = similarity[0].topk(4)
+
+# Résultats
+for value, index in zip(values, indices):
+    print(f"{text_prompts[index]:20s}: {100 * value.item():.2f}%")
+\end{lstlisting}
+
+% ===== SECTION 7: AVANTAGES ET LIMITES =====
+\section{Avantages et Limites}
+
+\subsection{Object Detection}
+
+\subsubsection{Avantages}
+\begin{itemize}
+    \item ✅ Localisation précise des objets dans l'image
+    \item ✅ Performance temps réel avec YOLO (vidéo, applications embarquées)
+    \item ✅ Datasets annotés disponibles (COCO, Pascal VOC)
+    \item ✅ Transfert d'apprentissage efficace
+\end{itemize}
+
+\subsubsection{Limites}
+\begin{itemize}
+    \item ❌ Annotation coûteuse (bounding boxes pour chaque objet)
+    \item ❌ Difficulté avec objets très petits ou occultés
+    \item ❌ Trade-off précision vs vitesse
+    \item ❌ Sensible aux variations d'échelle
+\end{itemize}
+
+\subsection{Segmentation}
+
+\subsubsection{Avantages}
+\begin{itemize}
+    \item ✅ Précision au pixel près (vs boxes rectangulaires)
+    \item ✅ U-Net très efficace en imagerie médicale
+    \item ✅ Mask R-CNN : détection + segmentation en un modèle
+    \item ✅ Interprétabilité : visualiser exactement les régions d'intérêt
+\end{itemize}
+
+\subsubsection{Limites}
+\begin{itemize}
+    \item ❌ Annotation pixel-level extrêmement coûteuse
+    \item ❌ Plus lent que la détection (surtout segmentation d'instances)
+    \item ❌ Difficulté avec les frontières ambiguës
+    \item ❌ Mémoire GPU importante
+\end{itemize}
+
+\subsection{Vision Transformers}
+
+\subsubsection{Avantages}
+\begin{itemize}
+    \item ✅ Capture des dépendances globales (pas seulement locales comme CNN)
+    \item ✅ Meilleure précision avec beaucoup de données
+    \item ✅ Attention maps interprétables
+    \item ✅ Architecture unifiée pour vision et NLP
+\end{itemize}
+
+\subsubsection{Limites}
+\begin{itemize}
+    \item ❌ Requiert énormément de données (JFT-300M, ImageNet-21k)
+    \item ❌ Complexité quadratique en la taille de l'image
+    \item ❌ Moins bon que CNN avec peu de données
+    \item ❌ Coût computationnel élevé
+\end{itemize}
+
+\subsection{CLIP}
+
+\subsubsection{Avantages}
+\begin{itemize}
+    \item ✅ Zero-shot learning : pas besoin de réentraîner pour nouvelles classes
+    \item ✅ Robuste aux distribution shifts
+    \item ✅ Multimodal : image + texte
+    \item ✅ Flexibilité : prompts textuels adaptables
+\end{itemize}
+
+\subsubsection{Limites}
+\begin{itemize}
+    \item ❌ Performances inférieures au fine-tuning sur tâches spécifiques
+    \item ❌ Sensible à la formulation des prompts
+    \item ❌ Biais des données web (400M paires non filtrées)
+    \item ❌ Difficulté avec tâches nécessitant localisation précise
+\end{itemize}
+
+% ===== SECTION 8: HYPERPARAMÈTRES =====
+\section{Hyperparamètres et Tuning}
+
+\subsection{Détection d'Objets}
+
+\begin{table}[h]
+\centering
+\caption{Hyperparamètres clés pour la détection}
+\label{tab:hyperparams-detection}
+\begin{tabular}{lll}
+\toprule
+\textbf{Paramètre} & \textbf{Valeurs typiques} & \textbf{Impact} \\
+\midrule
+learning\_rate & $10^{-4}$ à $10^{-2}$ & Convergence \\
+image\_size & $416$, $640$, $1024$ & Précision vs vitesse \\
+batch\_size & $8$ à $32$ & Stabilité gradient \\
+IoU\_threshold & $0.5$ à $0.7$ & NMS agressivité \\
+conf\_threshold & $0.25$ à $0.5$ & Rappel vs précision \\
+anchor\_scales & Auto ou manuel & Détection multi-échelle \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Segmentation}
+
+\begin{table}[h]
+\centering
+\caption{Hyperparamètres clés pour la segmentation}
+\label{tab:hyperparams-segmentation}
+\begin{tabular}{lll}
+\toprule
+\textbf{Paramètre} & \textbf{Valeurs typiques} & \textbf{Impact} \\
+\midrule
+learning\_rate & $10^{-4}$ à $10^{-3}$ & Convergence \\
+batch\_size & $2$ à $16$ & Mémoire GPU \\
+image\_size & $256$, $512$, $1024$ & Détails vs vitesse \\
+encoder\_depth & $4$ à $5$ & Complexité modèle \\
+dropout & $0.1$ à $0.5$ & Régularisation \\
+class\_weights & Auto ou manuel & Déséquilibre classes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Vision Transformers}
+
+\begin{table}[h]
+\centering
+\caption{Hyperparamètres clés pour ViT}
+\label{tab:hyperparams-vit}
+\begin{tabular}{lll}
+\toprule
+\textbf{Paramètre} & \textbf{Valeurs typiques} & \textbf{Impact} \\
+\midrule
+patch\_size & $16$, $32$ & Nb tokens vs détails \\
+num\_layers & $12$ à $32$ & Capacité modèle \\
+hidden\_dim & $768$ à $1280$ & Capacité représentation \\
+num\_heads & $12$ à $16$ & Attention multi-échelle \\
+learning\_rate & $10^{-4}$ à $10^{-3}$ & Convergence \\
+warmup\_steps & $500$ à $10000$ & Stabilité initiale \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{astuce}
+\textbf{Stratégies d'entraînement efficaces} :
+\begin{itemize}
+    \item \textbf{Transfer learning} : Toujours partir d'un modèle pré-entraîné (ImageNet, COCO)
+    \item \textbf{Progressive resizing} : Commencer avec petites images, augmenter progressivement
+    \item \textbf{Mixed precision} : FP16 pour accélérer et économiser mémoire
+    \item \textbf{Data augmentation} : Mosaic, MixUp, CutMix pour la détection
+    \item \textbf{Learning rate schedule} : Cosine annealing ou OneCycleLR
+\end{itemize}
+\end{astuce}
+
+% ===== SECTION 9: APPLICATIONS =====
+\section{Applications Pratiques}
+
+\subsection{Conduite Autonome}
+
+\begin{itemize}
+    \item \textbf{Détection} : Voitures, piétons, vélos, panneaux de signalisation
+    \item \textbf{Segmentation sémantique} : Route, trottoir, végétation, bâtiments
+    \item \textbf{Segmentation d'instances} : Suivi de chaque voiture/piéton individuellement
+    \item \textbf{Modèles} : YOLOv8, Mask R-CNN, DeepLab v3+
+    \item \textbf{Datasets} : KITTI, Cityscapes, nuScenes
+\end{itemize}
+
+\subsection{Imagerie Médicale}
+
+\begin{itemize}
+    \item \textbf{Segmentation d'organes} : U-Net pour foie, reins, cerveau
+    \item \textbf{Détection de tumeurs} : Faster R-CNN, RetinaNet
+    \item \textbf{Segmentation cellulaire} : U-Net, Mask R-CNN
+    \item \textbf{Modèles} : U-Net (référence), nnU-Net (auto-configuration)
+    \item \textbf{Datasets} : Medical Segmentation Decathlon, LIDC-IDRI
+\end{itemize}
+
+\subsection{Reconnaissance Faciale}
+
+\begin{itemize}
+    \item \textbf{Détection de visages} : MTCNN, RetinaFace
+    \item \textbf{Landmarks faciaux} : 68 points de repère (yeux, nez, bouche)
+    \item \textbf{Segmentation} : Cheveux, peau, arrière-plan
+    \item \textbf{Applications} : Sécurité, filtres AR, analyse d'émotions
+\end{itemize}
+
+\subsection{Commerce Électronique}
+
+\begin{itemize}
+    \item \textbf{Recherche visuelle} : CLIP pour "trouver des produits similaires"
+    \item \textbf{Détection de produits} : Compter articles en rayon (retail)
+    \item \textbf{Segmentation produits} : Extraction de produit pour montage
+    \item \textbf{Modèles} : CLIP, YOLOv8, Mask R-CNN
+\end{itemize}
+
+\subsection{Surveillance et Sécurité}
+
+\begin{itemize}
+    \item \textbf{Détection d'intrusion} : YOLO temps réel
+    \item \textbf{Suivi multi-objets} : DeepSORT avec détecteur
+    \item \textbf{Détection d'anomalies} : Comportements inhabituels
+    \item \textbf{Comptage de personnes} : Segmentation + tracking
+\end{itemize}
+
+% ===== SECTION 10: RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{Object Detection} : Localiser et classifier des objets
+    \begin{itemize}
+        \item Two-stage : Faster R-CNN (précis, ~5 FPS)
+        \item One-stage : YOLO (rapide, ~80 FPS)
+        \item Métriques : IoU, mAP@0.5, mAP@0.5:0.95
+    \end{itemize}
+
+    \item \textbf{Segmentation Sémantique} : Classifier chaque pixel
+    \begin{itemize}
+        \item FCN : première architecture fully convolutional
+        \item U-Net : architecture emblématique (médical)
+        \item DeepLab : atrous convolutions + ASPP
+        \item Métriques : mIoU, Dice coefficient
+    \end{itemize}
+
+    \item \textbf{Segmentation d'Instances} : Détecter et segmenter chaque instance
+    \begin{itemize}
+        \item Mask R-CNN = Faster R-CNN + branche de masque
+        \item RoI Align pour précision pixel-level
+    \end{itemize}
+
+    \item \textbf{Vision Transformers} : Appliquer les Transformers à la vision
+    \begin{itemize}
+        \item ViT : découper en patches, self-attention
+        \item Swin Transformer : attention locale + shifted windows
+        \item Nécessite beaucoup de données
+    \end{itemize}
+
+    \item \textbf{Vision-Langage (CLIP)} : Aligner images et textes
+    \begin{itemize}
+        \item Contrastive learning sur 400M paires
+        \item Zero-shot classification par prompts
+        \item Applications : recherche, multimodal
+    \end{itemize}
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+
+\textbf{IoU (Intersection over Union)} :
+\begin{equation*}
+\text{IoU} = \frac{\text{Aire}(A \cap B)}{\text{Aire}(A \cup B)}
+\end{equation*}
+
+\textbf{Mean Average Precision} :
+\begin{equation*}
+\text{mAP} = \frac{1}{C} \sum_{c=1}^{C} AP_c
+\end{equation*}
+
+\textbf{Dice Coefficient} :
+\begin{equation*}
+\text{Dice} = \frac{2 \cdot TP}{2 \cdot TP + FP + FN}
+\end{equation*}
+
+\textbf{ViT Patch Embedding} :
+\begin{equation*}
+z_p = E \cdot x_p + E_{pos}, \quad x_p \in \R^{P^2 \cdot C}
+\end{equation*}
+
+\textbf{CLIP Contrastive Loss} :
+\begin{equation*}
+L = -\log \frac{\exp(v_I \cdot v_T / \tau)}{\sum_j \exp(v_I \cdot v_T^j / \tau)}
+\end{equation*}
+
+\end{tcolorbox}
+
+\subsection{Tableau Récapitulatif}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des approches de vision avancée}
+\label{tab:recap}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Tâche} & \textbf{Modèle Recommandé} & \textbf{Précision} & \textbf{Vitesse} \\
+\midrule
+Détection (précision) & Faster R-CNN & ★★★ & ★☆☆ \\
+Détection (temps réel) & YOLOv8 & ★★☆ & ★★★ \\
+Seg. sémantique & DeepLab v3+ & ★★★ & ★★☆ \\
+Seg. médicale & U-Net & ★★★ & ★★☆ \\
+Seg. instances & Mask R-CNN & ★★★ & ★☆☆ \\
+Classification & ViT-Large & ★★★ & ★☆☆ \\
+Zero-shot & CLIP & ★★☆ & ★★★ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 11: EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de Compréhension}
+
+\begin{enumerate}
+    \item Expliquer la différence entre R-CNN, Fast R-CNN et Faster R-CNN. Pourquoi chaque version est-elle plus rapide que la précédente ?
+
+    \item Pourquoi YOLO est-il appelé "You Only Look Once" ? Quelle est sa principale différence philosophique avec Faster R-CNN ?
+
+    \item Qu'est-ce que le RoI Pooling ? Pourquoi RoI Align est-il meilleur pour la segmentation ?
+
+    \item Expliquer le rôle des skip connections dans U-Net. Pourquoi utiliser la concaténation plutôt que l'addition ?
+
+    \item Comment fonctionne l'atrous convolution dans DeepLab ? Quel est son avantage ?
+
+    \item Pourquoi ViT nécessite-t-il beaucoup plus de données d'entraînement que les CNN ?
+
+    \item Comment CLIP permet-il la classification zero-shot ? Donner un exemple d'application.
+
+    \item Quelle est la différence entre segmentation sémantique et segmentation d'instances ?
+\end{enumerate}
+
+\subsection{Exercices Pratiques}
+
+\begin{enumerate}
+    \item \textbf{Détection avec YOLOv8}
+    \begin{itemize}
+        \item Entraîner YOLOv8 sur un dataset custom (par ex. détecter des visages)
+        \item Tester sur vidéo et mesurer le FPS
+        \item Comparer YOLOv8n (nano) vs YOLOv8x (extra-large) : précision vs vitesse
+        \item Notebook : \texttt{12_demo_object\_detection.ipynb}
+    \end{itemize}
+
+    \item \textbf{Segmentation médicale avec U-Net}
+    \begin{itemize}
+        \item Implémenter U-Net from scratch en PyTorch
+        \item Entraîner sur un dataset de segmentation (par ex. cellules, tumeurs)
+        \item Calculer Dice coefficient et mIoU
+        \item Visualiser les prédictions
+        \item Notebook : \texttt{12_demo_segmentation.ipynb}
+    \end{itemize}
+
+    \item \textbf{Vision Transformers}
+    \begin{itemize}
+        \item Fine-tuner ViT-Base sur CIFAR-10
+        \item Comparer avec ResNet-50
+        \item Visualiser les attention maps
+        \item Tester DeiT avec distillation
+        \item Notebook : \texttt{12_demo_vision\_transformers.ipynb}
+    \end{itemize}
+
+    \item \textbf{CLIP Zero-Shot}
+    \begin{itemize}
+        \item Utiliser CLIP pour classifier des images sans fine-tuning
+        \item Tester différents prompts et mesurer l'impact
+        \item Implémenter un moteur de recherche d'images par description textuelle
+    \end{itemize}
+\end{enumerate}
+
+% ===== SECTION 12: POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\subsubsection{Papers Fondateurs}
+
+\begin{itemize}
+    \item \textbf{R-CNN} : Girshick et al. (2014). "Rich feature hierarchies for accurate object detection and semantic segmentation"
+    \item \textbf{Faster R-CNN} : Ren et al. (2015). "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks"
+    \item \textbf{YOLO} : Redmon et al. (2016). "You Only Look Once: Unified, Real-Time Object Detection"
+    \item \textbf{U-Net} : Ronneberger et al. (2015). "U-Net: Convolutional Networks for Biomedical Image Segmentation"
+    \item \textbf{Mask R-CNN} : He et al. (2017). "Mask R-CNN"
+    \item \textbf{ViT} : Dosovitskiy et al. (2020). "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale"
+    \item \textbf{CLIP} : Radford et al. (2021). "Learning Transferable Visual Models From Natural Language Supervision"
+\end{itemize}
+
+\subsubsection{Papers Récents}
+
+\begin{itemize}
+    \item \textbf{YOLOv8} : Ultralytics (2023). Documentation officielle
+    \item \textbf{Swin Transformer} : Liu et al. (2021). "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows"
+    \item \textbf{Segment Anything (SAM)} : Kirillov et al. (2023). "Segment Anything"
+    \item \textbf{DINOv2} : Oquab et al. (2023). "DINOv2: Learning Robust Visual Features without Supervision"
+\end{itemize}
+
+\subsection{Ressources en Ligne}
+
+\begin{itemize}
+    \item \textbf{Ultralytics YOLOv8} : \url{https://docs.ultralytics.com/}
+    \item \textbf{Detectron2} (Facebook) : \url{https://github.com/facebookresearch/detectron2}
+    \item \textbf{MMDetection} : \url{https://github.com/open-mmlab/mmdetection}
+    \item \textbf{Timm (PyTorch Image Models)} : \url{https://github.com/huggingface/pytorch-image-models}
+    \item \textbf{OpenAI CLIP} : \url{https://github.com/openai/CLIP}
+    \item \textbf{Hugging Face Transformers} : \url{https://huggingface.co/docs/transformers/}
+\end{itemize}
+
+\subsection{Datasets}
+
+\begin{itemize}
+    \item \textbf{COCO} (detection, segmentation) : \url{https://cocodataset.org/}
+    \item \textbf{Pascal VOC} : \url{http://host.robots.ox.ac.uk/pascal/VOC/}
+    \item \textbf{Cityscapes} (conduite) : \url{https://www.cityscapes-dataset.com/}
+    \item \textbf{Medical Segmentation Decathlon} : \url{http://medicaldecathlon.com/}
+    \item \textbf{Open Images} : \url{https://storage.googleapis.com/openimages/web/index.html}
+\end{itemize}
+
+\subsection{Outils et Bibliothèques}
+
+\begin{itemize}
+    \item \textbf{Ultralytics} : YOLO v5/v8 (PyTorch)
+    \item \textbf{torchvision} : Modèles pré-entraînés (Faster R-CNN, Mask R-CNN)
+    \item \textbf{segmentation\_models.pytorch} : U-Net, DeepLab, etc.
+    \item \textbf{timm} : Vision Transformers
+    \item \textbf{transformers} : CLIP, ViT (Hugging Face)
+    \item \textbf{albumentations} : Augmentations avancées
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+
+\begin{itemize}
+    \item \textbf{Chapitre 14 - GANs et Modèles Génératifs} : StyleGAN, Diffusion Models
+    \item \textbf{Chapitre 15 - AutoML et NAS} : Architecture search automatique
+    \item \textbf{Projets pratiques} : Appliquer ces techniques à vos propres données
+\end{itemize}
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item Girshick, R., Donahue, J., Darrell, T., \& Malik, J. (2014). Rich feature hierarchies for accurate object detection and semantic segmentation. \textit{CVPR}.
+
+    \item Ren, S., He, K., Girshick, R., \& Sun, J. (2015). Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks. \textit{NeurIPS}.
+
+    \item Redmon, J., Divvala, S., Girshick, R., \& Farhadi, A. (2016). You Only Look Once: Unified, Real-Time Object Detection. \textit{CVPR}.
+
+    \item Ronneberger, O., Fischer, P., \& Brox, T. (2015). U-Net: Convolutional Networks for Biomedical Image Segmentation. \textit{MICCAI}.
+
+    \item He, K., Gkioxari, G., Dollár, P., \& Girshick, R. (2017). Mask R-CNN. \textit{ICCV}.
+
+    \item Chen, L. C., Papandreou, G., Schroff, F., \& Adam, H. (2017). Rethinking Atrous Convolution for Semantic Image Segmentation. \textit{arXiv}.
+
+    \item Dosovitskiy, A., et al. (2020). An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale. \textit{ICLR 2021}.
+
+    \item Liu, Z., et al. (2021). Swin Transformer: Hierarchical Vision Transformer using Shifted Windows. \textit{ICCV}.
+
+    \item Radford, A., et al. (2021). Learning Transferable Visual Models From Natural Language Supervision. \textit{ICML}.
+
+    \item Kirillov, A., et al. (2023). Segment Anything. \textit{ICCV}.
+\end{enumerate}
+
+\end{document}

@@ -45,8 +45,8 @@ cd sandbox-ml
 
 ```
 sandbox-ml/
+├── cours/          # Cours complet ML (14 chapitres + annexes)
 ├── docs/           # Documentation
-├── TPs/            # Travaux pratiques
 ├── notebooks/      # Vos notebooks (créé au démarrage)
 ├── src/            # Code source
 ├── data/           # Datasets (gitignored)

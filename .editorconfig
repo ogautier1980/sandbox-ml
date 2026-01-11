@@ -1,0 +1,71 @@
+# EditorConfig : Configuration standardisée pour tous les éditeurs
+# https://editorconfig.org
+
+# Fichier racine du projet
+root = true
+
+# Paramètres par défaut pour tous les fichiers
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Python
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+# Shell scripts
+[*.{sh,bash}]
+indent_size = 2
+end_of_line = lf
+
+# Batch scripts Windows (doivent rester en CRLF)
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# JSON, YAML, TOML
+[*.{json,yaml,yml,toml}]
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = 120
+
+# LaTeX
+[*.tex]
+indent_size = 4
+max_line_length = 120
+
+# Jupyter Notebooks (JSON)
+[*.ipynb]
+indent_size = 1
+insert_final_newline = false
+
+# Dockerfiles
+[Dockerfile*]
+indent_size = 4
+
+# Docker Compose
+[docker-compose*.yml]
+indent_size = 2
+
+# Makefiles (doivent utiliser des tabs)
+[Makefile]
+indent_style = tab
+
+# Configuration files
+[.gitignore]
+insert_final_newline = true
+
+# Requirements files
+[requirements*.txt]
+insert_final_newline = true
+
+# README et documentation
+[README*]
+max_line_length = 120

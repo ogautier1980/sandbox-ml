@@ -1,0 +1,1195 @@
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc, matrix}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 08 - Deep Learning : RNN et Transformers},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 08 - Deep Learning : RNN et Transformers}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=⚠️ Attention,
+    breakable
+}
+
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=💡 Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+\newcommand{\tanh}{\operatorname{tanh}}
+\newcommand{\sigmoid}{\operatorname{sigmoid}}
+\newcommand{\softmax}{\operatorname{softmax}}
+
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 08}\\[0.3cm]
+    {\LARGE\bfseries Deep Learning : RNN et Transformers}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Comprendre les RNN (Recurrent Neural Networks) pour les séquences
+        \item Maîtriser LSTM et GRU pour résoudre les problèmes de vanishing gradient
+        \item Découvrir le mécanisme d'attention et son importance
+        \item Étudier l'architecture Transformer et son fonctionnement
+        \item Appliquer ces modèles au NLP et aux séries temporelles
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitre 06 (Réseaux de Neurones Fondamentaux)\\[0.3cm]
+    \textbf{Durée estimée :} 8-10 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{08_demo_*.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: INTRODUCTION =====
+\section{Introduction aux Données Séquentielles}
+
+\subsection{Qu'est-ce qu'une séquence ?}
+
+Une \textbf{séquence} est une suite ordonnée d'éléments où l'ordre a une importance cruciale.
+
+\begin{exemple}{Exemples de séquences}
+\begin{itemize}
+    \item \textbf{Texte} : "Le chat mange la souris" (ordre des mots → sens)
+    \item \textbf{Audio} : Signal sonore échantillonné dans le temps
+    \item \textbf{Vidéo} : Séquence d'images (frames)
+    \item \textbf{Séries temporelles} : Cours de bourse, température, trafic web
+    \item \textbf{ADN} : Séquence de nucléotides (A, C, G, T)
+\end{itemize}
+\end{exemple}
+
+\subsection{Limitations des MLP et CNN pour les séquences}
+
+\textbf{MLP :}
+\begin{itemize}
+    \item ❌ Taille d'entrée fixe (impossible pour séquences de longueur variable)
+    \item ❌ Pas de mémoire du contexte précédent
+    \item ❌ Nombre de paramètres explose avec la longueur
+\end{itemize}
+
+\textbf{CNN :}
+\begin{itemize}
+    \item ✓ Peut traiter des séquences avec Conv1D
+    \item ❌ Champ récepteur limité (contexte local uniquement)
+    \item ❌ Pas de mémoire à long terme
+\end{itemize}
+
+\subsection{Types de tâches séquentielles}
+
+\begin{table}[h]
+\centering
+\caption{Architectures séquence-to-X}
+\label{tab:seq_tasks}
+\begin{tabular}{lll}
+\toprule
+\textbf{Type} & \textbf{Description} & \textbf{Exemple} \\
+\midrule
+One-to-One & Entrée fixe → Sortie fixe & Classification d'image (CNN) \\
+One-to-Many & Entrée fixe → Séquence & Image captioning \\
+Many-to-One & Séquence → Sortie fixe & Sentiment analysis \\
+Many-to-Many & Séquence → Séquence & Traduction, génération texte \\
+ & (même longueur) & Étiquetage de séquences (NER) \\
+ & (longueur différente) & Traduction automatique \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 2: RNN =====
+\section{Recurrent Neural Networks (RNN)}
+
+\subsection{Architecture}
+
+\begin{definition}{RNN}
+Un RNN traite une séquence $(\vect{x}_1, \vect{x}_2, \ldots, \vect{x}_T)$ en maintenant un \textbf{état caché} $\vect{h}_t$ qui se propage dans le temps :
+\begin{align}
+    \vect{h}_t &= \tanh(\mat{W}_{hh} \vect{h}_{t-1} + \mat{W}_{xh} \vect{x}_t + \vect{b}_h) \\
+    \vect{y}_t &= \mat{W}_{hy} \vect{h}_t + \vect{b}_y
+\end{align}
+où :
+\begin{itemize}
+    \item $\vect{h}_t \in \R^h$ : état caché au temps $t$
+    \item $\vect{x}_t \in \R^d$ : entrée au temps $t$
+    \item $\vect{y}_t \in \R^k$ : sortie au temps $t$
+    \item $\mat{W}_{hh} \in \R^{h \times h}$ : poids récurrents
+    \item $\mat{W}_{xh} \in \R^{h \times d}$ : poids d'entrée
+    \item $\mat{W}_{hy} \in \R^{k \times h}$ : poids de sortie
+\end{itemize}
+\end{definition}
+
+\textbf{Caractéristique clé :} Les mêmes poids $\mat{W}_{hh}, \mat{W}_{xh}, \mat{W}_{hy}$ sont partagés à chaque pas de temps → capacité à traiter des séquences de longueur variable.
+
+\subsection{Déroulement dans le temps (Unfolding)}
+
+On peut "dérouler" le RNN dans le temps :
+\begin{align*}
+\vect{h}_1 &= \tanh(\mat{W}_{hh} \vect{h}_0 + \mat{W}_{xh} \vect{x}_1 + \vect{b}_h) \\
+\vect{h}_2 &= \tanh(\mat{W}_{hh} \vect{h}_1 + \mat{W}_{xh} \vect{x}_2 + \vect{b}_h) \\
+\vect{h}_3 &= \tanh(\mat{W}_{hh} \vect{h}_2 + \mat{W}_{xh} \vect{x}_3 + \vect{b}_h) \\
+&\vdots
+\end{align*}
+
+Initialisation : $\vect{h}_0 = \vect{0}$ (ou appris)
+
+\subsection{Backpropagation Through Time (BPTT)}
+
+Pour entraîner un RNN, on utilise \textbf{BPTT} : backpropagation appliquée au réseau déroulé.
+
+\textbf{Forward pass} : Calculer $\vect{h}_1, \ldots, \vect{h}_T$ et $\vect{y}_1, \ldots, \vect{y}_T$
+
+\textbf{Backward pass} : Calculer gradients en remontant dans le temps :
+\begin{equation}
+    \frac{\partial L}{\partial \vect{h}_t} = \frac{\partial L}{\partial \vect{y}_t} \frac{\partial \vect{y}_t}{\partial \vect{h}_t} + \frac{\partial L}{\partial \vect{h}_{t+1}} \frac{\partial \vect{h}_{t+1}}{\partial \vect{h}_t}
+\end{equation}
+
+\subsection{Problème du Vanishing/Exploding Gradient}
+
+\begin{attention}
+Le gradient se propage à travers tous les pas de temps :
+\begin{equation}
+    \frac{\partial \vect{h}_t}{\partial \vect{h}_0} = \prod_{k=1}^{t} \frac{\partial \vect{h}_k}{\partial \vect{h}_{k-1}} = \prod_{k=1}^{t} \mat{W}_{hh}^T \cdot \text{diag}(\tanh'(\vect{z}_k))
+\end{equation}
+
+\textbf{Vanishing gradient} : Si $\|\mat{W}_{hh}\| < 1$, le gradient $\to 0$ exponentiellement.
+\begin{itemize}
+    \item Le RNN ne peut pas apprendre de dépendances à long terme
+\end{itemize}
+
+\textbf{Exploding gradient} : Si $\|\mat{W}_{hh}\| > 1$, le gradient $\to \infty$.
+\begin{itemize}
+    \item Solution : \textbf{gradient clipping} (limiter la norme du gradient)
+\end{itemize}
+\end{attention}
+
+\subsection{Implémentation simple}
+
+\begin{lstlisting}[language=Python, caption=RNN vanilla from scratch]
+import numpy as np
+
+class SimpleRNN:
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        self.hidden_dim = hidden_dim
+
+        # Initialisation Xavier
+        self.Wxh = np.random.randn(hidden_dim, input_dim) * 0.01
+        self.Whh = np.random.randn(hidden_dim, hidden_dim) * 0.01
+        self.Why = np.random.randn(output_dim, hidden_dim) * 0.01
+        self.bh = np.zeros((hidden_dim, 1))
+        self.by = np.zeros((output_dim, 1))
+
+    def forward(self, inputs):
+        """
+        inputs: liste de vecteurs (seq_len, input_dim)
+        """
+        h = np.zeros((self.hidden_dim, 1))  # h0
+        self.last_inputs = inputs
+        self.last_hs = {0: h}
+
+        # Forward pass
+        for t, x in enumerate(inputs):
+            x = x.reshape(-1, 1)
+            h = np.tanh(self.Wxh @ x + self.Whh @ h + self.bh)
+            self.last_hs[t + 1] = h
+
+        # Output au dernier pas de temps (many-to-one)
+        y = self.Why @ h + self.by
+        return y, h
+
+    def backward(self, dy, learning_rate=0.001):
+        """
+        BPTT simplifié (output au dernier pas uniquement)
+        """
+        n = len(self.last_inputs)
+
+        # Gradients accumulés
+        dWxh, dWhh, dWhy = np.zeros_like(self.Wxh), \
+                           np.zeros_like(self.Whh), \
+                           np.zeros_like(self.Why)
+        dbh, dby = np.zeros_like(self.bh), np.zeros_like(self.by)
+
+        # Gradient output
+        dWhy += dy @ self.last_hs[n].T
+        dby += dy
+
+        # Backprop through time
+        dh = self.Why.T @ dy
+
+        for t in reversed(range(n)):
+            temp = (1 - self.last_hs[t + 1] ** 2) * dh  # tanh'
+            dbh += temp
+            dWxh += temp @ self.last_inputs[t].reshape(1, -1)
+            dWhh += temp @ self.last_hs[t].T
+            dh = self.Whh.T @ temp
+
+        # Gradient clipping
+        for grad in [dWxh, dWhh, dWhy, dbh, dby]:
+            np.clip(grad, -1, 1, out=grad)
+
+        # Update
+        self.Wxh -= learning_rate * dWxh
+        self.Whh -= learning_rate * dWhh
+        self.Why -= learning_rate * dWhy
+        self.bh -= learning_rate * dbh
+        self.by -= learning_rate * dby
+\end{lstlisting}
+
+% ===== SECTION 3: LSTM =====
+\section{Long Short-Term Memory (LSTM)}
+
+\subsection{Motivation}
+
+LSTM résout le problème du vanishing gradient en introduisant une \textbf{cellule mémoire} $\vect{c}_t$ et des \textbf{portes (gates)} qui contrôlent le flux d'information.
+
+\subsection{Architecture}
+
+\begin{definition}{LSTM}
+Un LSTM a 3 portes et 1 cellule mémoire :
+\begin{align}
+    \vect{f}_t &= \sigmoid(\mat{W}_f [\vect{h}_{t-1}, \vect{x}_t] + \vect{b}_f) \quad \text{(forget gate)} \\
+    \vect{i}_t &= \sigmoid(\mat{W}_i [\vect{h}_{t-1}, \vect{x}_t] + \vect{b}_i) \quad \text{(input gate)} \\
+    \tilde{\vect{c}}_t &= \tanh(\mat{W}_c [\vect{h}_{t-1}, \vect{x}_t] + \vect{b}_c) \quad \text{(candidate cell)} \\
+    \vect{c}_t &= \vect{f}_t \odot \vect{c}_{t-1} + \vect{i}_t \odot \tilde{\vect{c}}_t \quad \text{(cell state)} \\
+    \vect{o}_t &= \sigmoid(\mat{W}_o [\vect{h}_{t-1}, \vect{x}_t] + \vect{b}_o) \quad \text{(output gate)} \\
+    \vect{h}_t &= \vect{o}_t \odot \tanh(\vect{c}_t) \quad \text{(hidden state)}
+\end{align}
+où $\odot$ est le produit élément par élément (Hadamard).
+\end{definition}
+
+\subsection{Interprétation des portes}
+
+\begin{itemize}
+    \item \textbf{Forget gate} ($\vect{f}_t$) : Décide quelle information de $\vect{c}_{t-1}$ oublier
+    \begin{itemize}
+        \item $f_t = 0$ : oublier complètement
+        \item $f_t = 1$ : conserver complètement
+    \end{itemize}
+
+    \item \textbf{Input gate} ($\vect{i}_t$) : Décide quelle nouvelle information stocker dans $\vect{c}_t$
+    \begin{itemize}
+        \item $i_t = 0$ : ignorer la nouvelle information
+        \item $i_t = 1$ : stocker complètement
+    \end{itemize}
+
+    \item \textbf{Output gate} ($\vect{o}_t$) : Décide quelle partie de $\vect{c}_t$ exposer dans $\vect{h}_t$
+\end{itemize}
+
+\textbf{Flux d'information :}
+\begin{equation}
+    \vect{c}_t = \underbrace{\vect{f}_t \odot \vect{c}_{t-1}}_{\text{mémoire passée}} + \underbrace{\vect{i}_t \odot \tilde{\vect{c}}_t}_{\text{nouvelle info}}
+\end{equation}
+
+\begin{astuce}
+La cellule $\vect{c}_t$ agit comme une "autoroute" permettant au gradient de se propager sans atténuation (si $\vect{f}_t \approx 1$). Cela résout le vanishing gradient !
+\end{astuce}
+
+\subsection{Nombre de paramètres}
+
+Pour un LSTM avec $h$ unités cachées et $d$ inputs :
+\begin{equation}
+    \text{Params} = 4 \times (h \times (h + d) + h) = 4h(h + d + 1)
+\end{equation}
+
+Le facteur 4 vient des 4 matrices de poids (forget, input, candidate, output).
+
+\begin{exemple}{LSTM(128) avec input(100)}
+\begin{equation*}
+    \text{Params} = 4 \times 128 \times (128 + 100 + 1) = 117{,}248
+\end{equation*}
+\end{exemple}
+
+\subsection{Implémentation PyTorch}
+
+\begin{lstlisting}[language=Python, caption=LSTM avec PyTorch]
+import torch
+import torch.nn as nn
+
+class LSTMModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=1):
+        super(LSTMModel, self).__init__()
+
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+
+        # LSTM layer
+        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers,
+                            batch_first=True)
+
+        # Fully-connected output
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        """
+        x: (batch, seq_len, input_dim)
+        """
+        # Initialiser h0, c0
+        h0 = torch.zeros(self.num_layers, x.size(0),
+                         self.hidden_dim).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0),
+                         self.hidden_dim).to(x.device)
+
+        # LSTM forward
+        # out: (batch, seq_len, hidden_dim)
+        out, (hn, cn) = self.lstm(x, (h0, c0))
+
+        # Prendre le dernier timestep (many-to-one)
+        out = self.fc(out[:, -1, :])
+        return out
+
+# Exemple d'utilisation
+model = LSTMModel(input_dim=10, hidden_dim=128, output_dim=5)
+
+# Séquence de longueur 20
+x = torch.randn(32, 20, 10)  # (batch=32, seq_len=20, input_dim=10)
+output = model(x)
+print(output.shape)  # (32, 5)
+\end{lstlisting}
+
+% ===== SECTION 4: GRU =====
+\section{Gated Recurrent Unit (GRU)}
+
+\subsection{Architecture}
+
+GRU est une variante simplifiée du LSTM avec \textbf{2 portes} au lieu de 3.
+
+\begin{definition}{GRU}
+\begin{align}
+    \vect{z}_t &= \sigmoid(\mat{W}_z [\vect{h}_{t-1}, \vect{x}_t]) \quad \text{(update gate)} \\
+    \vect{r}_t &= \sigmoid(\mat{W}_r [\vect{h}_{t-1}, \vect{x}_t]) \quad \text{(reset gate)} \\
+    \tilde{\vect{h}}_t &= \tanh(\mat{W} [\vect{r}_t \odot \vect{h}_{t-1}, \vect{x}_t]) \quad \text{(candidate)} \\
+    \vect{h}_t &= (1 - \vect{z}_t) \odot \vect{h}_{t-1} + \vect{z}_t \odot \tilde{\vect{h}}_t
+\end{align}
+\end{definition}
+
+\subsection{Différences avec LSTM}
+
+\begin{table}[h]
+\centering
+\caption{LSTM vs GRU}
+\label{tab:lstm_gru}
+\begin{tabular}{lcc}
+\toprule
+ & \textbf{LSTM} & \textbf{GRU} \\
+\midrule
+Nombre de portes & 3 & 2 \\
+Cellule mémoire séparée & Oui ($\vect{c}_t$) & Non (seulement $\vect{h}_t$) \\
+Paramètres & $4h(h + d + 1)$ & $3h(h + d + 1)$ \\
+Vitesse & Plus lent & Plus rapide \\
+Performance & Légèrement meilleure & Comparable \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{astuce}
+\textbf{Règle pratique :}
+\begin{itemize}
+    \item LSTM : Séquences très longues, dépendances complexes
+    \item GRU : Séquences courtes/moyennes, plus rapide, moins de paramètres
+    \item En pratique, essayer les deux et comparer !
+\end{itemize}
+\end{astuce}
+
+\subsection{Implémentation PyTorch}
+
+\begin{lstlisting}[language=Python, caption=GRU avec PyTorch]
+class GRUModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=1):
+        super(GRUModel, self).__init__()
+
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+
+        self.gru = nn.GRU(input_dim, hidden_dim, num_layers,
+                          batch_first=True)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(0),
+                         self.hidden_dim).to(x.device)
+
+        out, hn = self.gru(x, h0)
+        out = self.fc(out[:, -1, :])
+        return out
+\end{lstlisting}
+
+% ===== SECTION 5: BIDIRECTIONAL RNN =====
+\section{Bidirectional RNN/LSTM/GRU}
+
+\subsection{Motivation}
+
+Un RNN classique ne voit que le \textbf{contexte passé}. Pour certaines tâches (NER, POS tagging), le contexte \textbf{futur} est aussi important.
+
+\begin{exemple}{Prédiction de mots}
+Phrase : "Le \_\_\_ mange la souris"
+
+\begin{itemize}
+    \item Contexte passé : "Le"
+    \item Contexte futur : "mange la souris" → animal carnivore → "chat"
+\end{itemize}
+\end{exemple}
+
+\subsection{Architecture}
+
+\begin{definition}{Bidirectional RNN}
+Un Bi-RNN a deux RNN :
+\begin{itemize}
+    \item \textbf{Forward RNN} : lit la séquence de gauche à droite → $\overrightarrow{\vect{h}}_t$
+    \item \textbf{Backward RNN} : lit la séquence de droite à gauche → $\overleftarrow{\vect{h}}_t$
+\end{itemize}
+
+La sortie finale est la concaténation :
+\begin{equation}
+    \vect{h}_t = [\overrightarrow{\vect{h}}_t ; \overleftarrow{\vect{h}}_t]
+\end{equation}
+\end{definition}
+
+\textbf{Nombre de paramètres :} Doublé (2 RNN indépendants)
+
+\subsection{Implémentation}
+
+\begin{lstlisting}[language=Python, caption=Bidirectional LSTM]
+class BiLSTM(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        super(BiLSTM, self).__init__()
+
+        # bidirectional=True
+        self.lstm = nn.LSTM(input_dim, hidden_dim,
+                            batch_first=True, bidirectional=True)
+
+        # hidden_dim * 2 car bidirectionnel
+        self.fc = nn.Linear(hidden_dim * 2, output_dim)
+
+    def forward(self, x):
+        # out: (batch, seq_len, hidden_dim * 2)
+        out, _ = self.lstm(x)
+        out = self.fc(out[:, -1, :])  # Dernier timestep
+        return out
+\end{lstlisting}
+
+% ===== SECTION 6: ATTENTION MECHANISM =====
+\section{Mécanisme d'Attention}
+
+\subsection{Motivation : Problème du goulot d'étranglement}
+
+En seq2seq (traduction), le décodeur doit tout comprendre à partir d'un seul vecteur contexte $\vect{c}$ :
+\begin{equation}
+    \text{Encoder} : (x_1, \ldots, x_n) \to \vect{c} \to \text{Decoder} : (y_1, \ldots, y_m)
+\end{equation}
+
+\textbf{Problème :} $\vect{c}$ est un goulot d'étranglement, surtout pour des séquences longues.
+
+\subsection{Attention de Bahdanau}
+
+\begin{definition}{Attention Mechanism}
+Au lieu d'un vecteur contexte fixe, on calcule un vecteur contexte \textbf{dynamique} $\vect{c}_t$ à chaque pas de décodage :
+\begin{align}
+    e_{t,i} &= \text{score}(\vect{s}_{t-1}, \vect{h}_i) \quad \text{(score d'attention)} \\
+    \alpha_{t,i} &= \frac{\exp(e_{t,i})}{\sum_{j=1}^n \exp(e_{t,j})} \quad \text{(poids d'attention)} \\
+    \vect{c}_t &= \sum_{i=1}^n \alpha_{t,i} \vect{h}_i \quad \text{(contexte pondéré)}
+\end{align}
+où :
+\begin{itemize}
+    \item $\vect{s}_{t-1}$ : état caché du décodeur
+    \item $\vect{h}_i$ : états cachés de l'encodeur
+    \item $\alpha_{t,i}$ : attention sur le mot $i$ de l'entrée
+\end{itemize}
+\end{definition}
+
+\subsection{Fonctions de score}
+
+\textbf{Dot product :}
+\begin{equation}
+    \text{score}(\vect{s}, \vect{h}) = \vect{s}^T \vect{h}
+\end{equation}
+
+\textbf{General (bilinear) :}
+\begin{equation}
+    \text{score}(\vect{s}, \vect{h}) = \vect{s}^T \mat{W}_a \vect{h}
+\end{equation}
+
+\textbf{Additive (Bahdanau) :}
+\begin{equation}
+    \text{score}(\vect{s}, \vect{h}) = \vect{v}_a^T \tanh(\mat{W}_1 \vect{s} + \mat{W}_2 \vect{h})
+\end{equation}
+
+\subsection{Scaled Dot-Product Attention}
+
+Version utilisée dans les Transformers :
+\begin{equation}
+    \text{Attention}(\mat{Q}, \mat{K}, \mat{V}) = \softmax\left(\frac{\mat{Q}\mat{K}^T}{\sqrt{d_k}}\right) \mat{V}
+\end{equation}
+où :
+\begin{itemize}
+    \item $\mat{Q}$ (Queries) : ce qu'on cherche
+    \item $\mat{K}$ (Keys) : ce qu'on a
+    \item $\mat{V}$ (Values) : ce qu'on renvoie
+    \item $d_k$ : dimension des clés (facteur de normalisation)
+\end{itemize}
+
+\textbf{Interprétation :}
+\begin{enumerate}
+    \item Calculer similarité entre $\mat{Q}$ et $\mat{K}$ : $\mat{Q}\mat{K}^T$
+    \item Normaliser par $\sqrt{d_k}$ pour éviter valeurs trop grandes
+    \item Appliquer softmax pour obtenir poids d'attention
+    \item Pondérer les valeurs $\mat{V}$
+\end{enumerate}
+
+% ===== SECTION 7: TRANSFORMERS =====
+\section{Transformers}
+
+\subsection{Motivation}
+
+\textbf{Limites des RNN :}
+\begin{itemize}
+    \item ❌ Traitement séquentiel (pas de parallélisation)
+    \item ❌ Difficulté avec dépendances à très long terme
+    \item ❌ Lent à entraîner
+\end{itemize}
+
+\textbf{Transformer (Vaswani et al., 2017) :}
+\begin{itemize}
+    \item ✅ Uniquement basé sur l'attention (pas de récurrence)
+    \item ✅ Complètement parallélisable
+    \item ✅ Capture dépendances à longue distance facilement
+    \item ✅ State-of-the-art en NLP (BERT, GPT, T5, etc.)
+\end{itemize}
+
+\subsection{Architecture globale}
+
+\textbf{Encoder-Decoder} avec 6 couches chacun (original paper) :
+
+\begin{itemize}
+    \item \textbf{Encoder} : Traite la séquence d'entrée
+    \item \textbf{Decoder} : Génère la séquence de sortie (autorégressif)
+\end{itemize}
+
+\subsection{Multi-Head Attention}
+
+\begin{definition}{Multi-Head Attention}
+Au lieu d'une seule attention, on calcule $h$ attentions en parallèle avec des projections différentes :
+\begin{align}
+    \text{head}_i &= \text{Attention}(\mat{Q}\mat{W}_i^Q, \mat{K}\mat{W}_i^K, \mat{V}\mat{W}_i^V) \\
+    \text{MultiHead}(\mat{Q}, \mat{K}, \mat{V}) &= \text{Concat}(\text{head}_1, \ldots, \text{head}_h) \mat{W}^O
+\end{align}
+où $\mat{W}_i^Q, \mat{W}_i^K, \mat{W}_i^V$ sont des matrices de projection apprenables.
+\end{definition}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Chaque tête peut se concentrer sur des aspects différents (syntaxe, sémantique, etc.)
+    \item Plus expressif qu'une seule attention
+\end{itemize}
+
+\subsection{Positional Encoding}
+
+\textbf{Problème :} Sans récurrence, le Transformer ne connaît pas l'ordre des mots !
+
+\textbf{Solution :} Ajouter un \textbf{encodage de position} à chaque embedding :
+\begin{align}
+    PE_{(pos, 2i)} &= \sin\left(\frac{pos}{10000^{2i/d}}\right) \\
+    PE_{(pos, 2i+1)} &= \cos\left(\frac{pos}{10000^{2i/d}}\right)
+\end{align}
+où $pos$ est la position et $i$ la dimension.
+
+\begin{equation}
+    \vect{x}_{\text{input}} = \text{Embedding}(\text{token}) + \text{PositionalEncoding}(pos)
+\end{equation}
+
+\subsection{Encoder Layer}
+
+Une couche encoder contient :
+\begin{enumerate}
+    \item \textbf{Multi-Head Self-Attention}
+    \item \textbf{Add \& Norm} (Residual connection + Layer Normalization)
+    \item \textbf{Feed-Forward Network} (2 couches FC avec ReLU)
+    \item \textbf{Add \& Norm}
+\end{enumerate}
+
+\begin{align}
+    \vect{z} &= \text{LayerNorm}(\vect{x} + \text{MultiHeadAttention}(\vect{x}, \vect{x}, \vect{x})) \\
+    \text{output} &= \text{LayerNorm}(\vect{z} + \text{FFN}(\vect{z}))
+\end{align}
+
+\subsection{Decoder Layer}
+
+Une couche decoder contient :
+\begin{enumerate}
+    \item \textbf{Masked Multi-Head Self-Attention} (ne voit que le passé)
+    \item \textbf{Add \& Norm}
+    \item \textbf{Multi-Head Cross-Attention} (attention sur l'encodeur)
+    \item \textbf{Add \& Norm}
+    \item \textbf{Feed-Forward Network}
+    \item \textbf{Add \& Norm}
+\end{enumerate}
+
+\textbf{Masking :} En génération, le décodeur ne doit voir que les tokens précédents (autorégressif).
+
+\subsection{Implémentation simplifiée}
+
+\begin{lstlisting}[language=Python, caption=Scaled Dot-Product Attention]
+import torch
+import torch.nn.functional as F
+
+def scaled_dot_product_attention(Q, K, V, mask=None):
+    """
+    Q, K, V: (batch, seq_len, d_k)
+    """
+    d_k = Q.size(-1)
+
+    # Scores: (batch, seq_len, seq_len)
+    scores = torch.matmul(Q, K.transpose(-2, -1)) / torch.sqrt(torch.tensor(d_k, dtype=torch.float32))
+
+    # Masking (optionnel)
+    if mask is not None:
+        scores = scores.masked_fill(mask == 0, -1e9)
+
+    # Softmax
+    attention_weights = F.softmax(scores, dim=-1)
+
+    # Weighted sum
+    output = torch.matmul(attention_weights, V)
+
+    return output, attention_weights
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Multi-Head Attention]
+class MultiHeadAttention(nn.Module):
+    def __init__(self, d_model, num_heads):
+        super(MultiHeadAttention, self).__init__()
+        assert d_model % num_heads == 0
+
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.d_k = d_model // num_heads
+
+        # Linear projections
+        self.W_q = nn.Linear(d_model, d_model)
+        self.W_k = nn.Linear(d_model, d_model)
+        self.W_v = nn.Linear(d_model, d_model)
+        self.W_o = nn.Linear(d_model, d_model)
+
+    def split_heads(self, x):
+        """Split into multiple heads"""
+        batch_size, seq_len, d_model = x.size()
+        return x.view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
+
+    def forward(self, Q, K, V, mask=None):
+        batch_size = Q.size(0)
+
+        # Linear projections
+        Q = self.split_heads(self.W_q(Q))  # (batch, num_heads, seq_len, d_k)
+        K = self.split_heads(self.W_k(K))
+        V = self.split_heads(self.W_v(V))
+
+        # Scaled dot-product attention
+        attn_output, _ = scaled_dot_product_attention(Q, K, V, mask)
+
+        # Concatenate heads
+        attn_output = attn_output.transpose(1, 2).contiguous().view(
+            batch_size, -1, self.d_model
+        )
+
+        # Final linear
+        output = self.W_o(attn_output)
+        return output
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Transformer Encoder Layer]
+class TransformerEncoderLayer(nn.Module):
+    def __init__(self, d_model, num_heads, d_ff, dropout=0.1):
+        super(TransformerEncoderLayer, self).__init__()
+
+        self.self_attn = MultiHeadAttention(d_model, num_heads)
+        self.feed_forward = nn.Sequential(
+            nn.Linear(d_model, d_ff),
+            nn.ReLU(),
+            nn.Linear(d_ff, d_model)
+        )
+
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x, mask=None):
+        # Self-attention + residual + norm
+        attn_output = self.self_attn(x, x, x, mask)
+        x = self.norm1(x + self.dropout(attn_output))
+
+        # Feed-forward + residual + norm
+        ff_output = self.feed_forward(x)
+        x = self.norm2(x + self.dropout(ff_output))
+
+        return x
+\end{lstlisting}
+
+% ===== SECTION 8: APPLICATIONS NLP =====
+\section{Applications NLP}
+
+\subsection{Modèles pré-entraînés}
+
+\subsubsection{BERT (Bidirectional Encoder Representations from Transformers)}
+
+\textbf{Architecture :} Encoder Transformer (12 ou 24 couches)
+
+\textbf{Pré-entraînement :}
+\begin{itemize}
+    \item \textbf{Masked Language Modeling (MLM)} : Prédire les mots masqués
+    \item \textbf{Next Sentence Prediction (NSP)} : Prédire si phrase B suit phrase A
+\end{itemize}
+
+\textbf{Fine-tuning :} Classification, NER, Q\&A, etc.
+
+\subsubsection{GPT (Generative Pre-trained Transformer)}
+
+\textbf{Architecture :} Decoder Transformer (autorégressif)
+
+\textbf{Pré-entraînement :} Language modeling (prédire token suivant)
+
+\textbf{Modèles :}
+\begin{itemize}
+    \item GPT-2 (1.5B params)
+    \item GPT-3 (175B params)
+    \item GPT-4 (1.76T params estimé)
+\end{itemize}
+
+\subsubsection{T5, BART, RoBERTa, etc.}
+
+Nombreuses variantes avec différentes stratégies de pré-entraînement.
+
+\subsection{Utilisation avec HuggingFace Transformers}
+
+\begin{lstlisting}[language=Python, caption=BERT pour classification]
+from transformers import BertTokenizer, BertForSequenceClassification
+import torch
+
+# Charger modèle pré-entraîné
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertForSequenceClassification.from_pretrained(
+    'bert-base-uncased',
+    num_labels=2  # Binary classification
+)
+
+# Texte à classifier
+text = "This movie is fantastic!"
+inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
+
+# Forward
+outputs = model(**inputs)
+logits = outputs.logits
+probs = torch.softmax(logits, dim=-1)
+
+print(f"Positive: {probs[0, 1]:.2f}")
+print(f"Negative: {probs[0, 0]:.2f}")
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=GPT-2 pour génération de texte]
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
+tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+model = GPT2LMHeadModel.from_pretrained('gpt2')
+
+# Prompt
+prompt = "Once upon a time"
+inputs = tokenizer.encode(prompt, return_tensors='pt')
+
+# Génération
+outputs = model.generate(
+    inputs,
+    max_length=50,
+    num_return_sequences=1,
+    temperature=0.7,
+    top_p=0.9,
+    do_sample=True
+)
+
+generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print(generated_text)
+\end{lstlisting}
+
+% ===== SECTION 9: SÉRIES TEMPORELLES =====
+\section{Séries Temporelles}
+
+\subsection{Prédiction}
+
+\begin{lstlisting}[language=Python, caption=LSTM pour prédiction de séries temporelles]
+import numpy as np
+import torch
+import torch.nn as nn
+
+# Générer série temporelle synthétique
+t = np.linspace(0, 100, 1000)
+data = np.sin(t) + 0.1 * np.random.randn(1000)
+
+# Créer séquences (window = 50)
+def create_sequences(data, window=50):
+    X, y = [], []
+    for i in range(len(data) - window):
+        X.append(data[i:i+window])
+        y.append(data[i+window])
+    return np.array(X), np.array(y)
+
+X, y = create_sequences(data, window=50)
+X = torch.FloatTensor(X).unsqueeze(-1)  # (N, 50, 1)
+y = torch.FloatTensor(y)
+
+# Modèle LSTM
+class TimeSeriesLSTM(nn.Module):
+    def __init__(self, input_dim=1, hidden_dim=64, num_layers=2):
+        super(TimeSeriesLSTM, self).__init__()
+        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, 1)
+
+    def forward(self, x):
+        out, _ = self.lstm(x)
+        out = self.fc(out[:, -1, :])  # Dernier timestep
+        return out.squeeze()
+
+model = TimeSeriesLSTM()
+criterion = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+# Training
+num_epochs = 100
+for epoch in range(num_epochs):
+    model.train()
+    optimizer.zero_grad()
+
+    outputs = model(X)
+    loss = criterion(outputs, y)
+
+    loss.backward()
+    optimizer.step()
+
+    if (epoch + 1) % 10 == 0:
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
+\end{lstlisting}
+
+% ===== SECTION 10: BONNES PRATIQUES =====
+\section{Bonnes Pratiques}
+
+\subsection{RNN/LSTM/GRU}
+
+\begin{itemize}
+    \item \textbf{Gradient clipping} : Limiter norme du gradient (5-10)
+    \item \textbf{Layer Normalization} : Stabilise l'entraînement
+    \item \textbf{Dropout} : Sur les connexions non-récurrentes uniquement
+    \item \textbf{Teacher Forcing} : En seq2seq, utiliser vraies sorties pendant entraînement
+    \item \textbf{Beam Search} : Pour génération (au lieu de greedy)
+\end{itemize}
+
+\subsection{Transformers}
+
+\begin{itemize}
+    \item \textbf{Learning Rate Warmup} : Augmenter LR progressivement au début
+    \item \textbf{Label Smoothing} : Régularisation pour classification
+    \item \textbf{Dropout} : Sur attention et FFN
+    \item \textbf{Layer Normalization} : Avant ou après chaque sous-couche
+    \item \textbf{Gradient Accumulation} : Pour simuler grands batch sizes
+\end{itemize}
+
+% ===== SECTION 11: RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{RNN} : État caché récurrent, vanishing/exploding gradient
+    \item \textbf{LSTM} : 3 portes (forget, input, output) + cellule mémoire
+    \item \textbf{GRU} : Variante simplifiée avec 2 portes
+    \item \textbf{Bidirectional} : Contexte passé + futur
+    \item \textbf{Attention} : Pondération dynamique des inputs
+    \item \textbf{Transformer} : Uniquement attention, parallélisable, state-of-the-art NLP
+    \item \textbf{BERT} : Encoder pré-entraîné (MLM)
+    \item \textbf{GPT} : Decoder autorégressif (LM)
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\textbf{RNN :}
+\begin{equation*}
+    \vect{h}_t = \tanh(\mat{W}_{hh} \vect{h}_{t-1} + \mat{W}_{xh} \vect{x}_t + \vect{b})
+\end{equation*}
+
+\textbf{LSTM (simplifié) :}
+\begin{align*}
+    \vect{c}_t &= \vect{f}_t \odot \vect{c}_{t-1} + \vect{i}_t \odot \tilde{\vect{c}}_t \\
+    \vect{h}_t &= \vect{o}_t \odot \tanh(\vect{c}_t)
+\end{align*}
+
+\textbf{Scaled Dot-Product Attention :}
+\begin{equation*}
+    \text{Attention}(\mat{Q}, \mat{K}, \mat{V}) = \softmax\left(\frac{\mat{Q}\mat{K}^T}{\sqrt{d_k}}\right) \mat{V}
+\end{equation*}
+\end{tcolorbox}
+
+% ===== SECTION 12: EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de compréhension}
+
+\begin{enumerate}
+    \item Pourquoi le RNN vanilla souffre-t-il du vanishing gradient ?
+    \item Expliquer le rôle de chaque porte dans un LSTM.
+    \item Quelle est la différence principale entre LSTM et GRU ?
+    \item Pourquoi utiliser un Bidirectional RNN pour le NER ?
+    \item Comment le mécanisme d'attention résout-il le problème du goulot d'étranglement ?
+    \item Pourquoi le Transformer a-t-il besoin de positional encoding ?
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+
+\begin{enumerate}
+    \item \textbf{Prédiction de séries temporelles}
+    \begin{itemize}
+        \item Implémenter un LSTM pour prédire une série temporelle
+        \item Comparer LSTM vs GRU
+        \item Visualiser les prédictions
+    \end{itemize}
+
+    \item \textbf{Sentiment Analysis}
+    \begin{itemize}
+        \item Fine-tuner BERT sur un dataset de reviews (IMDB, Yelp)
+        \item Comparer avec un LSTM from scratch
+    \end{itemize}
+
+    \item \textbf{Génération de texte}
+    \begin{itemize}
+        \item Entraîner un RNN character-level sur Shakespeare
+        \item Générer du texte avec temperature sampling
+    \end{itemize}
+
+    \item \textbf{Attention Visualization}
+    \begin{itemize}
+        \item Implémenter attention de Bahdanau
+        \item Visualiser les poids d'attention sur une tâche de traduction
+    \end{itemize}
+\end{enumerate}
+
+\textit{Solutions disponibles dans} \texttt{08_exercices.ipynb} \textit{(solutions intégrées dans le notebook)}
+
+% ===== SECTION: NOTEBOOKS PRATIQUES =====
+\section{Notebooks Pratiques}
+
+Ce chapitre est accompagné des notebooks suivants :
+
+\begin{itemize}
+    \item \texttt{08_demo_lstm\_sentiment.ipynb} : Analyse de sentiment avec LSTM
+    \begin{itemize}
+        \item LSTM bidirectionnel pour classification de texte
+        \item Dataset IMDB Reviews (sentiment positif/négatif)
+        \item Preprocessing et tokenization
+        \item Training avec PyTorch et visualisation des résultats
+    \end{itemize}
+
+    \item \texttt{08_demo_transformers\_huggingface.ipynb} : Transformers avec Hugging Face
+    \begin{itemize}
+        \item Fine-tuning de BERT pour classification de texte
+        \item Génération de texte avec GPT-2
+        \item Utilisation de la bibliothèque Transformers
+        \item Tokenization et gestion des modèles pré-entraînés
+    \end{itemize}
+
+    \item \texttt{08_demo_rag\_llm.ipynb} : RAG et LLMs avancés \textbf{(NOUVEAU)}
+    \begin{itemize}
+        \item Introduction au Retrieval-Augmented Generation (RAG)
+        \item Embeddings avec Sentence-BERT et recherche vectorielle (FAISS)
+        \item Pipeline RAG complet : Retrieval + Context + Generation
+        \item Chunking et preprocessing de documents longs
+        \item Techniques avancées : Reranking avec CrossEncoder
+        \item Hybrid Search : combinaison BM25 (keyword) + Dense embeddings
+        \item Évaluation du RAG : Precision@K, Recall@K
+        \item Visualisation des embeddings avec PCA
+        \item Applications pratiques : chatbots, QA systems, documentation
+    \end{itemize}
+
+    \item \texttt{08_exercices.ipynb} : Exercices pratiques avec solutions intégrées
+    \begin{itemize}
+        \item Implémentation de RNN vanilla et LSTM from scratch
+        \item Seq2Seq avec attention pour traduction
+        \item Génération de texte avec temperature sampling
+        \item Attention visualization
+    \end{itemize}
+\end{itemize}
+
+% ===== SECTION 13: POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\begin{itemize}
+    \item Hochreiter \& Schmidhuber (1997) - "Long Short-Term Memory"
+    \item Bahdanau et al. (2014) - "Neural Machine Translation by Jointly Learning to Align and Translate"
+    \item Vaswani et al. (2017) - "Attention Is All You Need" (Transformer)
+    \item Devlin et al. (2018) - "BERT: Pre-training of Deep Bidirectional Transformers"
+    \item Radford et al. (2019) - "Language Models are Unsupervised Multitask Learners" (GPT-2)
+\end{itemize}
+
+\subsection{Ressources}
+
+\begin{itemize}
+    \item The Illustrated Transformer : \url{https://jalammar.github.io/illustrated-transformer/}
+    \item HuggingFace Transformers : \url{https://huggingface.co/docs/transformers/}
+    \item Sequence Models (Coursera) : Andrew Ng
+    \item Annotated Transformer : \url{https://nlp.seas.harvard.edu/annotated-transformer/}
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+
+Chapitre suivant recommandé : \textbf{Chapitre 09 - Reinforcement Learning}
+
+Le reinforcement learning permet d'entraîner des agents à prendre des décisions séquentielles pour maximiser une récompense.
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item Hochreiter, S., \& Schmidhuber, J. (1997). "Long short-term memory". \textit{Neural computation}, 9(8), 1735-1780.
+    \item Cho, K., et al. (2014). "Learning phrase representations using RNN encoder-decoder for statistical machine translation". \textit{EMNLP}.
+    \item Bahdanau, D., Cho, K., \& Bengio, Y. (2014). "Neural machine translation by jointly learning to align and translate". \textit{arXiv:1409.0473}.
+    \item Vaswani, A., et al. (2017). "Attention is all you need". \textit{NIPS}.
+    \item Devlin, J., et al. (2018). "BERT: Pre-training of deep bidirectional transformers for language understanding". \textit{arXiv:1810.04805}.
+    \item Radford, A., et al. (2019). "Language models are unsupervised multitask learners". \textit{OpenAI blog}.
+\end{enumerate}
+
+\end{document}

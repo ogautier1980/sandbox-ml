@@ -1,0 +1,1402 @@
+% Chapitre 11 - Séries Temporelles et Forecasting
+% Cours Machine Learning - Sandbox-ML
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 11 - Séries Temporelles et Forecasting},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 12 - Séries Temporelles et Forecasting}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS (code Python) =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=Attention,
+    breakable
+}
+
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\text{Var}}
+\newcommand{\Cov}{\text{Cov}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+% ===== DÉBUT DU DOCUMENT =====
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 12}\\[0.3cm]
+    {\LARGE\bfseries Séries Temporelles et Forecasting}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Comprendre les composantes et propriétés des séries temporelles
+        \item Maîtriser les modèles classiques (ARIMA, SARIMA, Prophet)
+        \item Appliquer le Deep Learning au forecasting (LSTM, GRU, Transformers)
+        \item Évaluer et valider les prédictions temporelles
+        \item Implémenter des pipelines de prédiction robustes
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitres 06 (Réseaux de Neurones), 08 (RNN/LSTM)\\[0.3cm]
+    \textbf{Durée estimée :} 6-8 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{11_demo_*.ipynb}, \texttt{11_exercices.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+% ===== TABLE DES MATIÈRES =====
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: MOTIVATION =====
+\section{Motivation}
+
+Les séries temporelles sont omniprésentes dans notre monde : cours boursiers, météorologie, trafic réseau, consommation d'énergie, ventes de produits, signaux biologiques, etc. La capacité à analyser et prédire ces données séquentielles est cruciale pour de nombreuses applications industrielles et scientifiques.
+
+\begin{exemple}{Problèmes de forecasting réels}
+\begin{itemize}
+    \item \textbf{Finance :} Prédire le prix d'une action dans les prochains jours
+    \item \textbf{Énergie :} Anticiper la demande électrique pour optimiser la production
+    \item \textbf{E-commerce :} Prévoir les ventes pour gérer les stocks
+    \item \textbf{Santé :} Monitorer les signes vitaux et détecter les anomalies
+    \item \textbf{Météo :} Prédire la température et les précipitations
+\end{itemize}
+\end{exemple}
+
+Contrairement aux problèmes de ML classiques où les observations sont supposées i.i.d. (indépendantes et identiquement distribuées), les séries temporelles présentent une \textbf{dépendance temporelle} : la valeur à l'instant $t$ dépend des valeurs passées. Cette propriété fondamentale nécessite des approches spécifiques.
+
+\subsection{Différences avec le ML classique}
+
+\begin{table}[h]
+\centering
+\caption{ML Classique vs Séries Temporelles}
+\begin{tabular}{lll}
+\toprule
+\textbf{Aspect} & \textbf{ML Classique} & \textbf{Séries Temporelles} \\
+\midrule
+Structure & Observations i.i.d. & Dépendance temporelle \\
+Validation & Cross-validation & Time series split \\
+Features & Données tabulaires & Séquences temporelles \\
+Objectif & Classification/Régression & Forecasting/Détection \\
+Train/Test Split & Aléatoire & Chronologique \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 2: FONDEMENTS THÉORIQUES =====
+\section{Fondements Théoriques}
+
+\subsection{Définition et Notation}
+
+\begin{definition}{Série Temporelle}
+Une série temporelle est une séquence d'observations $\{y_t\}$ indexées par le temps $t$, où $t \in \{1, 2, \ldots, T\}$ pour des données discrètes.
+
+\[
+\{y_1, y_2, y_3, \ldots, y_T\}
+\]
+
+\textbf{Notation :}
+\begin{itemize}
+    \item $y_t$ : valeur observée au temps $t$
+    \item $\hat{y}_{t+h}$ : prédiction à l'horizon $h$ (forecast)
+    \item $T$ : longueur de la série (nombre d'observations)
+    \item $h$ : horizon de prédiction (forecast horizon)
+\end{itemize}
+\end{definition}
+
+\subsection{Composantes d'une Série Temporelle}
+
+Une série temporelle peut généralement être décomposée en plusieurs composantes :
+
+\begin{definition}{Décomposition Additive}
+\[
+y_t = T_t + S_t + R_t
+\]
+
+où :
+\begin{itemize}
+    \item $T_t$ : \textbf{Tendance (Trend)} - mouvement à long terme (croissance, décroissance)
+    \item $S_t$ : \textbf{Saisonnalité (Seasonality)} - motifs périodiques répétitifs
+    \item $R_t$ : \textbf{Résidu (Residual)} - fluctuations aléatoires (bruit)
+\end{itemize}
+\end{definition}
+
+\begin{definition}{Décomposition Multiplicative}
+\[
+y_t = T_t \times S_t \times R_t
+\]
+
+Utilisée quand la variance augmente avec le niveau de la série (croissance exponentielle).
+\end{definition}
+
+\begin{exemple}{Ventes mensuelles d'un produit}
+\begin{itemize}
+    \item \textbf{Tendance :} Croissance annuelle de 10\% (expansion du marché)
+    \item \textbf{Saisonnalité :} Pic en décembre (fêtes de fin d'année)
+    \item \textbf{Résidu :} Variations aléatoires dues à la météo, promotions
+\end{itemize}
+\end{exemple}
+
+\subsection{Stationnarité}
+
+La stationnarité est une propriété fondamentale qui simplifie grandement l'analyse et la modélisation.
+
+\begin{definition}{Stationnarité Forte}
+Une série $\{y_t\}$ est strictement stationnaire si sa distribution jointe est invariante par translation temporelle :
+
+\[
+P(y_{t_1}, y_{t_2}, \ldots, y_{t_k}) = P(y_{t_1+h}, y_{t_2+h}, \ldots, y_{t_k+h})
+\]
+
+pour tout $h$ et tous indices $t_1, \ldots, t_k$.
+\end{definition}
+
+\begin{definition}{Stationnarité Faible (du Second Ordre)}
+Une série $\{y_t\}$ est faiblement stationnaire si :
+\begin{enumerate}
+    \item $\E[y_t] = \mu$ est constante (moyenne constante)
+    \item $\Var(y_t) = \sigma^2$ est constante (variance constante)
+    \item $\Cov(y_t, y_{t+h}) = \gamma(h)$ ne dépend que de $h$ (autocovariance stationnaire)
+\end{enumerate}
+\end{definition}
+
+\begin{attention}
+La plupart des modèles classiques (ARIMA) supposent la stationnarité. Il faut donc transformer les séries non-stationnaires avant de les modéliser.
+\end{attention}
+
+\subsubsection{Techniques de Stationnarisation}
+
+\begin{enumerate}
+    \item \textbf{Différenciation :} $\nabla y_t = y_t - y_{t-1}$ (élimine la tendance)
+    \item \textbf{Transformation log :} $\log(y_t)$ (stabilise la variance)
+    \item \textbf{Différence saisonnière :} $\nabla_s y_t = y_t - y_{t-s}$ avec $s$ = période saisonnière
+    \item \textbf{Détrending :} Soustraire une tendance estimée (linéaire, polynomiale)
+\end{enumerate}
+
+\subsection{Autocorrélation et Autocorrélation Partielle}
+
+\begin{definition}{Fonction d'Autocorrélation (ACF)}
+Mesure la corrélation linéaire entre $y_t$ et $y_{t-k}$ (lag $k$) :
+
+\[
+\rho(k) = \frac{\Cov(y_t, y_{t-k})}{\sqrt{\Var(y_t) \Var(y_{t-k})}} = \frac{\gamma(k)}{\gamma(0)}
+\]
+
+où $\gamma(k) = \E[(y_t - \mu)(y_{t-k} - \mu)]$ est l'autocovariance au lag $k$.
+\end{definition}
+
+\begin{definition}{Fonction d'Autocorrélation Partielle (PACF)}
+Mesure la corrélation entre $y_t$ et $y_{t-k}$ après avoir éliminé l'influence des lags intermédiaires $1, 2, \ldots, k-1$.
+
+Utilisée pour identifier l'ordre $p$ d'un modèle AR$(p)$.
+\end{definition}
+
+\begin{astuce}
+\textbf{Interprétation ACF/PACF :}
+\begin{itemize}
+    \item ACF décroît lentement : série non-stationnaire (tendance)
+    \item Pic significatif à lag $s$ : saisonnalité de période $s$
+    \item PACF coupe après lag $p$ : modèle AR$(p)$ approprié
+    \item ACF coupe après lag $q$ : modèle MA$(q)$ approprié
+\end{itemize}
+\end{astuce}
+
+\subsection{Tests de Stationnarité}
+
+\begin{definition}{Test de Dickey-Fuller Augmenté (ADF)}
+Test statistique pour détecter la présence d'une racine unitaire (non-stationnarité).
+
+\textbf{Hypothèses :}
+\begin{itemize}
+    \item $H_0$ : La série possède une racine unitaire (non-stationnaire)
+    \item $H_1$ : La série est stationnaire
+\end{itemize}
+
+\textbf{Décision :}
+\begin{itemize}
+    \item Si $p$-value $< 0.05$ : rejeter $H_0$ $\Rightarrow$ série stationnaire
+    \item Si $p$-value $\geq 0.05$ : ne pas rejeter $H_0$ $\Rightarrow$ série non-stationnaire
+\end{itemize}
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Test ADF avec statsmodels]
+from statsmodels.tsa.stattools import adfuller
+
+# Test de stationnarite
+result = adfuller(timeseries)
+adf_statistic = result[0]
+p_value = result[1]
+
+print(f"ADF Statistic: {adf_statistic:.4f}")
+print(f"p-value: {p_value:.4f}")
+
+if p_value < 0.05:
+    print("Serie stationnaire (rejeter H0)")
+else:
+    print("Serie non-stationnaire (ne pas rejeter H0)")
+\end{lstlisting}
+
+% ===== SECTION 3: MODÈLES CLASSIQUES =====
+\section{Modèles Classiques de Séries Temporelles}
+
+\subsection{Modèle AutoRégressif AR(p)}
+
+\begin{definition}{Modèle AR(p)}
+Un processus autorégressif d'ordre $p$ exprime $y_t$ comme une combinaison linéaire des $p$ valeurs passées plus un bruit blanc :
+
+\[
+y_t = c + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \cdots + \phi_p y_{t-p} + \epsilon_t
+\]
+
+où :
+\begin{itemize}
+    \item $c$ : constante (intercept)
+    \item $\phi_1, \ldots, \phi_p$ : coefficients autorégressifs
+    \item $\epsilon_t \sim \mathcal{N}(0, \sigma^2)$ : bruit blanc (innovations)
+\end{itemize}
+\end{definition}
+
+\begin{exemple}{AR(1) - Modèle autorégressif d'ordre 1}
+\[
+y_t = c + \phi_1 y_{t-1} + \epsilon_t
+\]
+
+Si $|\phi_1| < 1$ : processus stationnaire convergeant vers la moyenne $\mu = \frac{c}{1 - \phi_1}$
+\end{exemple}
+
+\textbf{Identification de l'ordre $p$ :}
+\begin{itemize}
+    \item PACF coupe après lag $p$
+    \item ACF décroît exponentiellement ou avec oscillations amorties
+\end{itemize}
+
+\subsection{Modèle Moyenne Mobile MA(q)}
+
+\begin{definition}{Modèle MA(q)}
+Un processus moyenne mobile d'ordre $q$ exprime $y_t$ comme une combinaison linéaire des $q$ innovations passées :
+
+\[
+y_t = \mu + \epsilon_t + \theta_1 \epsilon_{t-1} + \theta_2 \epsilon_{t-2} + \cdots + \theta_q \epsilon_{t-q}
+\]
+
+où :
+\begin{itemize}
+    \item $\mu$ : moyenne du processus
+    \item $\theta_1, \ldots, \theta_q$ : coefficients MA
+    \item $\epsilon_t \sim \mathcal{N}(0, \sigma^2)$ : bruit blanc
+\end{itemize}
+\end{definition}
+
+\textbf{Identification de l'ordre $q$ :}
+\begin{itemize}
+    \item ACF coupe après lag $q$
+    \item PACF décroît exponentiellement
+\end{itemize}
+
+\subsection{Modèle ARMA(p,q)}
+
+\begin{definition}{Modèle ARMA(p,q)}
+Combine les composantes AR et MA :
+
+\[
+y_t = c + \phi_1 y_{t-1} + \cdots + \phi_p y_{t-p} + \epsilon_t + \theta_1 \epsilon_{t-1} + \cdots + \theta_q \epsilon_{t-q}
+\]
+
+Plus flexible que AR ou MA seuls, capture à la fois autocorrélations et moyennes mobiles.
+\end{definition}
+
+\subsection{Modèle ARIMA(p,d,q)}
+
+\begin{definition}{Modèle ARIMA(p,d,q)}
+ARIMA = AutoRegressive Integrated Moving Average
+
+\textbf{Paramètres :}
+\begin{itemize}
+    \item $p$ : ordre autorégressif (nombre de lags $y_{t-i}$)
+    \item $d$ : ordre de différenciation (nombre de différences pour stationnariser)
+    \item $q$ : ordre moyenne mobile (nombre de lags $\epsilon_{t-i}$)
+\end{itemize}
+
+\textbf{Formulation :}
+\[
+\nabla^d y_t = c + \phi_1 \nabla^d y_{t-1} + \cdots + \phi_p \nabla^d y_{t-p} + \epsilon_t + \theta_1 \epsilon_{t-1} + \cdots + \theta_q \epsilon_{t-q}
+\]
+
+où $\nabla^d$ représente $d$ différenciations successives.
+\end{definition}
+
+\begin{exemple}{ARIMA(1,1,1) - Modèle simple}
+\begin{itemize}
+    \item $d=1$ : une différenciation $\nabla y_t = y_t - y_{t-1}$
+    \item $p=1$ : un terme autorégressif $\phi_1 \nabla y_{t-1}$
+    \item $q=1$ : un terme moyenne mobile $\theta_1 \epsilon_{t-1}$
+\end{itemize}
+
+Équation : $\nabla y_t = c + \phi_1 \nabla y_{t-1} + \epsilon_t + \theta_1 \epsilon_{t-1}$
+\end{exemple}
+
+\subsubsection{Sélection des paramètres (p,d,q)}
+
+\begin{enumerate}
+    \item \textbf{Ordre $d$ :} Différencier jusqu'à obtenir la stationnarité (test ADF)
+    \item \textbf{Ordre $p$ :} Analyser PACF de la série différenciée
+    \item \textbf{Ordre $q$ :} Analyser ACF de la série différenciée
+    \item \textbf{Critères d'information :} Comparer AIC/BIC pour différents $(p,q)$
+\end{enumerate}
+
+\begin{definition}{Critères AIC et BIC}
+\textbf{AIC (Akaike Information Criterion) :}
+\[
+\text{AIC} = 2k - 2\ln(\hat{L})
+\]
+
+\textbf{BIC (Bayesian Information Criterion) :}
+\[
+\text{BIC} = k \ln(n) - 2\ln(\hat{L})
+\]
+
+où $k$ = nombre de paramètres, $n$ = taille échantillon, $\hat{L}$ = vraisemblance maximale.
+
+\textbf{Objectif :} Minimiser AIC ou BIC (pénalise la complexité du modèle).
+\end{definition}
+
+\subsection{Modèle SARIMA(p,d,q)(P,D,Q)s}
+
+\begin{definition}{Modèle SARIMA - Seasonal ARIMA}
+Extension d'ARIMA pour capturer la saisonnalité périodique de période $s$.
+
+\textbf{Paramètres non-saisonniers :} $(p, d, q)$
+
+\textbf{Paramètres saisonniers :} $(P, D, Q)_s$
+\begin{itemize}
+    \item $P$ : ordre AR saisonnier (lags $y_{t-s}, y_{t-2s}, \ldots$)
+    \item $D$ : ordre de différenciation saisonnière
+    \item $Q$ : ordre MA saisonnier
+    \item $s$ : période saisonnière (12 pour mensuel, 7 pour quotidien hebdomadaire)
+\end{itemize}
+\end{definition}
+
+\begin{exemple}{SARIMA(1,1,1)(1,1,1)12 pour données mensuelles}
+\begin{itemize}
+    \item Tendance : ARIMA(1,1,1)
+    \item Saisonnalité annuelle : période $s=12$ (12 mois)
+    \item Composante saisonnière : AR(1) MA(1) avec différenciation saisonnière
+\end{itemize}
+
+Capture à la fois les corrélations à court terme et les patterns annuels.
+\end{exemple}
+
+\begin{lstlisting}[language=Python, caption=ARIMA avec statsmodels]
+from statsmodels.tsa.arima.model import ARIMA
+
+# Ajuster ARIMA(1,1,1)
+model = ARIMA(timeseries, order=(1, 1, 1))
+fitted_model = model.fit()
+
+# Resume du modele
+print(fitted_model.summary())
+
+# Predictions
+forecast = fitted_model.forecast(steps=10)
+print(f"Predictions 10 prochains pas: {forecast}")
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=SARIMA avec statsmodels]
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+# SARIMA(1,1,1)(1,1,1,12) pour donnees mensuelles
+model = SARIMAX(timeseries,
+                order=(1, 1, 1),
+                seasonal_order=(1, 1, 1, 12))
+fitted_model = model.fit()
+
+# Predictions
+forecast = fitted_model.forecast(steps=24)  # 24 mois
+\end{lstlisting}
+
+\subsection{Prophet - Modèle de Facebook}
+
+\begin{definition}{Prophet}
+Modèle de forecasting développé par Facebook (Meta) pour des séries temporelles avec :
+\begin{itemize}
+    \item Tendances fortes (croissance linéaire ou logistique)
+    \item Saisonnalités multiples (annuelle, hebdomadaire, journalière)
+    \item Jours fériés et événements spéciaux
+    \item Observations manquantes et outliers
+\end{itemize}
+
+\textbf{Décomposition additive :}
+\[
+y(t) = g(t) + s(t) + h(t) + \epsilon_t
+\]
+
+où :
+\begin{itemize}
+    \item $g(t)$ : fonction de tendance (linéaire ou logistique avec changepoints)
+    \item $s(t)$ : saisonnalité périodique (séries de Fourier)
+    \item $h(t)$ : effets des jours fériés
+    \item $\epsilon_t$ : erreur résiduelle
+\end{itemize}
+\end{definition}
+
+\textbf{Avantages de Prophet :}
+\begin{itemize}
+    \item Interface simple (peu de tuning)
+    \item Robuste aux données manquantes et outliers
+    \item Détection automatique des changepoints (ruptures de tendance)
+    \item Saisonnalités multiples (annuelle, hebdomadaire, custom)
+    \item Gestion native des jours fériés (calendriers prédéfinis)
+    \item Intervalles de confiance automatiques
+\end{itemize}
+
+\begin{lstlisting}[language=Python, caption=Prophet de Facebook]
+from prophet import Prophet
+import pandas as pd
+
+# Donnees au format Prophet (colonnes 'ds' et 'y')
+df = pd.DataFrame({'ds': dates, 'y': values})
+
+# Creer et ajuster le modele
+model = Prophet(yearly_seasonality=True,
+                weekly_seasonality=True,
+                daily_seasonality=False)
+model.fit(df)
+
+# Predictions sur 365 jours
+future = model.make_future_dataframe(periods=365)
+forecast = model.predict(future)
+
+# Visualisation
+model.plot(forecast)
+model.plot_components(forecast)  # tendance + saisonnalites
+\end{lstlisting}
+
+\begin{attention}
+Prophet est excellent pour des séries avec saisonnalités claires et tendances changeantes, mais peut être moins performant que ARIMA sur des séries purement stationnaires ou avec des patterns complexes non-périodiques.
+\end{attention}
+
+% ===== SECTION 4: DEEP LEARNING POUR SÉRIES TEMPORELLES =====
+\section{Deep Learning pour Séries Temporelles}
+
+Les réseaux de neurones récurrents (RNN) et leurs variantes (LSTM, GRU) sont particulièrement adaptés aux données séquentielles grâce à leur capacité à modéliser les dépendances temporelles à long terme.
+
+\subsection{LSTM pour Forecasting}
+
+\begin{definition}{LSTM pour Séries Temporelles}
+Un réseau LSTM (Long Short-Term Memory) peut apprendre des dépendances temporelles complexes grâce à sa cellule mémoire et ses portes de régulation.
+
+\textbf{Architecture typique :}
+\begin{enumerate}
+    \item \textbf{Input :} Séquence de longueur $L$ : $(y_{t-L+1}, \ldots, y_{t-1}, y_t)$
+    \item \textbf{LSTM layers :} 1-3 couches avec hidden size $h$
+    \item \textbf{Output :} Prédiction $\hat{y}_{t+1}$ ou $(\hat{y}_{t+1}, \ldots, \hat{y}_{t+h})$
+\end{enumerate}
+\end{definition}
+
+\subsubsection{Préparation des Données - Windowing}
+
+Pour utiliser un LSTM, il faut transformer la série temporelle en séquences (windows) :
+
+\begin{exemple}{Création de fenêtres glissantes (sliding windows)}
+Série : $[y_1, y_2, y_3, y_4, y_5, y_6, y_7, y_8]$
+
+Avec window size $L=3$, horizon $h=1$ :
+\begin{align*}
+X_1 &= [y_1, y_2, y_3], \quad Y_1 = y_4 \\
+X_2 &= [y_2, y_3, y_4], \quad Y_2 = y_5 \\
+X_3 &= [y_3, y_4, y_5], \quad Y_3 = y_6 \\
+&\vdots
+\end{align*}
+
+Dataset final : $\{(X_i, Y_i)\}_{i=1}^{N}$
+\end{exemple}
+
+\begin{lstlisting}[language=Python, caption=Création de fenêtres glissantes]
+import numpy as np
+
+def create_windows(data, window_size, horizon=1):
+    X, y = [], []
+    for i in range(len(data) - window_size - horizon + 1):
+        X.append(data[i:i+window_size])
+        y.append(data[i+window_size:i+window_size+horizon])
+    return np.array(X), np.array(y)
+
+# Exemple
+timeseries = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+X, y = create_windows(timeseries, window_size=3, horizon=1)
+
+print(f"X shape: {X.shape}")  # (7, 3)
+print(f"y shape: {y.shape}")  # (7, 1)
+print(f"Premier exemple: X={X[0]} -> y={y[0]}")
+\end{lstlisting}
+
+\subsubsection{Architecture LSTM pour Forecasting}
+
+\begin{lstlisting}[language=Python, caption=LSTM avec PyTorch]
+import torch
+import torch.nn as nn
+
+class LSTMForecaster(nn.Module):
+    def __init__(self, input_size=1, hidden_size=64,
+                 num_layers=2, output_size=1, dropout=0.2):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+
+        # LSTM layers
+        self.lstm = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0
+        )
+
+        # Fully connected output
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        # x: (batch, seq_len, input_size)
+        lstm_out, (h_n, c_n) = self.lstm(x)
+
+        # Prendre le dernier output
+        last_output = lstm_out[:, -1, :]  # (batch, hidden_size)
+
+        # Prediction
+        output = self.fc(last_output)  # (batch, output_size)
+        return output
+
+# Instanciation
+model = LSTMForecaster(
+    input_size=1,      # features univariees
+    hidden_size=64,    # taille hidden state
+    num_layers=2,      # 2 couches LSTM
+    output_size=1,     # prediction 1 pas
+    dropout=0.2
+)
+
+print(model)
+\end{lstlisting}
+
+\subsubsection{Entraînement}
+
+\begin{lstlisting}[language=Python, caption=Entraînement LSTM]
+import torch.optim as optim
+
+# Hyperparametres
+learning_rate = 0.001
+num_epochs = 100
+batch_size = 32
+
+# Loss et optimizer
+criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+# DataLoader
+from torch.utils.data import TensorDataset, DataLoader
+
+X_train = torch.FloatTensor(X_train).unsqueeze(-1)  # (N, L, 1)
+y_train = torch.FloatTensor(y_train)
+
+dataset = TensorDataset(X_train, y_train)
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
+# Boucle d'entrainement
+model.train()
+for epoch in range(num_epochs):
+    epoch_loss = 0.0
+    for batch_X, batch_y in dataloader:
+        # Forward
+        predictions = model(batch_X)
+        loss = criterion(predictions.squeeze(), batch_y)
+
+        # Backward
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        epoch_loss += loss.item()
+
+    if (epoch + 1) % 10 == 0:
+        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss/len(dataloader):.4f}")
+\end{lstlisting}
+
+\subsection{GRU pour Forecasting}
+
+\begin{definition}{GRU - Gated Recurrent Unit}
+Variante simplifiée de LSTM avec seulement 2 portes (reset et update) au lieu de 3.
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Moins de paramètres que LSTM (entraînement plus rapide)
+    \item Performances souvent comparables à LSTM
+    \item Moins susceptible au surapprentissage
+\end{itemize}
+\end{definition}
+
+Remplacer simplement \texttt{nn.LSTM} par \texttt{nn.GRU} dans le code précédent.
+
+\subsection{Séries Temporelles Multivariées}
+
+\begin{definition}{Forecasting Multivarié}
+Prédire $y_t$ en utilisant plusieurs features $\vect{x}_t = [x_t^{(1)}, x_t^{(2)}, \ldots, x_t^{(d)}]^T$.
+
+\textbf{Exemple :} Prédire la consommation électrique avec :
+\begin{itemize}
+    \item $x_t^{(1)}$ : température
+    \item $x_t^{(2)}$ : jour de la semaine (encodé)
+    \item $x_t^{(3)}$ : consommation passée
+\end{itemize}
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=LSTM multivarié]
+# input_size = nombre de features
+model = LSTMForecaster(
+    input_size=5,      # 5 features en entree
+    hidden_size=128,
+    num_layers=2,
+    output_size=1      # 1 valeur predite (univarie output)
+)
+
+# X shape: (batch, seq_len, 5)
+# y shape: (batch, 1)
+\end{lstlisting}
+
+\subsection{Attention pour Séries Temporelles}
+
+Le mécanisme d'attention permet au modèle de se concentrer sur les instants les plus pertinents pour la prédiction.
+
+\begin{definition}{Temporal Attention}
+Au lieu de n'utiliser que le dernier hidden state, utiliser une combinaison pondérée de tous les hidden states :
+
+\[
+\vect{c} = \sum_{t=1}^{L} \alpha_t \vect{h}_t
+\]
+
+où $\alpha_t$ sont des poids d'attention calculés dynamiquement :
+
+\[
+\alpha_t = \frac{\exp(e_t)}{\sum_{i=1}^{L} \exp(e_i)}, \quad e_t = \text{score}(\vect{h}_t, \vect{h}_L)
+\]
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=LSTM avec Attention]
+class LSTMWithAttention(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, output_size):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.attention = nn.Linear(hidden_size, 1)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        # LSTM
+        lstm_out, _ = self.lstm(x)  # (batch, seq_len, hidden)
+
+        # Attention scores
+        scores = self.attention(lstm_out)  # (batch, seq_len, 1)
+        attention_weights = torch.softmax(scores, dim=1)
+
+        # Context vector (weighted sum)
+        context = torch.sum(attention_weights * lstm_out, dim=1)  # (batch, hidden)
+
+        # Prediction
+        output = self.fc(context)
+        return output
+\end{lstlisting}
+
+\subsection{Transformers pour Séries Temporelles}
+
+Les Transformers, initialement développés pour le NLP, sont de plus en plus utilisés pour les séries temporelles grâce au mécanisme d'attention multi-têtes.
+
+\begin{definition}{Transformer pour Forecasting}
+Architecture basée sur :
+\begin{itemize}
+    \item \textbf{Positional Encoding :} Ajouter l'information temporelle
+    \item \textbf{Multi-Head Self-Attention :} Capturer les relations entre tous les instants
+    \item \textbf{Feed-Forward Networks :} Transformations non-linéaires
+\end{itemize}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Capture des dépendances à très long terme
+    \item Parallélisation (pas de récurrence séquentielle)
+    \item Interprétabilité via les poids d'attention
+\end{itemize}
+\end{definition}
+
+\begin{exemple}{Modèles Transformer pour Time Series}
+\begin{itemize}
+    \item \textbf{Temporal Fusion Transformer (TFT)} : Google Research
+    \item \textbf{Autoformer} : Décomposition auto-corrélation
+    \item \textbf{Informer} : Attention sparse pour longues séquences
+    \item \textbf{PatchTST} : Découpage en patches comme en vision
+\end{itemize}
+\end{exemple}
+
+% ===== SECTION 5: MÉTRIQUES D'ÉVALUATION =====
+\section{Métriques d'Évaluation}
+
+\subsection{Métriques de Régression Classiques}
+
+\begin{definition}{Mean Absolute Error (MAE)}
+\[
+\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|
+\]
+
+Erreur absolue moyenne, interprétable dans l'unité des données.
+\end{definition}
+
+\begin{definition}{Mean Squared Error (MSE)}
+\[
+\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2
+\]
+
+Pénalise fortement les grandes erreurs (carré).
+\end{definition}
+
+\begin{definition}{Root Mean Squared Error (RMSE)}
+\[
+\text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}
+\]
+
+Erreur quadratique moyenne, même unité que les données.
+\end{definition}
+
+\subsection{Métriques Spécifiques aux Séries Temporelles}
+
+\begin{definition}{Mean Absolute Percentage Error (MAPE)}
+\[
+\text{MAPE} = \frac{100\%}{n} \sum_{i=1}^{n} \left|\frac{y_i - \hat{y}_i}{y_i}\right|
+\]
+
+Erreur en pourcentage, utile pour comparer des séries d'échelles différentes.
+
+\textbf{Attention :} Indéfini si $y_i = 0$.
+\end{definition}
+
+\begin{definition}{Symmetric MAPE (sMAPE)}
+\[
+\text{sMAPE} = \frac{100\%}{n} \sum_{i=1}^{n} \frac{|y_i - \hat{y}_i|}{(|y_i| + |\hat{y}_i|) / 2}
+\]
+
+Variante symétrique de MAPE, bornée entre 0\% et 200\%.
+\end{definition}
+
+\begin{definition}{Mean Absolute Scaled Error (MASE)}
+\[
+\text{MASE} = \frac{\text{MAE}}{\text{MAE}_{\text{naive}}}
+\]
+
+où $\text{MAE}_{\text{naive}}$ est l'erreur d'un modèle naïf (ex: prédire $\hat{y}_t = y_{t-1}$).
+
+\textbf{Interprétation :}
+\begin{itemize}
+    \item MASE $< 1$ : meilleur que le modèle naïf
+    \item MASE $= 1$ : équivalent au modèle naïf
+    \item MASE $> 1$ : pire que le modèle naïf
+\end{itemize}
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Calcul des métriques]
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import numpy as np
+
+def mape(y_true, y_pred):
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+def smape(y_true, y_pred):
+    return np.mean(2 * np.abs(y_pred - y_true) / (np.abs(y_true) + np.abs(y_pred))) * 100
+
+# Evaluation
+mae = mean_absolute_error(y_test, predictions)
+rmse = np.sqrt(mean_squared_error(y_test, predictions))
+mape_score = mape(y_test, predictions)
+
+print(f"MAE: {mae:.2f}")
+print(f"RMSE: {rmse:.2f}")
+print(f"MAPE: {mape_score:.2f}%")
+\end{lstlisting}
+
+% ===== SECTION 6: VALIDATION =====
+\section{Validation des Modèles de Séries Temporelles}
+
+\subsection{Time Series Split}
+
+\begin{attention}
+Ne JAMAIS utiliser la validation croisée classique (K-Fold aléatoire) pour les séries temporelles ! Cela créerait du \textbf{data leakage} (utiliser le futur pour prédire le passé).
+\end{attention}
+
+\begin{definition}{Time Series Split (Forward Chaining)}
+Validation séquentielle respectant l'ordre temporel :
+
+\begin{itemize}
+    \item \textbf{Fold 1 :} Train $[1, \ldots, t_1]$, Test $[t_1+1, \ldots, t_2]$
+    \item \textbf{Fold 2 :} Train $[1, \ldots, t_2]$, Test $[t_2+1, \ldots, t_3]$
+    \item \textbf{Fold 3 :} Train $[1, \ldots, t_3]$, Test $[t_3+1, \ldots, t_4]$
+    \item $\vdots$
+\end{itemize}
+
+Le training set grandit progressivement (expanding window).
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Time Series Split avec scikit-learn]
+from sklearn.model_selection import TimeSeriesSplit
+
+tscv = TimeSeriesSplit(n_splits=5)
+
+for fold, (train_idx, test_idx) in enumerate(tscv.split(X)):
+    print(f"Fold {fold+1}:")
+    print(f"  Train: {train_idx[0]} to {train_idx[-1]}")
+    print(f"  Test:  {test_idx[0]} to {test_idx[-1]}")
+
+    X_train, X_test = X[train_idx], X[test_idx]
+    y_train, y_test = y[train_idx], y[test_idx]
+
+    # Entrainer et evaluer le modele
+    model.fit(X_train, y_train)
+    score = model.score(X_test, y_test)
+    print(f"  Score: {score:.4f}\n")
+\end{lstlisting}
+
+\subsection{Backtesting}
+
+\begin{definition}{Backtesting}
+Simuler des prédictions historiques pour évaluer la performance du modèle :
+
+\begin{enumerate}
+    \item Entraîner sur $[1, \ldots, t]$
+    \item Prédire $\hat{y}_{t+1}$
+    \item Observer la vraie valeur $y_{t+1}$
+    \item Calculer l'erreur $|y_{t+1} - \hat{y}_{t+1}|$
+    \item Avancer d'un pas : $t \leftarrow t+1$
+    \item Répéter (potentiellement ré-entraîner le modèle)
+\end{enumerate}
+
+\textbf{Variantes :}
+\begin{itemize}
+    \item \textbf{Expanding window :} Training set grandit continuellement
+    \item \textbf{Rolling window :} Training set de taille fixe (glisse)
+\end{itemize}
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Backtesting simple]
+def backtest_model(model, data, window_size, test_size):
+    predictions = []
+    actuals = []
+
+    for i in range(len(data) - window_size - test_size):
+        # Train/test split
+        train_end = window_size + i
+        X_train = data[:train_end]
+        y_test = data[train_end]
+
+        # Entrainer
+        model.fit(X_train)
+
+        # Predire
+        pred = model.predict(steps=1)[0]
+        predictions.append(pred)
+        actuals.append(y_test)
+
+    # Evaluation
+    mae = mean_absolute_error(actuals, predictions)
+    return predictions, actuals, mae
+\end{lstlisting}
+
+% ===== SECTION 7: DÉTECTION D'ANOMALIES =====
+\section{Détection d'Anomalies dans les Séries Temporelles}
+
+\begin{definition}{Anomalie Temporelle}
+Observation anormale qui dévie significativement du pattern attendu.
+
+\textbf{Types d'anomalies :}
+\begin{itemize}
+    \item \textbf{Point anomaly :} Valeur isolée inhabituelle (spike)
+    \item \textbf{Contextual anomaly :} Valeur normale ailleurs mais anormale à cet instant
+    \item \textbf{Collective anomaly :} Séquence anormale (changement de régime)
+\end{itemize}
+\end{definition}
+
+\subsection{Méthodes Statistiques}
+
+\begin{definition}{Détection par Seuil (Z-score)}
+Une observation $y_t$ est anormale si :
+
+\[
+|z_t| = \left|\frac{y_t - \mu}{\sigma}\right| > \text{seuil}
+\]
+
+Seuil typique : 3 (99.7\% des données dans $[\mu - 3\sigma, \mu + 3\sigma]$)
+\end{definition}
+
+\subsection{Méthodes par Prédiction}
+
+\begin{definition}{Anomalie par Erreur de Prédiction}
+\begin{enumerate}
+    \item Entraîner un modèle de forecasting (ARIMA, LSTM)
+    \item Calculer l'erreur de prédiction $e_t = |y_t - \hat{y}_t|$
+    \item Anomalie si $e_t > \text{seuil}$ (ex: $\mu_e + 3\sigma_e$)
+\end{enumerate}
+
+\textbf{Intuition :} Une valeur difficile à prédire est potentiellement anormale.
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Détection d'anomalies par prédiction]
+# Predictions LSTM
+model.eval()
+predictions = model(X_test).squeeze().detach().numpy()
+actuals = y_test.numpy()
+
+# Erreurs de prediction
+errors = np.abs(actuals - predictions)
+
+# Seuil (moyenne + 3 * ecart-type)
+threshold = errors.mean() + 3 * errors.std()
+
+# Anomalies
+anomalies = errors > threshold
+print(f"Nombre d'anomalies detectees: {anomalies.sum()}")
+print(f"Indices: {np.where(anomalies)[0]}")
+\end{lstlisting}
+
+% ===== SECTION 8: BEST PRACTICES =====
+\section{Best Practices pour le Forecasting}
+
+\subsection{Preprocessing}
+
+\begin{enumerate}
+    \item \textbf{Gestion des valeurs manquantes :}
+    \begin{itemize}
+        \item Interpolation linéaire, spline, forward/backward fill
+        \item Modèles robustes (Prophet gère nativement)
+    \end{itemize}
+
+    \item \textbf{Détection et traitement des outliers :}
+    \begin{itemize}
+        \item Z-score, IQR, isolation forest
+        \item Winsorization (clipping), remplacement
+    \end{itemize}
+
+    \item \textbf{Normalisation/Standardisation :}
+    \begin{itemize}
+        \item Min-Max scaling : $x' = \frac{x - \min}{\max - \min}$
+        \item Standardisation : $x' = \frac{x - \mu}{\sigma}$
+        \item \textbf{Important :} Calculer stats sur train uniquement !
+    \end{itemize}
+\end{enumerate}
+
+\begin{lstlisting}[language=Python, caption=Normalisation correcte]
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+
+# Fit sur train uniquement
+scaler.fit(X_train)
+
+# Transform train et test
+X_train_scaled = scaler.transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Predictions
+predictions_scaled = model.predict(X_test_scaled)
+
+# Inverse transform pour revenir a l'echelle originale
+predictions = scaler.inverse_transform(predictions_scaled)
+\end{lstlisting}
+
+\subsection{Feature Engineering}
+
+\begin{enumerate}
+    \item \textbf{Features temporelles :}
+    \begin{itemize}
+        \item Jour de la semaine, mois, trimestre, année
+        \item Week-end vs jour de semaine
+        \item Jours fériés
+    \end{itemize}
+
+    \item \textbf{Lags :} $y_{t-1}, y_{t-2}, \ldots, y_{t-k}$
+
+    \item \textbf{Rolling statistics :}
+    \begin{itemize}
+        \item Moyenne mobile : $\text{MA}_k(t) = \frac{1}{k}\sum_{i=0}^{k-1} y_{t-i}$
+        \item Écart-type mobile
+        \item Min/Max mobile
+    \end{itemize}
+
+    \item \textbf{Différenciation :} $\Delta y_t = y_t - y_{t-1}$
+
+    \item \textbf{Features cycliques :} Pour encoder périodicité
+    \begin{align*}
+    \text{hour\_sin} &= \sin\left(\frac{2\pi \cdot \text{hour}}{24}\right) \\
+    \text{hour\_cos} &= \cos\left(\frac{2\pi \cdot \text{hour}}{24}\right)
+    \end{align*}
+\end{enumerate}
+
+\subsection{Sélection de Modèle}
+
+\begin{table}[h]
+\centering
+\caption{Quand utiliser quel modèle ?}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Modèle} & \textbf{Cas d'usage} \\
+\midrule
+ARIMA & Séries univariées stationnaires, patterns linéaires, taille modérée \\
+SARIMA & Saisonnalité claire et périodique \\
+Prophet & Saisonnalités multiples, jours fériés, tendances changeantes, données manquantes \\
+LSTM/GRU & Dépendances long terme, patterns non-linéaires, multivarié \\
+Transformer & Très longues séquences, attention importante, ressources suffisantes \\
+XGBoost & Features engineered riches, régression avec lags \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ensemble Methods}
+
+Combiner plusieurs modèles pour améliorer la robustesse :
+
+\begin{lstlisting}[language=Python, caption=Ensemble de prédictions]
+# Predictions de plusieurs modeles
+pred_arima = model_arima.forecast(steps=10)
+pred_lstm = model_lstm.predict(X_test)
+pred_prophet = model_prophet.predict(future)['yhat'].values
+
+# Moyenne simple
+pred_ensemble = (pred_arima + pred_lstm + pred_prophet) / 3
+
+# Moyenne ponderee (poids bases sur performance validation)
+weights = [0.3, 0.5, 0.2]  # ARIMA, LSTM, Prophet
+pred_ensemble = (weights[0] * pred_arima +
+                weights[1] * pred_lstm +
+                weights[2] * pred_prophet)
+\end{lstlisting}
+
+% ===== SECTION 9: APPLICATIONS =====
+\section{Applications Pratiques}
+
+\begin{enumerate}
+    \item \textbf{Finance et Trading :}
+    \begin{itemize}
+        \item Prédiction de prix d'actions, indices boursiers
+        \item Volatilité, détection d'anomalies (flash crashes)
+        \item Trading algorithmique
+    \end{itemize}
+
+    \item \textbf{Énergie :}
+    \begin{itemize}
+        \item Forecasting de la demande électrique (load forecasting)
+        \item Prédiction de production éolienne/solaire
+        \item Optimisation de la distribution
+    \end{itemize}
+
+    \item \textbf{E-commerce et Retail :}
+    \begin{itemize}
+        \item Prévision des ventes pour gestion des stocks
+        \item Optimisation des prix dynamiques
+        \item Détection de fraudes (transactions anormales)
+    \end{itemize}
+
+    \item \textbf{IoT et Industrie :}
+    \begin{itemize}
+        \item Maintenance prédictive (détection de pannes)
+        \item Monitoring de capteurs
+        \item Optimisation de production
+    \end{itemize}
+
+    \item \textbf{Santé :}
+    \begin{itemize}
+        \item Monitoring de signes vitaux (ECG, EEG)
+        \item Prédiction d'épidémies
+        \item Détection précoce de pathologies
+    \end{itemize}
+
+    \item \textbf{Météorologie :}
+    \begin{itemize}
+        \item Prévisions météo courte/moyenne échéance
+        \item Modèles climatiques
+    \end{itemize}
+\end{enumerate}
+
+% ===== SECTION 10: RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{Stationnarité :} Propriété essentielle pour les modèles classiques (ARIMA)
+    \item \textbf{Composantes :} Tendance, saisonnalité, résidu
+    \item \textbf{ARIMA :} Modèle statistique puissant pour séries univariées
+    \item \textbf{Prophet :} Framework simple pour saisonnalités multiples et jours fériés
+    \item \textbf{LSTM/GRU :} Deep Learning pour dépendances complexes et long terme
+    \item \textbf{Attention/Transformers :} État de l'art pour séquences très longues
+    \item \textbf{Validation :} Time Series Split, backtesting (jamais de CV classique)
+    \item \textbf{Métriques :} MAE, RMSE, MAPE, MASE
+    \item \textbf{Feature Engineering :} Lags, rolling stats, features temporelles
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\textbf{ARIMA(p,d,q) :}
+\[
+\nabla^d y_t = c + \sum_{i=1}^p \phi_i \nabla^d y_{t-i} + \epsilon_t + \sum_{j=1}^q \theta_j \epsilon_{t-j}
+\]
+
+\textbf{Prophet :}
+\[
+y(t) = g(t) + s(t) + h(t) + \epsilon_t
+\]
+
+\textbf{Métriques :}
+\begin{align*}
+\text{MAE} &= \frac{1}{n}\sum |y_i - \hat{y}_i| \\
+\text{RMSE} &= \sqrt{\frac{1}{n}\sum (y_i - \hat{y}_i)^2} \\
+\text{MAPE} &= \frac{100\%}{n}\sum \left|\frac{y_i - \hat{y}_i}{y_i}\right|
+\end{align*}
+\end{tcolorbox}
+
+% ===== SECTION 11: EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de compréhension}
+
+\begin{enumerate}
+    \item Pourquoi la validation croisée classique (K-Fold) est-elle inappropriée pour les séries temporelles ?
+    \item Quelle est la différence entre un modèle AR et un modèle MA ?
+    \item Expliquez le rôle de chaque paramètre dans ARIMA(p,d,q).
+    \item Quand utiliser Prophet plutôt qu'ARIMA ?
+    \item Comment gérer une série temporelle avec tendance croissante ?
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+
+\begin{enumerate}
+    \item \textbf{Prédiction de ventes mensuelles :}
+    \begin{itemize}
+        \item Charger un dataset de ventes (ex: retail sales)
+        \item Analyser la décomposition (tendance, saisonnalité)
+        \item Tester la stationnarité (ADF test)
+        \item Comparer ARIMA vs Prophet
+    \end{itemize}
+
+    \item \textbf{Forecasting de consommation électrique :}
+    \begin{itemize}
+        \item Dataset multivarié (température, jour, heure)
+        \item Feature engineering (lags, rolling stats)
+        \item Entraîner un LSTM
+        \item Évaluer avec RMSE et MAPE
+    \end{itemize}
+
+    \item \textbf{Détection d'anomalies :}
+    \begin{itemize}
+        \item Charger un dataset avec anomalies
+        \item Entraîner un modèle LSTM
+        \item Détecter les anomalies via erreur de prédiction
+        \item Visualiser les résultats
+    \end{itemize}
+\end{enumerate}
+
+\textit{Solutions disponibles dans} \texttt{11_exercices.ipynb}
+
+% ===== SECTION 12: POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\begin{itemize}
+    \item Hyndman, R.J., \& Athanasopoulos, G. (2021). \textit{Forecasting: Principles and Practice} (3rd ed.) - Livre de référence gratuit en ligne
+    \item Box, G.E.P., Jenkins, G.M., Reinsel, G.C., \& Ljung, G.M. (2015). \textit{Time Series Analysis: Forecasting and Control}
+    \item Taylor, S.J., \& Letham, B. (2018). "Forecasting at Scale". \textit{The American Statistician}
+    \item Lim, B., et al. (2021). "Temporal Fusion Transformers for Interpretable Multi-horizon Time Series Forecasting". \textit{International Journal of Forecasting}
+\end{itemize}
+
+\subsection{Ressources en Ligne}
+
+\begin{itemize}
+    \item Documentation statsmodels : \url{https://www.statsmodels.org/stable/tsa.html}
+    \item Prophet (Meta) : \url{https://facebook.github.io/prophet/}
+    \item PyTorch Forecasting : \url{https://pytorch-forecasting.readthedocs.io/}
+    \item Darts (time series library) : \url{https://unit8co.github.io/darts/}
+    \item Course "Time Series" de Penn State : \url{https://online.stat.psu.edu/stat510/}
+\end{itemize}
+
+\subsection{Bibliothèques Python}
+
+\begin{itemize}
+    \item \textbf{statsmodels} : ARIMA, SARIMA, décomposition, tests statistiques
+    \item \textbf{prophet} : Framework de Meta pour forecasting
+    \item \textbf{darts} : Bibliothèque complète (classique + DL)
+    \item \textbf{sktime} : Extension scikit-learn pour time series
+    \item \textbf{pytorch-forecasting} : DL pour forecasting (Temporal Fusion Transformer)
+    \item \textbf{tslearn} : ML pour séries temporelles (clustering, DTW)
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+
+\begin{itemize}
+    \item Approfondir les Transformers pour séries temporelles
+    \item Étudier les modèles probabilistes (Bayésiens, GARCH)
+    \item Explorer la causalité dans les séries temporelles (Granger causality)
+    \item Appliquer à des problèmes réels de votre domaine
+\end{itemize}
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item Box, G. E. P., Jenkins, G. M., Reinsel, G. C., \& Ljung, G. M. (2015). \textit{Time Series Analysis: Forecasting and Control} (5th ed.). John Wiley \& Sons.
+
+    \item Hyndman, R. J., \& Athanasopoulos, G. (2021). \textit{Forecasting: Principles and Practice} (3rd ed.). OTexts. \url{https://otexts.com/fpp3/}
+
+    \item Taylor, S. J., \& Letham, B. (2018). Forecasting at scale. \textit{The American Statistician}, 72(1), 37-45.
+
+    \item Hochreiter, S., \& Schmidhuber, J. (1997). Long short-term memory. \textit{Neural Computation}, 9(8), 1735-1780.
+
+    \item Vaswani, A., et al. (2017). Attention is all you need. \textit{Advances in Neural Information Processing Systems}, 30.
+
+    \item Lim, B., Arık, S. Ö., Loeff, N., \& Pfister, T. (2021). Temporal Fusion Transformers for interpretable multi-horizon time series forecasting. \textit{International Journal of Forecasting}, 37(4), 1748-1764.
+
+    \item Seabold, S., \& Perktold, J. (2010). Statsmodels: Econometric and statistical modeling with Python. \textit{Proceedings of the 9th Python in Science Conference}, 57, 61.
+\end{enumerate}
+
+\end{document}

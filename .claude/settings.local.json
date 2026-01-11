@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker ps:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ls:*)",
+      "Bash(pdftotext:*)",
+      "Bash(docker exec:*)",
+      "Bash(for dir in cours/*/)",
+      "Bash(while read dir)",
+      "Bash(xelatex:*)",
+      "Bash(wc:*)",
+      "Bash(bash:*)",
+      "Bash(chmod:*)",
+      "Bash(python fix_notebook_refs.py:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(find:*)"
+    ]
+  }
+}

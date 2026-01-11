@@ -1,0 +1,1378 @@
+% Chapitre 02 - Métriques d'Évaluation
+% Cours Machine Learning - Sandbox-ML
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, matrix, fit}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 02 - Métriques d'Évaluation},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 02 - Métriques d'Évaluation}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS (code Python) =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+% Box pour définitions
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+% Box pour théorèmes
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+% Box pour exemples
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+% Box pour attention/warning
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=⚠️ Attention,
+    breakable
+}
+
+% Box pour astuce/tips
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=💡 Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}  % Vecteur
+\newcommand{\mat}[1]{\mathbf{#1}}   % Matrice
+\newcommand{\R}{\mathbb{R}}         % Réels
+\newcommand{\N}{\mathbb{N}}         % Naturels
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+% ===== DÉBUT DU DOCUMENT =====
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 02}\\[0.3cm]
+    {\LARGE\bfseries Métriques d'Évaluation}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Maîtriser les métriques de classification (matrice de confusion, accuracy, precision, recall, F1-score, ROC, AUC)
+        \item Comprendre les métriques de régression (MSE, RMSE, MAE, R², MAPE)
+        \item Savoir choisir la bonne métrique selon le problème
+        \item Maîtriser les techniques de validation (train/test split, K-fold, stratified K-fold)
+        \item Identifier les pièges courants et éviter l'overfitting
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitre 01 - Fondamentaux Mathématiques\\[0.3cm]
+    \textbf{Durée estimée :} 6-8 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{02_demo_*.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+% ===== TABLE DES MATIÈRES =====
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: MOTIVATION =====
+\section{Motivation}
+
+L'évaluation des modèles de Machine Learning est une étape cruciale qui détermine si un modèle est prêt pour la production. Contrairement à la programmation traditionnelle où on peut vérifier la correction d'un programme par des tests unitaires, en ML, un modèle n'est jamais parfait à 100\%.
+
+\begin{exemple}{Le dilemme du diagnostic médical}
+Imaginez un système de détection automatique du cancer à partir de radiographies :
+
+\textbf{Scénario A :} Le modèle détecte 95\% des cancers (excellent !) mais donne 40\% de faux positifs (mauvais !).
+\begin{itemize}
+    \item \textbf{Conséquence :} 40\% des patients sains passent des examens invasifs inutiles
+    \item \textbf{Coût :} Anxiété des patients + surcharge du système de santé
+\end{itemize}
+
+\textbf{Scénario B :} Le modèle ne donne que 2\% de faux positifs (excellent !) mais ne détecte que 60\% des cancers (catastrophique !).
+\begin{itemize}
+    \item \textbf{Conséquence :} 40\% des malades ne sont pas diagnostiqués
+    \item \textbf{Coût :} Vies humaines
+\end{itemize}
+
+\textbf{Question clé :} Quelle métrique unique utiliser pour comparer ces deux modèles ? L'accuracy ? La précision ? Le recall ? Le F1-score ?
+
+\textbf{Réponse :} Cela dépend du contexte médical et des coûts associés. Ce chapitre vous apprendra à faire ce choix de manière éclairée.
+\end{exemple}
+
+\begin{attention}
+Une métrique unique ne suffit jamais ! Un modèle avec 99\% d'accuracy peut être complètement inutile si :
+\begin{itemize}
+    \item Les classes sont déséquilibrées (ex: 1\% de fraudes bancaires)
+    \item Les coûts d'erreur sont asymétriques (faux négatif en médecine >> faux positif)
+    \item Le modèle ne généralise pas (overfitting)
+\end{itemize}
+\end{attention}
+
+% ===== SECTION 2: MÉTRIQUES DE CLASSIFICATION =====
+\section{Métriques de Classification}
+
+\subsection{Matrice de Confusion}
+
+\begin{definition}{Matrice de Confusion}
+La \textbf{matrice de confusion} est un tableau qui décrit les performances d'un modèle de classification en comparant les prédictions aux vraies valeurs. Pour un problème de classification binaire, elle contient 4 valeurs :
+\end{definition}
+
+\begin{table}[h]
+\centering
+\caption{Matrice de Confusion (Classification Binaire)}
+\label{tab:confusion_matrix}
+\begin{tabular}{cc|cc}
+\toprule
+\multicolumn{2}{c|}{} & \multicolumn{2}{c}{\textbf{Prédiction}} \\
+\multicolumn{2}{c|}{} & Positive & Negative \\
+\midrule
+\multirow{2}{*}{\rotatebox[origin=c]{90}{\textbf{Réalité}}}
+& Positive & \cellcolor{green!20}TP (Vrai Positif) & \cellcolor{red!20}FN (Faux Négatif) \\
+& Negative & \cellcolor{red!20}FP (Faux Positif) & \cellcolor{green!20}TN (Vrai Négatif) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{itemize}
+    \item \textbf{TP (True Positive)} : Cas positifs correctement classés comme positifs
+    \item \textbf{TN (True Negative)} : Cas négatifs correctement classés comme négatifs
+    \item \textbf{FP (False Positive)} : Cas négatifs incorrectement classés comme positifs (Erreur de Type I)
+    \item \textbf{FN (False Negative)} : Cas positifs incorrectement classés comme négatifs (Erreur de Type II)
+\end{itemize}
+
+\begin{exemple}{Détection de spam}
+Sur 1000 emails analysés :
+\begin{itemize}
+    \item 150 vrais spams, 850 emails légitimes
+    \item TP = 130 : spams détectés correctement
+    \item FN = 20 : spams non détectés (passent en boîte de réception)
+    \item FP = 40 : emails légitimes classés comme spam (perdus !)
+    \item TN = 810 : emails légitimes correctement classés
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cc|cc|c}
+\toprule
+\multicolumn{2}{c|}{} & \multicolumn{2}{c|}{\textbf{Prédiction}} & \\
+\multicolumn{2}{c|}{} & Spam & Légitime & Total \\
+\midrule
+\multirow{2}{*}{\rotatebox[origin=c]{90}{\textbf{Réalité}}}
+& Spam & \cellcolor{green!20}130 & \cellcolor{red!20}20 & 150 \\
+& Légitime & \cellcolor{red!20}40 & \cellcolor{green!20}810 & 850 \\
+\midrule
+& Total & 170 & 830 & 1000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{exemple}
+
+\subsection{Accuracy (Exactitude)}
+
+\begin{definition}{Accuracy}
+L'\textbf{accuracy} (exactitude) est la proportion de prédictions correctes sur l'ensemble total :
+\begin{equation}
+    \text{Accuracy} = \frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}} = \frac{\text{Correct}}{\text{Total}}
+\end{equation}
+\end{definition}
+
+Valeur : entre 0 et 1 (ou 0\% et 100\%).
+
+\textbf{Pour l'exemple spam :}
+\begin{equation}
+    \text{Accuracy} = \frac{130 + 810}{1000} = \frac{940}{1000} = 0.94 = 94\%
+\end{equation}
+
+\begin{attention}
+L'accuracy peut être trompeuse avec des classes déséquilibrées !
+
+\textbf{Exemple :} Détection de fraude bancaire (0.1\% de fraudes)
+\begin{itemize}
+    \item Sur 10 000 transactions : 10 fraudes, 9 990 légitimes
+    \item Modèle stupide : prédire toujours "légitime"
+    \item Accuracy = $\frac{9990}{10000} = 99.9\%$ (excellent en apparence !)
+    \item Mais 0\% de fraudes détectées (catastrophique !)
+\end{itemize}
+
+\textbf{Conclusion :} L'accuracy seule est insuffisante pour des classes déséquilibrées.
+\end{attention}
+
+\subsection{Precision (Précision)}
+
+\begin{definition}{Precision}
+La \textbf{precision} (précision) mesure la proportion de prédictions positives qui sont correctes :
+\begin{equation}
+    \text{Precision} = \frac{\text{TP}}{\text{TP} + \text{FP}} = \frac{\text{TP}}{\text{Total Prédictions Positives}}
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation :} "Quand le modèle prédit 'positif', à quelle fréquence a-t-il raison ?"
+
+\textbf{Pour l'exemple spam :}
+\begin{equation}
+    \text{Precision} = \frac{130}{130 + 40} = \frac{130}{170} \approx 0.765 = 76.5\%
+\end{equation}
+
+Cela signifie que 76.5\% des emails classés comme spam sont réellement des spams. Les 23.5\% restants sont des faux positifs (emails légitimes perdus).
+
+\begin{astuce}
+Utilisez la \textbf{precision} quand les \textbf{faux positifs sont coûteux} :
+\begin{itemize}
+    \item Filtrage spam : éviter de perdre des emails importants
+    \item Recommandation de produits : éviter de recommander des produits non pertinents
+    \item Publicité ciblée : éviter de dépenser du budget sur de mauvaises cibles
+\end{itemize}
+\end{astuce}
+
+\subsection{Recall (Rappel / Sensibilité)}
+
+\begin{definition}{Recall (Sensibilité)}
+Le \textbf{recall} (rappel ou sensibilité) mesure la proportion de cas positifs réels qui sont détectés :
+\begin{equation}
+    \text{Recall} = \frac{\text{TP}}{\text{TP} + \text{FN}} = \frac{\text{TP}}{\text{Total Cas Positifs Réels}}
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation :} "Parmi tous les cas positifs réels, combien le modèle en détecte-t-il ?"
+
+\textbf{Pour l'exemple spam :}
+\begin{equation}
+    \text{Recall} = \frac{130}{130 + 20} = \frac{130}{150} \approx 0.867 = 86.7\%
+\end{equation}
+
+Cela signifie que 86.7\% des spams sont détectés. Les 13.3\% restants passent en boîte de réception (faux négatifs).
+
+\begin{astuce}
+Utilisez le \textbf{recall} quand les \textbf{faux négatifs sont coûteux} :
+\begin{itemize}
+    \item Détection de cancer : manquer un cancer peut être fatal
+    \item Détection de fraude : manquer une fraude peut coûter cher
+    \item Détection d'intrusion réseau : manquer une attaque peut compromettre le système
+\end{itemize}
+\end{astuce}
+
+\subsection{Spécificité}
+
+\begin{definition}{Spécificité}
+La \textbf{spécificité} mesure la proportion de cas négatifs réels qui sont correctement classés :
+\begin{equation}
+    \text{Spécificité} = \frac{\text{TN}}{\text{TN} + \text{FP}} = \frac{\text{TN}}{\text{Total Cas Négatifs Réels}}
+\end{equation}
+\end{definition}
+
+\textbf{Pour l'exemple spam :}
+\begin{equation}
+    \text{Spécificité} = \frac{810}{810 + 40} = \frac{810}{850} \approx 0.953 = 95.3\%
+\end{equation}
+
+La spécificité est le complément du taux de faux positifs (FPR) :
+\begin{equation}
+    \text{FPR} = 1 - \text{Spécificité} = \frac{\text{FP}}{\text{TN} + \text{FP}}
+\end{equation}
+
+\subsection{F1-Score (Moyenne Harmonique)}
+
+\begin{definition}{F1-Score}
+Le \textbf{F1-score} est la moyenne harmonique entre la precision et le recall :
+\begin{equation}
+    F_1 = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}} = \frac{2 \times \text{TP}}{2 \times \text{TP} + \text{FP} + \text{FN}}
+\end{equation}
+\end{definition}
+
+\textbf{Pour l'exemple spam :}
+\begin{equation}
+    F_1 = 2 \times \frac{0.765 \times 0.867}{0.765 + 0.867} = 2 \times \frac{0.663}{1.632} \approx 0.813 = 81.3\%
+\end{equation}
+
+\textbf{Pourquoi la moyenne harmonique ?}
+
+La moyenne harmonique pénalise les déséquilibres :
+\begin{itemize}
+    \item Si Precision = 100\% et Recall = 10\% : $F_1 \approx 18\%$ (faible !)
+    \item Si Precision = 90\% et Recall = 90\% : $F_1 = 90\%$ (bon équilibre)
+\end{itemize}
+
+En comparaison, la moyenne arithmétique donnerait :
+\begin{itemize}
+    \item $(100\% + 10\%) / 2 = 55\%$ (trop optimiste !)
+    \item $(90\% + 90\%) / 2 = 90\%$ (identique)
+\end{itemize}
+
+\begin{astuce}
+Le F1-score est la métrique par défaut quand :
+\begin{itemize}
+    \item Les classes sont déséquilibrées
+    \item Precision et Recall sont tous deux importants
+    \item Vous cherchez un bon compromis entre FP et FN
+\end{itemize}
+\end{astuce}
+
+\subsubsection{Variante : F-Beta Score}
+
+Pour donner plus de poids au recall ou à la precision, on utilise le \textbf{F-beta score} :
+\begin{equation}
+    F_\beta = (1 + \beta^2) \times \frac{\text{Precision} \times \text{Recall}}{\beta^2 \times \text{Precision} + \text{Recall}}
+\end{equation}
+
+\begin{itemize}
+    \item $\beta = 1$ : F1-score (poids égal)
+    \item $\beta = 0.5$ : F0.5-score (favorise la precision)
+    \item $\beta = 2$ : F2-score (favorise le recall)
+\end{itemize}
+
+\subsection{Courbe ROC et AUC}
+
+\subsubsection{Courbe ROC}
+
+\begin{definition}{Courbe ROC}
+La \textbf{courbe ROC} (Receiver Operating Characteristic) représente le compromis entre le taux de vrais positifs (TPR = Recall) et le taux de faux positifs (FPR) pour différents seuils de classification.
+
+\textbf{Axes :}
+\begin{itemize}
+    \item Axe X : FPR (False Positive Rate) = $\frac{\text{FP}}{\text{FP} + \text{TN}} = 1 - \text{Spécificité}$
+    \item Axe Y : TPR (True Positive Rate) = $\frac{\text{TP}}{\text{TP} + \text{FN}} = \text{Recall}$
+\end{itemize}
+\end{definition}
+
+La plupart des classifieurs produisent des probabilités (ex: \texttt{predict\_proba()} en scikit-learn). La classification finale dépend d'un seuil (généralement 0.5) :
+\begin{itemize}
+    \item Si $P(\text{classe positive}) \geq 0.5$ : prédire "positif"
+    \item Si $P(\text{classe positive}) < 0.5$ : prédire "négatif"
+\end{itemize}
+
+La courbe ROC trace TPR vs FPR pour tous les seuils possibles (0 à 1).
+
+\textbf{Interprétation visuelle :}
+\begin{itemize}
+    \item \textbf{Classifieur aléatoire} : ligne diagonale (TPR = FPR)
+    \item \textbf{Classifieur parfait} : passe par le point (0, 1) (TPR = 100\%, FPR = 0\%)
+    \item \textbf{Meilleur modèle} : courbe la plus proche du coin supérieur gauche
+\end{itemize}
+
+\subsubsection{AUC (Area Under Curve)}
+
+\begin{definition}{AUC}
+L'\textbf{AUC} (Area Under the ROC Curve) mesure l'aire sous la courbe ROC. Elle représente la probabilité qu'un classifieur classe un exemple positif aléatoire plus haut qu'un exemple négatif aléatoire.
+\begin{equation}
+    \text{AUC} \in [0, 1]
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation :}
+\begin{itemize}
+    \item AUC = 0.5 : Classifieur aléatoire (inutile)
+    \item AUC = 0.7 : Acceptable
+    \item AUC = 0.8 : Bon
+    \item AUC = 0.9 : Excellent
+    \item AUC = 1.0 : Parfait (rare en pratique, souvent signe d'overfitting)
+\end{itemize}
+
+\begin{astuce}
+L'AUC est une excellente métrique car :
+\begin{itemize}
+    \item Insensible au seuil de classification
+    \item Robuste aux classes déséquilibrées (dans une certaine mesure)
+    \item Permet de comparer différents modèles indépendamment du seuil choisi
+\end{itemize}
+\end{astuce}
+
+\subsection{Courbe Precision-Recall}
+
+\begin{definition}{Courbe Precision-Recall}
+La \textbf{courbe Precision-Recall} trace la precision en fonction du recall pour différents seuils.
+
+\textbf{Axes :}
+\begin{itemize}
+    \item Axe X : Recall (TPR)
+    \item Axe Y : Precision
+\end{itemize}
+\end{definition}
+
+\textbf{Différence avec ROC :}
+\begin{itemize}
+    \item La courbe ROC utilise FPR (sensible aux TN)
+    \item La courbe PR utilise Precision (ignore les TN)
+\end{itemize}
+
+\begin{astuce}
+Préférez la courbe \textbf{Precision-Recall} plutôt que ROC quand :
+\begin{itemize}
+    \item Les classes sont très déséquilibrées (ex: 1\% de positifs)
+    \item Vous vous souciez plus des positifs que des négatifs
+    \item Exemples : détection de fraude, détection d'anomalies, recherche d'information
+\end{itemize}
+
+\textbf{Raison :} Avec 99\% de négatifs, FPR reste proche de 0 même avec beaucoup de FP, ce qui rend la courbe ROC trop optimiste.
+\end{astuce}
+
+\subsection{Métriques Multi-Classes}
+
+Pour les problèmes de classification à plus de 2 classes, on peut calculer les métriques de trois façons :
+
+\begin{definition}{Moyennes pour Multi-Classes}
+\begin{itemize}
+    \item \textbf{Macro Average} : moyenne simple des métriques de chaque classe
+    \begin{equation}
+        \text{Precision}_{\text{macro}} = \frac{1}{C} \sum_{i=1}^{C} \text{Precision}_i
+    \end{equation}
+    Traite toutes les classes de manière égale (utile si toutes les classes sont aussi importantes).
+
+    \item \textbf{Micro Average} : calcule les métriques globalement (agrège TP, FP, FN)
+    \begin{equation}
+        \text{Precision}_{\text{micro}} = \frac{\sum_{i=1}^{C} \text{TP}_i}{\sum_{i=1}^{C} (\text{TP}_i + \text{FP}_i)}
+    \end{equation}
+    Favorise les classes majoritaires (utile si les classes déséquilibrées reflètent la réalité).
+
+    \item \textbf{Weighted Average} : moyenne pondérée par le nombre d'exemples de chaque classe
+    \begin{equation}
+        \text{Precision}_{\text{weighted}} = \frac{1}{N} \sum_{i=1}^{C} n_i \times \text{Precision}_i
+    \end{equation}
+    où $n_i$ est le nombre d'exemples de la classe $i$ et $N = \sum n_i$.
+\end{itemize}
+\end{definition}
+
+\begin{exemple}{Classification d'images (3 classes)}
+\begin{table}[h]
+\centering
+\caption{Résultats par classe}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Classe} & \textbf{Support} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
+\midrule
+Chat & 100 & 0.90 & 0.85 & 0.87 \\
+Chien & 100 & 0.88 & 0.90 & 0.89 \\
+Oiseau & 20 & 0.70 & 0.60 & 0.65 \\
+\midrule
+\textbf{Macro avg} & 220 & 0.83 & 0.78 & 0.80 \\
+\textbf{Weighted avg} & 220 & 0.87 & 0.85 & 0.86 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Analyse :}
+\begin{itemize}
+    \item Macro average = $(0.90 + 0.88 + 0.70) / 3 = 0.83$ (classe "Oiseau" pèse autant que les autres)
+    \item Weighted average plus élevée car elle donne plus de poids aux classes majoritaires (Chat, Chien)
+\end{itemize}
+\end{exemple}
+
+% ===== SECTION 3: MÉTRIQUES DE RÉGRESSION =====
+\section{Métriques de Régression}
+
+Pour les problèmes de régression, on cherche à mesurer l'écart entre les prédictions continues et les vraies valeurs.
+
+\textbf{Notations :}
+\begin{itemize}
+    \item $y_i$ : vraie valeur pour l'exemple $i$
+    \item $\hat{y}_i$ : prédiction pour l'exemple $i$
+    \item $n$ : nombre d'exemples
+    \item $\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i$ : moyenne des vraies valeurs
+\end{itemize}
+
+\subsection{MSE (Mean Squared Error)}
+
+\begin{definition}{MSE}
+Le \textbf{MSE} (Mean Squared Error) est la moyenne des carrés des erreurs :
+\begin{equation}
+    \text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2
+\end{equation}
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item Toujours $\geq 0$ (0 = prédictions parfaites)
+    \item Pénalise fortement les grandes erreurs (à cause du carré)
+    \item Unité : carré de l'unité de $y$ (difficile à interpréter)
+    \item Très sensible aux outliers
+\end{itemize}
+
+\begin{exemple}{Prédiction de prix immobiliers}
+Prix réels : $[200, 250, 300, 350, 400]$ (en k€)\\
+Prédictions : $[210, 240, 310, 340, 500]$ (en k€)\\
+Erreurs : $[10, -10, 10, -10, 100]$
+
+\begin{equation}
+    \text{MSE} = \frac{10^2 + 10^2 + 10^2 + 10^2 + 100^2}{5} = \frac{10300}{5} = 2060 \text{ (k€)}^2
+\end{equation}
+
+L'erreur de 100 k€ domine complètement le MSE.
+\end{exemple}
+
+\subsection{RMSE (Root Mean Squared Error)}
+
+\begin{definition}{RMSE}
+Le \textbf{RMSE} est la racine carrée du MSE :
+\begin{equation}
+    \text{RMSE} = \sqrt{\text{MSE}} = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}
+\end{equation}
+\end{definition}
+
+\textbf{Avantage :} Même unité que $y$ (plus facile à interpréter).
+
+\textbf{Pour l'exemple précédent :}
+\begin{equation}
+    \text{RMSE} = \sqrt{2060} \approx 45.4 \text{ k€}
+\end{equation}
+
+Interprétation : en moyenne, les prédictions s'écartent de 45.4 k€ de la réalité.
+
+\subsection{MAE (Mean Absolute Error)}
+
+\begin{definition}{MAE}
+Le \textbf{MAE} (Mean Absolute Error) est la moyenne des valeurs absolues des erreurs :
+\begin{equation}
+    \text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|
+\end{equation}
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item Toujours $\geq 0$
+    \item Moins sensible aux outliers que MSE/RMSE
+    \item Même unité que $y$
+    \item Pénalise toutes les erreurs de manière proportionnelle
+\end{itemize}
+
+\textbf{Pour l'exemple précédent :}
+\begin{equation}
+    \text{MAE} = \frac{|10| + |10| + |10| + |10| + |100|}{5} = \frac{140}{5} = 28 \text{ k€}
+\end{equation}
+
+\textbf{Comparaison MSE vs MAE :}
+\begin{itemize}
+    \item RMSE = 45.4 k€ (fortement influencé par l'outlier de 100 k€)
+    \item MAE = 28 k€ (moins influencé par l'outlier)
+\end{itemize}
+
+\begin{astuce}
+Choisir entre RMSE et MAE :
+\begin{itemize}
+    \item Utilisez \textbf{RMSE} si les grandes erreurs sont très pénalisantes (finance, sécurité)
+    \item Utilisez \textbf{MAE} si toutes les erreurs ont un coût similaire (météo, estimation générale)
+    \item En cas de doute, reportez les deux !
+\end{itemize}
+\end{astuce}
+
+\subsection{R² (Coefficient de Détermination)}
+
+\begin{definition}{R²}
+Le \textbf{R²} (coefficient de détermination) mesure la proportion de variance expliquée par le modèle :
+\begin{equation}
+    R^2 = 1 - \frac{\text{SS}_{\text{res}}}{\text{SS}_{\text{tot}}} = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
+\end{equation}
+
+où :
+\begin{itemize}
+    \item $\text{SS}_{\text{res}} = \sum (y_i - \hat{y}_i)^2$ : somme des carrés des résidus (variance non expliquée)
+    \item $\text{SS}_{\text{tot}} = \sum (y_i - \bar{y})^2$ : variance totale
+\end{itemize}
+\end{definition}
+
+\textbf{Interprétation :}
+\begin{itemize}
+    \item $R^2 = 1$ : modèle parfait (prédictions exactes)
+    \item $R^2 = 0$ : modèle équivalent à prédire la moyenne $\bar{y}$
+    \item $R^2 < 0$ : modèle pire que prédire la moyenne (très mauvais !)
+\end{itemize}
+
+\textbf{Exemple :}
+\begin{itemize}
+    \item Si $R^2 = 0.85$ : le modèle explique 85\% de la variance des données
+    \item Les 15\% restants sont dus au bruit ou à des variables non prises en compte
+\end{itemize}
+
+\begin{attention}
+Limites du R² :
+\begin{itemize}
+    \item Augmente automatiquement quand on ajoute des features (même inutiles)
+    \item Ne détecte pas l'overfitting
+    \item Solution : utiliser le \textbf{R² ajusté} qui pénalise le nombre de features
+\end{itemize}
+
+\begin{equation}
+    R^2_{\text{ajusté}} = 1 - \frac{(1 - R^2)(n - 1)}{n - p - 1}
+\end{equation}
+où $p$ est le nombre de features.
+\end{attention}
+
+\subsection{MAPE (Mean Absolute Percentage Error)}
+
+\begin{definition}{MAPE}
+Le \textbf{MAPE} mesure l'erreur moyenne en pourcentage :
+\begin{equation}
+    \text{MAPE} = \frac{100\%}{n} \sum_{i=1}^{n} \left| \frac{y_i - \hat{y}_i}{y_i} \right|
+\end{equation}
+\end{definition}
+
+\textbf{Avantage :} Indépendant de l'échelle (permet de comparer des modèles sur différents datasets).
+
+\textbf{Interprétation :} MAPE = 10\% signifie que les prédictions s'écartent en moyenne de 10\% des vraies valeurs.
+
+\begin{attention}
+Problème du MAPE :
+\begin{itemize}
+    \item Non défini si $y_i = 0$
+    \item Asymétrique : pénalise plus les surestimations que les sous-estimations
+    \item Exemple : erreur de +50\% vs -50\% ne donnent pas le même MAPE
+\end{itemize}
+\end{attention}
+
+\subsection{Comparaison des Métriques de Régression}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des métriques de régression}
+\label{tab:regression_metrics}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Métrique} & \textbf{Sensibilité outliers} & \textbf{Interprétation} & \textbf{Unité} \\
+\midrule
+MSE & Très élevée & Difficile & $(y)^2$ \\
+RMSE & Élevée & Facile & $y$ \\
+MAE & Modérée & Facile & $y$ \\
+R² & N/A & Facile & Sans unité \\
+MAPE & Modérée & Facile & \% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 4: VALIDATION =====
+\section{Techniques de Validation}
+
+L'évaluation d'un modèle ne peut pas se faire sur les données d'entraînement ! Un modèle peut mémoriser les données (overfitting) et obtenir 100\% d'accuracy en entraînement mais échouer en production.
+
+\begin{attention}
+\textbf{Règle d'or :} Ne jamais évaluer un modèle sur les données utilisées pour l'entraîner !
+\end{attention}
+
+\subsection{Train/Test Split}
+
+\begin{definition}{Train/Test Split}
+La technique la plus simple : diviser aléatoirement le dataset en deux ensembles :
+\begin{itemize}
+    \item \textbf{Training set} (70-80\%) : pour entraîner le modèle
+    \item \textbf{Test set} (20-30\%) : pour évaluer le modèle
+\end{itemize}
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Train/Test Split avec scikit-learn]
+from sklearn.model_selection import train_test_split
+
+# Split 80/20
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,      # 20% pour le test
+    random_state=42,    # reproductibilité
+    stratify=y          # préserve distribution des classes
+)
+
+# Entraînement
+model.fit(X_train, y_train)
+
+# Évaluation sur données JAMAIS vues
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+\end{lstlisting}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Simple et rapide
+    \item Suffisant pour les grands datasets
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Résultat dépend du split aléatoire (variance élevée)
+    \item Perte de données (20-30\% non utilisés pour l'entraînement)
+    \item Risque de split non représentatif sur petits datasets
+\end{itemize}
+
+\subsection{Validation Set (Train/Validation/Test)}
+
+Pour optimiser les hyperparamètres, il faut un 3ème ensemble :
+
+\begin{definition}{Train/Validation/Test Split}
+\begin{itemize}
+    \item \textbf{Training set} (60\%) : entraînement du modèle
+    \item \textbf{Validation set} (20\%) : tuning des hyperparamètres
+    \item \textbf{Test set} (20\%) : évaluation finale (jamais touché avant)
+\end{itemize}
+\end{definition}
+
+\textbf{Workflow :}
+\begin{enumerate}
+    \item Entraîner plusieurs modèles avec différents hyperparamètres sur le training set
+    \item Évaluer chaque modèle sur le validation set
+    \item Choisir le meilleur modèle
+    \item Évaluation finale sur le test set (une seule fois !)
+\end{enumerate}
+
+\begin{attention}
+Si vous évaluez plusieurs fois sur le test set et ajustez le modèle en conséquence, le test set devient un validation set déguisé ! Vous risquez l'overfitting sur le test set.
+\end{attention}
+
+\subsection{K-Fold Cross-Validation}
+
+\begin{definition}{K-Fold Cross-Validation}
+La \textbf{validation croisée K-fold} divise le dataset en $K$ sous-ensembles (folds) de taille égale. Le modèle est entraîné et évalué $K$ fois, chaque fold servant une fois de test set.
+\end{definition}
+
+\textbf{Algorithme :}
+\begin{algorithm}[H]
+\caption{K-Fold Cross-Validation}
+\label{alg:kfold}
+\begin{algorithmic}[1]
+\REQUIRE Dataset $D$, Modèle $M$, Nombre de folds $K$
+\ENSURE Score moyen et variance
+\STATE Diviser $D$ en $K$ folds : $D_1, D_2, \ldots, D_K$
+\STATE Initialiser liste de scores : $\text{scores} = []$
+\FOR{$i = 1$ \TO $K$}
+    \STATE $\text{test\_set} = D_i$
+    \STATE $\text{train\_set} = D \setminus D_i$ (tous les folds sauf $D_i$)
+    \STATE Entraîner $M$ sur $\text{train\_set}$
+    \STATE $\text{score}_i = $ évaluer $M$ sur $\text{test\_set}$
+    \STATE Ajouter $\text{score}_i$ à $\text{scores}$
+\ENDFOR
+\RETURN $\text{mean}(\text{scores})$, $\text{std}(\text{scores})$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{lstlisting}[language=Python, caption=K-Fold Cross-Validation avec scikit-learn]
+from sklearn.model_selection import cross_val_score
+from sklearn.linear_model import LogisticRegression
+
+model = LogisticRegression()
+
+# 5-fold cross-validation
+scores = cross_val_score(
+    model, X, y,
+    cv=5,                    # 5 folds
+    scoring='accuracy'       # métrique
+)
+
+print(f"Scores: {scores}")
+print(f"Moyenne: {scores.mean():.3f} (+/- {scores.std():.3f})")
+
+# Exemple de sortie :
+# Scores: [0.82, 0.85, 0.81, 0.84, 0.83]
+# Moyenne: 0.830 (+/- 0.015)
+\end{lstlisting}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Utilise toutes les données pour l'entraînement et le test
+    \item Réduit la variance de l'estimation (score moyen sur $K$ runs)
+    \item Fournit un intervalle de confiance (écart-type)
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Coût computationnel : $K$ fois plus long qu'un simple train/test
+    \item Valeur typique : $K = 5$ ou $K = 10$
+\end{itemize}
+
+\subsection{Stratified K-Fold}
+
+\begin{definition}{Stratified K-Fold}
+Le \textbf{Stratified K-Fold} est une variante de K-Fold qui préserve la proportion de chaque classe dans chaque fold.
+\end{definition}
+
+\textbf{Pourquoi c'est important :}
+
+Exemple : Dataset de 100 exemples (90 classe A, 10 classe B)
+
+\textbf{K-Fold classique :}
+\begin{itemize}
+    \item Un fold pourrait contenir 0 exemple de classe B (problème !)
+    \item Entraînement sur données non représentatives
+\end{itemize}
+
+\textbf{Stratified K-Fold :}
+\begin{itemize}
+    \item Chaque fold contient environ 90\% classe A et 10\% classe B
+    \item Distribution préservée
+\end{itemize}
+
+\begin{lstlisting}[language=Python, caption=Stratified K-Fold]
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+
+skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+scores = cross_val_score(
+    model, X, y,
+    cv=skf,                  # utiliser stratified K-fold
+    scoring='f1_weighted'
+)
+\end{lstlisting}
+
+\begin{astuce}
+Utilisez \textbf{Stratified K-Fold} par défaut pour la classification, surtout si :
+\begin{itemize}
+    \item Les classes sont déséquilibrées
+    \item Le dataset est petit
+\end{itemize}
+
+Pour la régression, utilisez K-Fold classique.
+\end{astuce}
+
+\subsection{Leave-One-Out Cross-Validation (LOOCV)}
+
+\begin{definition}{LOOCV}
+Le \textbf{LOOCV} est un cas extrême de K-Fold où $K = n$ (nombre d'exemples). Chaque exemple sert une fois de test set.
+\end{definition}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Estimation quasi non biaisée
+    \item Utile pour très petits datasets (< 100 exemples)
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Extrêmement coûteux : $n$ entraînements complets
+    \item Variance élevée de l'estimation
+    \item Rarement utilisé en pratique (préférer 5 ou 10-fold)
+\end{itemize}
+
+\subsection{Time Series Split}
+
+\begin{definition}{Time Series Split}
+Pour les séries temporelles, il faut respecter l'ordre chronologique. Le \textbf{Time Series Split} crée des folds où le training set contient toujours des données antérieures au test set.
+\end{definition}
+
+\textbf{Exemple avec 5 splits :}
+\begin{verbatim}
+Fold 1: train [1:100], test [101:120]
+Fold 2: train [1:120], test [121:140]
+Fold 3: train [1:140], test [141:160]
+Fold 4: train [1:160], test [161:180]
+Fold 5: train [1:180], test [181:200]
+\end{verbatim}
+
+\begin{lstlisting}[language=Python, caption=Time Series Split]
+from sklearn.model_selection import TimeSeriesSplit
+
+tscv = TimeSeriesSplit(n_splits=5)
+
+for train_index, test_index in tscv.split(X):
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+
+    model.fit(X_train, y_train)
+    score = model.score(X_test, y_test)
+    print(f"Score: {score:.3f}")
+\end{lstlisting}
+
+\begin{attention}
+Pour les séries temporelles, \textbf{JAMAIS de shuffle} ni de K-Fold classique !
+Utiliser uniquement Time Series Split ou un simple train/test split chronologique.
+\end{attention}
+
+\subsection{Comparaison des Techniques de Validation}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des techniques de validation}
+\label{tab:validation_comparison}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Technique} & \textbf{Données utilisées} & \textbf{Variance} & \textbf{Coût} & \textbf{Cas d'usage} \\
+\midrule
+Train/Test & 80\% & Élevée & Faible & Grands datasets, première itération \\
+Train/Val/Test & 60\% & Élevée & Faible & Tuning hyperparamètres \\
+K-Fold (K=5) & 100\% & Modérée & Moyen & Usage général, petits/moyens datasets \\
+K-Fold (K=10) & 100\% & Faible & Élevé & Datasets moyens, besoin précision \\
+LOOCV & 100\% & Très faible & Très élevé & Très petits datasets (< 100) \\
+Stratified K-Fold & 100\% & Modérée & Moyen & Classes déséquilibrées \\
+Time Series Split & 100\% & Modérée & Moyen & Séries temporelles uniquement \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+% ===== SECTION 5: PIÈGES COURANTS =====
+\section{Pièges Courants et Bonnes Pratiques}
+
+\subsection{Data Leakage (Fuite de données)}
+
+\begin{attention}
+Le \textbf{data leakage} est la principale cause de modèles qui performent bien en développement mais échouent en production.
+\end{attention}
+
+\begin{definition}{Data Leakage}
+Il y a \textbf{data leakage} quand des informations du test set influencent l'entraînement du modèle. Cela conduit à des performances surestimées.
+\end{definition}
+
+\textbf{Types de leakage :}
+
+\subsubsection{Leakage via le preprocessing}
+
+\textbf{MAUVAIS :}
+\begin{lstlisting}[language=Python, caption=Leakage via normalisation (INCORRECT)]
+from sklearn.preprocessing import StandardScaler
+
+# ERREUR: normalisation AVANT le split
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)  # utilise mean/std de TOUT le dataset
+
+# Split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y)
+
+# Le test set a influencé la normalisation !
+\end{lstlisting}
+
+\textbf{BON :}
+\begin{lstlisting}[language=Python, caption=Normalisation correcte (CORRECT)]
+# Split AVANT preprocessing
+X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+# Normalisation basée UNIQUEMENT sur train set
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)  # fit sur train
+X_test_scaled = scaler.transform(X_test)        # transform sur test (sans fit!)
+\end{lstlisting}
+
+\textbf{Pourquoi c'est important :}
+\begin{itemize}
+    \item Le scaler calculé sur tout le dataset "voit" les statistiques du test set
+    \item En production, vous n'aurez pas accès aux données futures
+    \item Impact : performances surestimées de 5-10\% ou plus
+\end{itemize}
+
+\subsubsection{Leakage via les features}
+
+\begin{exemple}{Prédiction de fraude bancaire (leakage)}
+\textbf{Feature problématique :} \texttt{fraud\_score} (score de fraude calculé manuellement après investigation)
+
+\textbf{Problème :} Ce score n'existe qu'après l'enquête, donc inutilisable en production (au moment de la transaction).
+
+\textbf{Symptôme :} Modèle avec 99\% d'accuracy en validation, mais 0\% en production.
+\end{exemple}
+
+\subsubsection{Leakage temporel}
+
+\begin{exemple}{Prédiction de prix d'actions}
+\textbf{Erreur :} Utiliser K-Fold classique sur des données temporelles.
+
+\textbf{Problème :} Le modèle s'entraîne sur des données futures pour prédire le passé (impossible en production).
+
+\textbf{Solution :} Utiliser Time Series Split.
+\end{exemple}
+
+\subsection{Classes Déséquilibrées}
+
+\begin{attention}
+Avec des classes très déséquilibrées (99\% / 1\%), l'accuracy devient inutile.
+\end{attention}
+
+\textbf{Stratégies :}
+
+\begin{enumerate}
+    \item \textbf{Changer la métrique :}
+    \begin{itemize}
+        \item Utiliser Precision, Recall, F1-score, AUC
+        \item Ignorer l'accuracy
+    \end{itemize}
+
+    \item \textbf{Rééchantillonnage :}
+    \begin{itemize}
+        \item \textbf{Oversampling :} dupliquer la classe minoritaire (risque d'overfitting)
+        \item \textbf{Undersampling :} réduire la classe majoritaire (perte de données)
+        \item \textbf{SMOTE :} générer des exemples synthétiques (meilleure approche)
+    \end{itemize}
+
+    \item \textbf{Class weights :}
+    \begin{lstlisting}[language=Python]
+from sklearn.linear_model import LogisticRegression
+
+# Pénaliser plus les erreurs sur la classe minoritaire
+model = LogisticRegression(class_weight='balanced')
+    \end{lstlisting}
+
+    \item \textbf{Algorithmes robustes :}
+    \begin{itemize}
+        \item Random Forest, XGBoost (gèrent bien le déséquilibre)
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Overfitting et Underfitting}
+
+\begin{definition}{Overfitting et Underfitting}
+\begin{itemize}
+    \item \textbf{Overfitting :} Le modèle mémorise les données d'entraînement (bruit inclus). Performance excellente en train, mauvaise en test.
+    \item \textbf{Underfitting :} Le modèle est trop simple pour capturer les patterns. Performance médiocre en train ET en test.
+\end{itemize}
+\end{definition}
+
+\textbf{Détection :}
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Situation} & \textbf{Train Score} & \textbf{Test Score} & \textbf{Diagnostic} \\
+\midrule
+Bon modèle & 85\% & 83\% & Équilibre \\
+Overfitting & 99\% & 70\% & Trop complexe \\
+Underfitting & 65\% & 63\% & Trop simple \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Solutions :}
+
+\textbf{Contre l'overfitting :}
+\begin{itemize}
+    \item Augmenter les données d'entraînement
+    \item Régularisation (L1, L2, Dropout)
+    \item Réduire la complexité du modèle
+    \item Early stopping
+    \item Data augmentation
+\end{itemize}
+
+\textbf{Contre l'underfitting :}
+\begin{itemize}
+    \item Augmenter la complexité du modèle
+    \item Ajouter des features
+    \item Réduire la régularisation
+    \item Entraîner plus longtemps
+\end{itemize}
+
+\subsection{Sélection de Métriques : Guide Pratique}
+
+\begin{table}[h]
+\centering
+\caption{Quelle métrique utiliser ?}
+\label{tab:metric_selection}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lll}
+\toprule
+\textbf{Contexte} & \textbf{Métrique recommandée} & \textbf{Raison} \\
+\midrule
+Classification équilibrée & Accuracy, F1-score & Classes également importantes \\
+Classification déséquilibrée & Precision, Recall, F1, AUC & Accuracy trompeuse \\
+Spam detection & Precision (+ Recall) & Éviter de perdre emails légitimes \\
+Détection cancer & Recall (+ Precision) & Ne pas manquer de malades \\
+Détection fraude & AUC, F1-score & Compromis FP/FN + robustesse seuil \\
+Multi-classes équilibrées & Macro average & Toutes classes égales \\
+Multi-classes déséquilibrées & Weighted average & Classes réalistes \\
+Régression générale & RMSE, MAE, R² & Standard, facile à interpréter \\
+Régression avec outliers & MAE & Moins sensible aux outliers \\
+Régression sans outliers & RMSE & Pénalise les grandes erreurs \\
+Comparaison multi-datasets & MAPE, R² & Indépendant de l'échelle \\
+Séries temporelles & Time Series Split + RMSE/MAE & Respect de la temporalité \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+% ===== SECTION 6: RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{Métriques de classification :}
+    \begin{itemize}
+        \item Matrice de confusion : TP, TN, FP, FN
+        \item Accuracy : proportion de prédictions correctes (attention aux classes déséquilibrées)
+        \item Precision : "Quand je prédis positif, ai-je raison ?" (important si FP coûteux)
+        \item Recall : "Parmi les vrais positifs, combien sont détectés ?" (important si FN coûteux)
+        \item F1-score : compromis entre Precision et Recall
+        \item AUC-ROC : performance indépendante du seuil (bon pour comparer des modèles)
+        \item Precision-Recall curve : meilleure que ROC pour classes déséquilibrées
+    \end{itemize}
+
+    \item \textbf{Métriques de régression :}
+    \begin{itemize}
+        \item MSE : pénalise fortement les grandes erreurs (sensible aux outliers)
+        \item RMSE : version interprétable du MSE (même unité que $y$)
+        \item MAE : robuste aux outliers, pénalise toutes les erreurs également
+        \item R² : proportion de variance expliquée (0 = modèle inutile, 1 = parfait)
+        \item MAPE : erreur en pourcentage (indépendant de l'échelle, mais problèmes si $y=0$)
+    \end{itemize}
+
+    \item \textbf{Validation :}
+    \begin{itemize}
+        \item Ne JAMAIS évaluer sur les données d'entraînement
+        \item Train/Test split : simple, mais variance élevée
+        \item K-Fold CV : utilise toutes les données, réduit la variance
+        \item Stratified K-Fold : préserve la distribution des classes (recommandé)
+        \item Time Series Split : obligatoire pour les séries temporelles
+    \end{itemize}
+
+    \item \textbf{Pièges à éviter :}
+    \begin{itemize}
+        \item Data leakage (preprocessing APRÈS split)
+        \item Choisir la mauvaise métrique (accuracy avec classes déséquilibrées)
+        \item Overfitting (train score >> test score)
+        \item Évaluer plusieurs fois sur le test set
+    \end{itemize}
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+
+\textbf{Classification :}
+\begin{align}
+    \text{Accuracy} &= \frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}} \\
+    \text{Precision} &= \frac{\text{TP}}{\text{TP} + \text{FP}} \\
+    \text{Recall} &= \frac{\text{TP}}{\text{TP} + \text{FN}} \\
+    F_1 &= 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+\end{align}
+
+\textbf{Régression :}
+\begin{align}
+    \text{MSE} &= \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 \\
+    \text{RMSE} &= \sqrt{\text{MSE}} \\
+    \text{MAE} &= \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i| \\
+    R^2 &= 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
+\end{align}
+\end{tcolorbox}
+
+% ===== SECTION 7: EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de compréhension}
+
+\begin{enumerate}
+    \item Expliquez pourquoi l'accuracy peut être trompeuse avec des classes déséquilibrées (99\% / 1\%). Donnez un exemple concret.
+
+    \item Un modèle de détection de cancer a Precision = 80\% et Recall = 95\%. Que signifient ces chiffres concrètement ? Quelle métrique est la plus importante dans ce contexte ?
+
+    \item Pourquoi utilise-t-on la moyenne harmonique (F1) plutôt que la moyenne arithmétique entre Precision et Recall ?
+
+    \item Vous entraînez un modèle et obtenez : Train accuracy = 98\%, Test accuracy = 72\%. Quel est le problème ? Quelles solutions proposez-vous ?
+
+    \item Expliquez la différence entre RMSE et MAE. Dans quel contexte préférer l'un à l'autre ?
+
+    \item Pourquoi ne peut-on pas utiliser K-Fold classique pour des séries temporelles ? Quelle technique utiliser ?
+
+    \item Qu'est-ce que le data leakage ? Donnez un exemple de leakage via le preprocessing.
+
+    \item Un dataset contient 1\% de fraudes. Vous voulez optimiser un seuil de classification. Quelle courbe utiliser : ROC ou Precision-Recall ? Pourquoi ?
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+
+\begin{enumerate}
+    \item \textbf{Calcul manuel de métriques :}
+    \begin{itemize}
+        \item Soit une matrice de confusion : TP = 45, FP = 10, FN = 5, TN = 140
+        \item Calculez : Accuracy, Precision, Recall, F1-score, Spécificité
+        \item Interprétez les résultats
+    \end{itemize}
+
+    \item \textbf{Comparaison de modèles (régression) :}
+    \begin{itemize}
+        \item Modèle A : MSE = 25, MAE = 4, R² = 0.85
+        \item Modèle B : MSE = 30, MAE = 3.5, R² = 0.82
+        \item Quel modèle choisir ? Justifiez selon le contexte.
+    \end{itemize}
+
+    \item \textbf{Implémentation from scratch :}
+    \begin{itemize}
+        \item Implémenter Precision, Recall, F1-score en NumPy pur (sans scikit-learn)
+        \item Tester sur des données synthétiques
+        \item Comparer avec \texttt{sklearn.metrics}
+    \end{itemize}
+
+    \item \textbf{Validation croisée :}
+    \begin{itemize}
+        \item Dataset : Breast Cancer (sklearn)
+        \item Comparer : simple train/test, 5-fold CV, 10-fold CV, Stratified 5-fold
+        \item Analyser moyenne et écart-type des scores
+    \end{itemize}
+
+    \item \textbf{Classes déséquilibrées :}
+    \begin{itemize}
+        \item Créer un dataset déséquilibré (95\% / 5\%)
+        \item Entraîner un modèle baseline
+        \item Tester : SMOTE, class weights, undersampling
+        \item Comparer les métriques (Accuracy, F1, AUC)
+    \end{itemize}
+
+    \item \textbf{Visualisations :}
+    \begin{itemize}
+        \item Tracer une matrice de confusion avec seaborn
+        \item Tracer courbes ROC et Precision-Recall
+        \item Comparer 3 modèles sur le même graphique
+    \end{itemize}
+\end{enumerate}
+
+
+% ===== SECTION 8: POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\begin{itemize}
+    \item \textbf{Articles :}
+    \begin{itemize}
+        \item "The Precision-Recall Plot Is More Informative than the ROC Plot When Evaluating Binary Classifiers on Imbalanced Datasets" (Saito \& Rehmsmeier, 2015)
+        \item "A Survey on Deep Learning for Imbalanced Classification" (Zhang et al., 2023)
+    \end{itemize}
+
+    \item \textbf{Livres :}
+    \begin{itemize}
+        \item "Hands-On Machine Learning" (Aurélien Géron) - Chapitre 3
+        \item "The Elements of Statistical Learning" (Hastie et al.) - Chapitre 7
+    \end{itemize}
+
+    \item \textbf{Blogs :}
+    \begin{itemize}
+        \item \url{https://machinelearningmastery.com/metrics-evaluate-machine-learning-algorithms-python/}
+        \item \url{https://neptune.ai/blog/f1-score-accuracy-roc-auc-pr-auc}
+    \end{itemize}
+\end{itemize}
+
+\subsection{Ressources en Ligne}
+
+\begin{itemize}
+    \item Documentation scikit-learn : \url{https://scikit-learn.org/stable/modules/model_evaluation.html}
+    \item Imbalanced-learn (SMOTE) : \url{https://imbalanced-learn.org/}
+    \item Interactive ROC/PR curves : \url{https://roc.mlvis.com/}
+\end{itemize}
+
+\subsection{Notebooks Associés}
+
+\begin{enumerate}
+    \item \texttt{02_demo_metriques\_classification.ipynb} : Calcul manuel, visualisations ROC/PR
+    \item \texttt{02_demo_metriques\_regression.ipynb} : Comparaison MSE/MAE/R²
+\end{enumerate}
+
+\subsection{Prochaines Étapes}
+
+Chapitre suivant recommandé : \textbf{Chapitre 03 - Régression Linéaire}
+
+Vous savez maintenant évaluer un modèle. Le chapitre suivant vous apprendra à construire votre premier modèle de régression, en appliquant toutes les métriques et techniques de validation vues ici.
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item Géron, A. (2022). \textit{Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow} (3rd ed.). O'Reilly Media.
+    \item Hastie, T., Tibshirani, R., \& Friedman, J. (2009). \textit{The Elements of Statistical Learning} (2nd ed.). Springer.
+    \item Saito, T., \& Rehmsmeier, M. (2015). "The Precision-Recall Plot Is More Informative than the ROC Plot When Evaluating Binary Classifiers on Imbalanced Datasets". \textit{PLOS ONE}, 10(3).
+    \item Pedregosa, F. et al. (2011). "Scikit-learn: Machine Learning in Python". \textit{Journal of Machine Learning Research}, 12, 2825-2830.
+    \item Provost, F., \& Fawcett, T. (2013). \textit{Data Science for Business}. O'Reilly Media.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,1300 @@
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc, matrix}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 07 - Deep Learning : CNN},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 07 - Deep Learning : CNN}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=⚠️ Attention,
+    breakable
+}
+
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=💡 Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+\newcommand{\relu}{\operatorname{ReLU}}
+\newcommand{\softmax}{\operatorname{softmax}}
+
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 07}\\[0.3cm]
+    {\LARGE\bfseries Deep Learning : Réseaux de Neurones Convolutifs (CNN)}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Comprendre l'opération de convolution et son utilité pour les images
+        \item Maîtriser les couches fondamentales : convolution, pooling, fully-connected
+        \item Étudier les architectures classiques : LeNet, AlexNet, VGG, ResNet
+        \item Appliquer le transfer learning et le fine-tuning
+        \item Implémenter un CNN avec PyTorch/TensorFlow
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitre 06 (Réseaux de Neurones Fondamentaux)\\[0.3cm]
+    \textbf{Durée estimée :} 8-10 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{07_demo_*.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: INTRODUCTION =====
+\section{Introduction aux CNN}
+
+\subsection{Motivation : Limitations des MLP pour les images}
+
+Un MLP classique présente des problèmes majeurs pour traiter les images :
+
+\begin{enumerate}
+    \item \textbf{Nombre de paramètres explosif} : Image 224×224 RGB → 150K inputs → MLP(512) nécessite 77M paramètres pour la première couche !
+    \item \textbf{Pas d'invariance spatiale} : Un chat en haut à gauche vs en bas à droite sont des patterns complètement différents
+    \item \textbf{Perte de structure 2D} : Aplatir l'image en vecteur 1D détruit les relations spatiales locales
+\end{enumerate}
+
+\begin{exemple}{MNIST avec MLP vs CNN}
+\begin{itemize}
+    \item MLP (784 → 128 → 10) : ~100K paramètres, ~98\% accuracy
+    \item CNN simple (2 conv + pooling) : ~10K paramètres, ~99\% accuracy
+\end{itemize}
+Le CNN est 10× plus compact et plus performant !
+\end{exemple}
+
+\subsection{Principes des CNN}
+
+Les CNN exploitent trois idées clés :
+
+\begin{enumerate}
+    \item \textbf{Connexions locales (local connectivity)} : Chaque neurone ne "regarde" qu'une petite région de l'image (champ récepteur)
+    \item \textbf{Partage de poids (weight sharing)} : Le même filtre est appliqué sur toute l'image → invariance par translation
+    \item \textbf{Hiérarchie de features} : Couches successives détectent des features de plus en plus complexes
+\end{enumerate}
+
+\subsection{Hiérarchie de représentations}
+
+\begin{itemize}
+    \item \textbf{Couche 1} : Détecte bords, contours, gradients (features bas niveau)
+    \item \textbf{Couche 2-3} : Détecte textures, motifs simples (coins, cercles)
+    \item \textbf{Couche 4-5} : Détecte parties d'objets (yeux, roues, fenêtres)
+    \item \textbf{Couche finale} : Détecte objets complets (chat, voiture, visage)
+\end{itemize}
+
+% ===== SECTION 2: OPÉRATION DE CONVOLUTION =====
+\section{Opération de Convolution}
+
+\subsection{Convolution 2D}
+
+\begin{definition}{Convolution Discrète 2D}
+Pour une image $\mat{I} \in \R^{H \times W}$ et un filtre (kernel) $\mat{K} \in \R^{k \times k}$, la convolution produit une feature map $\mat{O}$ :
+\begin{equation}
+    \mat{O}[i, j] = (\mat{I} * \mat{K})[i, j] = \sum_{m=0}^{k-1} \sum_{n=0}^{k-1} \mat{I}[i+m, j+n] \cdot \mat{K}[m, n]
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation :} Le filtre "glisse" sur l'image et calcule un produit scalaire local à chaque position.
+
+\subsection{Exemple concret}
+
+Image 5×5 et filtre 3×3 :
+\begin{equation*}
+\mat{I} = \begin{bmatrix}
+1 & 2 & 3 & 0 & 1 \\
+0 & 1 & 2 & 3 & 0 \\
+1 & 0 & 1 & 2 & 3 \\
+2 & 1 & 0 & 1 & 2 \\
+3 & 2 & 1 & 0 & 1
+\end{bmatrix}, \quad
+\mat{K} = \begin{bmatrix}
+1 & 0 & -1 \\
+1 & 0 & -1 \\
+1 & 0 & -1
+\end{bmatrix} \text{ (détecteur de bord vertical)}
+\end{equation*}
+
+Calcul de $\mat{O}[0, 0]$ :
+\begin{align*}
+\mat{O}[0, 0] &= 1 \cdot 1 + 2 \cdot 0 + 3 \cdot (-1) \\
+              &+ 0 \cdot 1 + 1 \cdot 0 + 2 \cdot (-1) \\
+              &+ 1 \cdot 1 + 0 \cdot 0 + 1 \cdot (-1) \\
+              &= 1 + 0 - 3 + 0 + 0 - 2 + 1 + 0 - 1 = -4
+\end{align*}
+
+\subsection{Filtres classiques}
+
+\textbf{Détecteur de bord vertical :}
+\begin{equation*}
+\mat{K}_{\text{vert}} = \begin{bmatrix}
+1 & 0 & -1 \\
+1 & 0 & -1 \\
+1 & 0 & -1
+\end{bmatrix}
+\end{equation*}
+
+\textbf{Détecteur de bord horizontal :}
+\begin{equation*}
+\mat{K}_{\text{horiz}} = \begin{bmatrix}
+1 & 1 & 1 \\
+0 & 0 & 0 \\
+-1 & -1 & -1
+\end{bmatrix}
+\end{equation*}
+
+\textbf{Filtre de flou (blur) :}
+\begin{equation*}
+\mat{K}_{\text{blur}} = \frac{1}{9} \begin{bmatrix}
+1 & 1 & 1 \\
+1 & 1 & 1 \\
+1 & 1 & 1
+\end{bmatrix}
+\end{equation*}
+
+\textbf{Sobel (détection de contours) :}
+\begin{equation*}
+\mat{K}_{\text{Sobel}_x} = \begin{bmatrix}
+-1 & 0 & 1 \\
+-2 & 0 & 2 \\
+-1 & 0 & 1
+\end{bmatrix}, \quad
+\mat{K}_{\text{Sobel}_y} = \begin{bmatrix}
+-1 & -2 & -1 \\
+0 & 0 & 0 \\
+1 & 2 & 1
+\end{bmatrix}
+\end{equation*}
+
+\subsection{Hyperparamètres de la convolution}
+
+\subsubsection{Padding}
+
+\begin{definition}{Padding}
+Ajout de zéros (ou autres valeurs) autour de l'image pour contrôler la taille de sortie.
+\begin{itemize}
+    \item \textbf{Valid padding} (no padding) : $p = 0$
+    \item \textbf{Same padding} : $p = \lfloor k/2 \rfloor$ (sortie même taille que l'entrée)
+\end{itemize}
+\end{definition}
+
+\subsubsection{Stride}
+
+\begin{definition}{Stride}
+Pas de déplacement du filtre. Stride $s = 1$ : déplacement de 1 pixel. Stride $s = 2$ : déplacement de 2 pixels (sous-échantillonnage).
+\end{definition}
+
+\subsubsection{Taille de sortie}
+
+Pour une entrée $H \times W$, filtre $k \times k$, padding $p$, stride $s$ :
+\begin{equation}
+    H_{out} = \left\lfloor \frac{H + 2p - k}{s} \right\rfloor + 1, \quad
+    W_{out} = \left\lfloor \frac{W + 2p - k}{s} \right\rfloor + 1
+\end{equation}
+
+\begin{exemple}{Calcul de taille}
+Entrée 32×32, filtre 5×5, padding 2, stride 1 :
+\begin{equation*}
+    H_{out} = \frac{32 + 2 \cdot 2 - 5}{1} + 1 = \frac{31}{1} + 1 = 32
+\end{equation*}
+Sortie : 32×32 (same padding)
+\end{exemple}
+
+\subsection{Convolution multi-canal}
+
+Pour une image RGB (3 canaux) :
+\begin{itemize}
+    \item Entrée : $\mat{I} \in \R^{H \times W \times C_{in}}$ ($C_{in} = 3$ pour RGB)
+    \item Filtre : $\mat{K} \in \R^{k \times k \times C_{in} \times C_{out}}$
+    \item Sortie : $\mat{O} \in \R^{H' \times W' \times C_{out}}$
+\end{itemize}
+
+Pour chaque canal de sortie $c$, on applique un filtre 3D :
+\begin{equation}
+    \mat{O}[i, j, c] = \sum_{m=0}^{k-1} \sum_{n=0}^{k-1} \sum_{c'=0}^{C_{in}-1} \mat{I}[i+m, j+n, c'] \cdot \mat{K}[m, n, c', c] + b_c
+\end{equation}
+
+\begin{astuce}
+Un CNN apprend automatiquement les meilleurs filtres pendant l'entraînement, contrairement aux filtres manuels (Sobel, etc.) !
+\end{astuce}
+
+% ===== SECTION 3: COUCHES CNN =====
+\section{Couches d'un CNN}
+
+\subsection{Couche de Convolution (Conv Layer)}
+
+\begin{definition}{Couche de Convolution}
+Une couche Conv applique $C_{out}$ filtres apprenables sur l'entrée pour produire $C_{out}$ feature maps.
+\end{definition}
+
+\textbf{Nombre de paramètres :}
+\begin{equation}
+    \text{Params} = (k \times k \times C_{in} + 1) \times C_{out}
+\end{equation}
+Le $+1$ correspond au biais par filtre.
+
+\begin{exemple}{Conv2D(3, 64, kernel=3)}
+Entrée RGB (3 canaux), 64 filtres de taille 3×3 :
+\begin{equation*}
+    \text{Params} = (3 \times 3 \times 3 + 1) \times 64 = 28 \times 64 = 1{,}792
+\end{equation*}
+\end{exemple}
+
+\subsection{Fonction d'Activation}
+
+Après chaque convolution, on applique une activation non-linéaire (typiquement ReLU) :
+\begin{equation}
+    \mat{A} = \relu(\mat{O}) = \max(0, \mat{O})
+\end{equation}
+
+\subsection{Couche de Pooling}
+
+\begin{definition}{Pooling}
+Opération de sous-échantillonnage qui réduit la dimension spatiale des feature maps.
+\end{definition}
+
+\subsubsection{Max Pooling}
+
+Prend le maximum dans chaque région :
+\begin{equation}
+    \mat{O}[i, j] = \max_{m, n \in \text{pool}} \mat{I}[i \cdot s + m, j \cdot s + n]
+\end{equation}
+
+\textbf{Max Pooling 2×2 avec stride 2 :}
+\begin{equation*}
+\begin{bmatrix}
+1 & 3 & 2 & 4 \\
+5 & 6 & 7 & 8 \\
+3 & 2 & 1 & 0 \\
+1 & 2 & 3 & 4
+\end{bmatrix}
+\xrightarrow{\text{MaxPool 2×2}}
+\begin{bmatrix}
+6 & 8 \\
+3 & 4
+\end{bmatrix}
+\end{equation*}
+
+\subsubsection{Average Pooling}
+
+Prend la moyenne :
+\begin{equation}
+    \mat{O}[i, j] = \frac{1}{k^2} \sum_{m, n \in \text{pool}} \mat{I}[i \cdot s + m, j \cdot s + n]
+\end{equation}
+
+\subsubsection{Avantages du Pooling}
+
+\begin{itemize}
+    \item ✅ Réduit la taille spatiale → moins de paramètres dans les couches suivantes
+    \item ✅ Invariance locale par translation (petits déplacements)
+    \item ✅ Augmente le champ récepteur
+    \item ✅ Régularisation (réduit overfitting)
+\end{itemize}
+
+\begin{attention}
+Le pooling \textbf{n'a pas de paramètres apprenables}. C'est une opération déterministe.
+\end{attention}
+
+\subsection{Couche Fully-Connected (FC)}
+
+En fin de réseau, on "aplatit" les feature maps et on applique un MLP classique :
+\begin{align}
+    \vect{x}_{\text{flat}} &= \text{Flatten}(\mat{A}^{[L-1]}) \quad \in \R^d \\
+    \vect{z}^{[L]} &= \mat{W}^{[L]} \vect{x}_{\text{flat}} + \vect{b}^{[L]} \\
+    \hat{\vect{y}} &= \softmax(\vect{z}^{[L]})
+\end{align}
+
+\subsection{Architecture typique}
+
+Un CNN classique suit le pattern :
+\begin{equation*}
+\boxed{\text{INPUT}} \to \boxed{\text{[CONV + ReLU + POOL]} \times N} \to \boxed{\text{FC}} \to \boxed{\text{SOFTMAX}}
+\end{equation*}
+
+\begin{exemple}{CNN simple pour MNIST}
+\begin{align*}
+&\text{Input: } 28 \times 28 \times 1 \\
+&\text{Conv1: } 32 \text{ filtres } 3 \times 3 \to 28 \times 28 \times 32 \\
+&\text{ReLU + MaxPool } 2 \times 2 \to 14 \times 14 \times 32 \\
+&\text{Conv2: } 64 \text{ filtres } 3 \times 3 \to 14 \times 14 \times 64 \\
+&\text{ReLU + MaxPool } 2 \times 2 \to 7 \times 7 \times 64 \\
+&\text{Flatten: } 7 \times 7 \times 64 = 3{,}136 \\
+&\text{FC: } 3{,}136 \to 10 \text{ (classes)}
+\end{align*}
+\end{exemple}
+
+% ===== SECTION 4: BACKPROPAGATION DANS LES CNN =====
+\section{Backpropagation dans les CNN}
+
+\subsection{Gradient de la convolution}
+
+Pour une convolution $\mat{O} = \mat{I} * \mat{K}$ :
+
+\textbf{Gradient par rapport à l'entrée :}
+\begin{equation}
+    \frac{\partial L}{\partial \mat{I}} = \frac{\partial L}{\partial \mat{O}} * \mat{K}_{\text{rot180}}
+\end{equation}
+où $\mat{K}_{\text{rot180}}$ est le filtre $\mat{K}$ tourné de 180°.
+
+\textbf{Gradient par rapport au filtre :}
+\begin{equation}
+    \frac{\partial L}{\partial \mat{K}} = \mat{I} * \frac{\partial L}{\partial \mat{O}}
+\end{equation}
+
+\subsection{Gradient du Max Pooling}
+
+Le gradient ne se propage qu'à travers l'élément qui était le maximum :
+\begin{equation}
+    \frac{\partial L}{\partial \mat{I}[i, j]} = \begin{cases}
+        \frac{\partial L}{\partial \mat{O}[i', j']} & \text{si } \mat{I}[i, j] = \max \text{ dans sa région} \\
+        0 & \text{sinon}
+    \end{cases}
+\end{equation}
+
+\begin{astuce}
+En pratique, PyTorch et TensorFlow calculent automatiquement tous ces gradients grâce à l'autodifférentiation !
+\end{astuce}
+
+% ===== SECTION 5: ARCHITECTURES CLASSIQUES =====
+\section{Architectures CNN Classiques}
+
+\subsection{LeNet-5 (1998)}
+
+\textbf{Auteurs :} Yann LeCun et al.
+\textbf{Application :} Reconnaissance de chiffres manuscrits (MNIST)
+
+\textbf{Architecture :}
+\begin{align*}
+&\text{Input: } 32 \times 32 \times 1 \\
+&\text{C1: Conv } 6 @ 5 \times 5 \to 28 \times 28 \times 6 \\
+&\text{S2: AvgPool } 2 \times 2 \to 14 \times 14 \times 6 \\
+&\text{C3: Conv } 16 @ 5 \times 5 \to 10 \times 10 \times 16 \\
+&\text{S4: AvgPool } 2 \times 2 \to 5 \times 5 \times 16 \\
+&\text{C5: Conv } 120 @ 5 \times 5 \to 1 \times 1 \times 120 \\
+&\text{F6: FC } 120 \to 84 \\
+&\text{Output: FC } 84 \to 10
+\end{align*}
+
+\textbf{Paramètres :} ~60K
+\textbf{Fonction d'activation :} Tanh (à l'époque, ReLU n'était pas encore populaire)
+
+\subsection{AlexNet (2012)}
+
+\textbf{Auteurs :} Alex Krizhevsky, Ilya Sutskever, Geoffrey Hinton
+\textbf{Dataset :} ImageNet (1.2M images, 1000 classes)
+\textbf{Impact :} Révolution du deep learning (top-5 error : 15.3\% vs 26\% avant)
+
+\textbf{Architecture :}
+\begin{align*}
+&\text{Input: } 227 \times 227 \times 3 \\
+&\text{Conv1: } 96 @ 11 \times 11, \text{stride } 4 \to 55 \times 55 \times 96 \\
+&\text{MaxPool } 3 \times 3, \text{stride } 2 \to 27 \times 27 \times 96 \\
+&\text{Conv2: } 256 @ 5 \times 5 \to 27 \times 27 \times 256 \\
+&\text{MaxPool } 3 \times 3, \text{stride } 2 \to 13 \times 13 \times 256 \\
+&\text{Conv3: } 384 @ 3 \times 3 \to 13 \times 13 \times 384 \\
+&\text{Conv4: } 384 @ 3 \times 3 \to 13 \times 13 \times 384 \\
+&\text{Conv5: } 256 @ 3 \times 3 \to 13 \times 13 \times 256 \\
+&\text{MaxPool } 3 \times 3 \to 6 \times 6 \times 256 \\
+&\text{FC6: } 9{,}216 \to 4{,}096 \\
+&\text{FC7: } 4{,}096 \to 4{,}096 \\
+&\text{FC8: } 4{,}096 \to 1{,}000
+\end{align*}
+
+\textbf{Paramètres :} ~60M
+\textbf{Innovations :}
+\begin{itemize}
+    \item ReLU activation (au lieu de tanh)
+    \item Dropout (0.5 dans les FC)
+    \item Data augmentation (crop, flip, color jitter)
+    \item GPU training (2× GTX 580)
+\end{itemize}
+
+\subsection{VGGNet (2014)}
+
+\textbf{Auteurs :} Simonyan \& Zisserman (Oxford)
+\textbf{Principe :} Utiliser des filtres 3×3 exclusivement, empiler beaucoup de couches
+
+\textbf{VGG-16 Architecture :}
+\begin{itemize}
+    \item \textbf{Block 1 :} 2× Conv(64, 3×3) + MaxPool
+    \item \textbf{Block 2 :} 2× Conv(128, 3×3) + MaxPool
+    \item \textbf{Block 3 :} 3× Conv(256, 3×3) + MaxPool
+    \item \textbf{Block 4 :} 3× Conv(512, 3×3) + MaxPool
+    \item \textbf{Block 5 :} 3× Conv(512, 3×3) + MaxPool
+    \item \textbf{FC :} 4096 → 4096 → 1000
+\end{itemize}
+
+\textbf{Paramètres :} 138M (très lourd !)
+\textbf{Insight :} 2 convolutions 3×3 = champ récepteur 5×5, mais avec moins de paramètres et plus de non-linéarité
+
+\begin{equation*}
+\text{Params}(5 \times 5) = 25C^2 \quad \text{vs} \quad \text{Params}(3 \times 3 \times 2) = 18C^2
+\end{equation*}
+
+\subsection{ResNet (2015)}
+
+\textbf{Auteurs :} He et al. (Microsoft Research)
+\textbf{Innovation :} Residual connections (skip connections)
+
+\textbf{Problème des réseaux profonds :} Degradation problem (réseaux très profonds difficiles à entraîner, même avec BN)
+
+\begin{definition}{Residual Block}
+Au lieu d'apprendre $\mathcal{H}(\vect{x})$, on apprend le résidu $\mathcal{F}(\vect{x}) = \mathcal{H}(\vect{x}) - \vect{x}$ :
+\begin{equation}
+    \vect{y} = \mathcal{F}(\vect{x}, \{W_i\}) + \vect{x}
+\end{equation}
+La connexion $+\vect{x}$ est appelée "skip connection" ou "shortcut".
+\end{definition}
+
+\textbf{Architecture d'un bloc résiduel :}
+\begin{align*}
+\vect{x} &\to \text{Conv } 3 \times 3 \to \text{BN} \to \text{ReLU} \\
+&\to \text{Conv } 3 \times 3 \to \text{BN} \to (+\vect{x}) \to \text{ReLU} \to \vect{y}
+\end{align*}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Permet d'entraîner des réseaux très profonds (50, 101, 152, voire 1000 couches)
+    \item Gradient flow amélioré (évite vanishing gradient)
+    \item Si nécessaire, le réseau peut "copier" l'identité en mettant $\mathcal{F}(\vect{x}) = 0$
+\end{itemize}
+
+\textbf{ResNet-50 :} 50 couches, ~25M paramètres, top-5 error ImageNet : 3.6\%
+
+\subsection{Autres architectures modernes}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des architectures CNN}
+\label{tab:cnn_architectures}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Modèle} & \textbf{Année} & \textbf{Paramètres} & \textbf{Top-5 Error} & \textbf{Innovation} \\
+\midrule
+LeNet-5 & 1998 & 60K & - & Premier CNN \\
+AlexNet & 2012 & 60M & 15.3\% & ReLU, Dropout, GPU \\
+VGG-16 & 2014 & 138M & 7.3\% & Filtres 3×3 profonds \\
+ResNet-50 & 2015 & 25M & 3.6\% & Skip connections \\
+Inception v3 & 2015 & 24M & 3.5\% & Multi-scale filters \\
+EfficientNet & 2019 & 5-66M & 2.9\% & Scaling optimal \\
+Vision Transformer & 2020 & 86M & 2.3\% & Self-attention \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 6: IMPLÉMENTATION =====
+\section{Implémentation avec PyTorch}
+
+\subsection{CNN simple from scratch}
+
+\begin{lstlisting}[language=Python, caption=CNN simple pour MNIST]
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+
+        # Couches de convolution
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32,
+                               kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64,
+                               kernel_size=3, padding=1)
+
+        # Pooling
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        # Couches fully-connected
+        self.fc1 = nn.Linear(64 * 7 * 7, 128)
+        self.fc2 = nn.Linear(128, 10)
+
+        # Dropout
+        self.dropout = nn.Dropout(0.5)
+
+    def forward(self, x):
+        # Block 1: Conv + ReLU + Pool
+        x = self.pool(F.relu(self.conv1(x)))  # 28x28x1 -> 14x14x32
+
+        # Block 2: Conv + ReLU + Pool
+        x = self.pool(F.relu(self.conv2(x)))  # 14x14x32 -> 7x7x64
+
+        # Flatten
+        x = x.view(-1, 64 * 7 * 7)  # (batch, 3136)
+
+        # FC layers
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
+
+        return x
+
+# Instancier le modèle
+model = SimpleCNN()
+print(model)
+
+# Compter les paramètres
+total_params = sum(p.numel() for p in model.parameters())
+print(f"Total parameters: {total_params:,}")
+\end{lstlisting}
+
+\subsection{Entraînement}
+
+\begin{lstlisting}[language=Python, caption=Training loop]
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+# Dataset et DataLoader
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.1307,), (0.3081,))
+])
+
+train_dataset = datasets.MNIST('./data', train=True, download=True,
+                               transform=transform)
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+
+# Loss et optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# Training loop
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = model.to(device)
+
+num_epochs = 10
+
+for epoch in range(num_epochs):
+    model.train()
+    total_loss = 0
+
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+
+        # Forward
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+
+        # Backward
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+
+    avg_loss = total_loss / len(train_loader)
+    print(f"Epoch {epoch+1}/{num_epochs}, Loss: {avg_loss:.4f}")
+
+print("Training complete!")
+\end{lstlisting}
+
+\subsection{VGG-like architecture}
+
+\begin{lstlisting}[language=Python, caption=VGG-style CNN]
+class VGGBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, num_convs):
+        super(VGGBlock, self).__init__()
+        layers = []
+        for _ in range(num_convs):
+            layers.append(nn.Conv2d(in_channels, out_channels,
+                                    kernel_size=3, padding=1))
+            layers.append(nn.ReLU(inplace=True))
+            in_channels = out_channels
+        layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+        self.block = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.block(x)
+
+class TinyVGG(nn.Module):
+    def __init__(self, num_classes=10):
+        super(TinyVGG, self).__init__()
+
+        self.features = nn.Sequential(
+            VGGBlock(3, 64, 2),   # 2x Conv64 + Pool
+            VGGBlock(64, 128, 2), # 2x Conv128 + Pool
+            VGGBlock(128, 256, 3) # 3x Conv256 + Pool
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(256 * 4 * 4, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(512, num_classes)
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+\end{lstlisting}
+
+\subsection{ResNet block}
+
+\begin{lstlisting}[language=Python, caption=Residual Block]
+class ResidualBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, stride=1):
+        super(ResidualBlock, self).__init__()
+
+        self.conv1 = nn.Conv2d(in_channels, out_channels,
+                               kernel_size=3, stride=stride, padding=1,
+                               bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels,
+                               kernel_size=3, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+
+        # Skip connection (shortcut)
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels)
+            )
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)  # Skip connection
+        out = F.relu(out)
+        return out
+
+# Utilisation
+class TinyResNet(nn.Module):
+    def __init__(self, num_classes=10):
+        super(TinyResNet, self).__init__()
+
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+
+        self.layer1 = self._make_layer(64, 64, 2, stride=1)
+        self.layer2 = self._make_layer(64, 128, 2, stride=2)
+        self.layer3 = self._make_layer(128, 256, 2, stride=2)
+
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(256, num_classes)
+
+    def _make_layer(self, in_channels, out_channels, num_blocks, stride):
+        layers = []
+        layers.append(ResidualBlock(in_channels, out_channels, stride))
+        for _ in range(1, num_blocks):
+            layers.append(ResidualBlock(out_channels, out_channels, 1))
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.avg_pool(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
+\end{lstlisting}
+
+% ===== SECTION 7: TRANSFER LEARNING =====
+\section{Transfer Learning et Fine-Tuning}
+
+\subsection{Principe}
+
+\textbf{Idée :} Utiliser un réseau pré-entraîné sur ImageNet (1.2M images) comme point de départ pour une nouvelle tâche.
+
+\textbf{Pourquoi ça marche ?}
+\begin{itemize}
+    \item Les features bas niveau (bords, textures) sont universelles
+    \item Pré-entraîner sur un grand dataset capture ces features
+    \item On peut réutiliser ces features pour une nouvelle tâche (même avec peu de données)
+\end{itemize}
+
+\subsection{Stratégies}
+
+\subsubsection{Feature Extraction (Frozen Backbone)}
+
+\begin{enumerate}
+    \item Charger un modèle pré-entraîné (ResNet, VGG, etc.)
+    \item \textbf{Geler} toutes les couches convolutionnelles
+    \item Remplacer la dernière couche FC par une nouvelle (taille = nb de classes)
+    \item Entraîner uniquement la nouvelle couche FC
+\end{enumerate}
+
+\textbf{Avantages :} Très rapide, peu de données nécessaires
+\textbf{Inconvénients :} Features pas adaptées à la nouvelle tâche
+
+\subsubsection{Fine-Tuning}
+
+\begin{enumerate}
+    \item Charger modèle pré-entraîné
+    \item Remplacer dernière couche FC
+    \item \textbf{Entraîner tout le réseau} avec un learning rate très faible
+    \item Optionnel : dégeler progressivement les couches (shallow → deep)
+\end{enumerate}
+
+\textbf{Avantages :} Meilleure performance
+\textbf{Inconvénients :} Nécessite plus de données, risque d'overfitting
+
+\subsection{Implémentation PyTorch}
+
+\begin{lstlisting}[language=Python, caption=Transfer Learning avec ResNet]
+import torchvision.models as models
+
+# Charger ResNet-18 pré-entraîné
+model = models.resnet18(pretrained=True)
+
+# Option 1 : Feature Extraction (geler toutes les couches)
+for param in model.parameters():
+    param.requires_grad = False
+
+# Remplacer la dernière couche FC
+num_classes = 10  # Notre nouvelle tâche
+num_features = model.fc.in_features
+model.fc = nn.Linear(num_features, num_classes)
+
+# Seule la dernière couche sera entraînée
+optimizer = optim.Adam(model.fc.parameters(), lr=0.001)
+
+# -------------------------------------------
+
+# Option 2 : Fine-Tuning (tout entraîner)
+model = models.resnet18(pretrained=True)
+model.fc = nn.Linear(model.fc.in_features, num_classes)
+
+# Entraîner tout le réseau avec un petit LR
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
+
+# -------------------------------------------
+
+# Option 3 : Fine-Tuning progressif
+model = models.resnet18(pretrained=True)
+model.fc = nn.Linear(model.fc.in_features, num_classes)
+
+# Geler d'abord toutes les couches sauf FC
+for param in model.parameters():
+    param.requires_grad = False
+for param in model.fc.parameters():
+    param.requires_grad = True
+
+# Entraîner FC pendant quelques epochs
+optimizer = optim.Adam(model.fc.parameters(), lr=0.001)
+# ... train ...
+
+# Puis dégeler tout et fine-tune avec petit LR
+for param in model.parameters():
+    param.requires_grad = True
+optimizer = optim.Adam(model.parameters(), lr=1e-5)
+# ... train ...
+\end{lstlisting}
+
+\subsection{Data Augmentation}
+
+Pour éviter l'overfitting avec peu de données :
+
+\begin{lstlisting}[language=Python, caption=Data Augmentation]
+from torchvision import transforms
+
+train_transform = transforms.Compose([
+    transforms.RandomResizedCrop(224),      # Crop aléatoire
+    transforms.RandomHorizontalFlip(),      # Flip horizontal
+    transforms.ColorJitter(                 # Perturbations couleur
+        brightness=0.2,
+        contrast=0.2,
+        saturation=0.2
+    ),
+    transforms.RandomRotation(15),          # Rotation ±15°
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                         std=[0.229, 0.224, 0.225])
+])
+
+val_transform = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                         std=[0.229, 0.224, 0.225])
+])
+\end{lstlisting}
+
+% ===== SECTION 8: VISUALISATION =====
+\section{Visualisation et Interprétation}
+
+\subsection{Visualiser les filtres}
+
+\begin{lstlisting}[language=Python, caption=Visualiser les filtres Conv1]
+import matplotlib.pyplot as plt
+
+# Extraire les poids de la première couche conv
+conv1_weights = model.conv1.weight.data.cpu()
+# Shape: (out_channels, in_channels, k, k)
+
+# Visualiser les 16 premiers filtres
+fig, axes = plt.subplots(4, 4, figsize=(10, 10))
+for i, ax in enumerate(axes.flat):
+    if i < conv1_weights.shape[0]:
+        # Si RGB, prendre le premier canal
+        if conv1_weights.shape[1] == 3:
+            filter_img = conv1_weights[i, 0, :, :]
+        else:
+            filter_img = conv1_weights[i, 0, :, :]
+        ax.imshow(filter_img, cmap='gray')
+        ax.axis('off')
+plt.suptitle('Filtres Conv1')
+plt.show()
+\end{lstlisting}
+
+\subsection{Visualiser les feature maps}
+
+\begin{lstlisting}[language=Python, caption=Visualiser les activations]
+def visualize_feature_maps(model, image, layer_name='conv1'):
+    # Hook pour capturer l'output d'une couche
+    activations = {}
+    def hook_fn(module, input, output):
+        activations['feature_maps'] = output
+
+    # Enregistrer le hook
+    layer = dict(model.named_modules())[layer_name]
+    hook = layer.register_forward_hook(hook_fn)
+
+    # Forward pass
+    model.eval()
+    with torch.no_grad():
+        _ = model(image.unsqueeze(0))
+
+    # Supprimer le hook
+    hook.remove()
+
+    # Visualiser
+    feature_maps = activations['feature_maps'][0].cpu()
+    num_maps = min(16, feature_maps.shape[0])
+
+    fig, axes = plt.subplots(4, 4, figsize=(12, 12))
+    for i, ax in enumerate(axes.flat):
+        if i < num_maps:
+            ax.imshow(feature_maps[i], cmap='viridis')
+            ax.set_title(f'Map {i}')
+            ax.axis('off')
+    plt.suptitle(f'Feature Maps - {layer_name}')
+    plt.show()
+\end{lstlisting}
+
+\subsection{Grad-CAM (Class Activation Mapping)}
+
+Technique pour visualiser quelles régions de l'image influencent la prédiction.
+
+\begin{lstlisting}[language=Python, caption=Grad-CAM simplifié]
+def grad_cam(model, image, target_class):
+    model.eval()
+    image.requires_grad = True
+
+    # Forward
+    output = model(image.unsqueeze(0))
+    class_score = output[0, target_class]
+
+    # Backward
+    model.zero_grad()
+    class_score.backward()
+
+    # Récupérer gradients de la dernière conv
+    gradients = image.grad.data
+
+    # Calculer importance (moyenne des gradients)
+    weights = torch.mean(gradients, dim=(2, 3), keepdim=True)
+
+    # Combiner avec feature maps
+    cam = torch.sum(weights * image, dim=1, keepdim=True)
+    cam = F.relu(cam)  # ReLU pour garder activations positives
+
+    # Normaliser
+    cam = (cam - cam.min()) / (cam.max() - cam.min())
+
+    return cam.squeeze().cpu().numpy()
+\end{lstlisting}
+
+% ===== SECTION 9: APPLICATIONS =====
+\section{Applications des CNN}
+
+\subsection{Computer Vision}
+
+\begin{enumerate}
+    \item \textbf{Classification d'images}
+    \begin{itemize}
+        \item ImageNet : 1000 classes (chiens, chats, avions, etc.)
+        \item Diagnostic médical : détection cancer, COVID-19 sur radiographies
+    \end{itemize}
+
+    \item \textbf{Détection d'objets} (Object Detection)
+    \begin{itemize}
+        \item YOLO, Faster R-CNN, SSD
+        \item Applications : voitures autonomes, surveillance
+    \end{itemize}
+
+    \item \textbf{Segmentation sémantique}
+    \begin{itemize}
+        \item U-Net, Mask R-CNN
+        \item Applications : imagerie médicale, édition photo
+    \end{itemize}
+
+    \item \textbf{Reconnaissance faciale}
+    \begin{itemize}
+        \item FaceNet, DeepFace
+        \item Applications : déverrouillage téléphone, sécurité
+    \end{itemize}
+
+    \item \textbf{Génération d'images}
+    \begin{itemize}
+        \item GANs (Generative Adversarial Networks)
+        \item Style Transfer, Super-Resolution
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Au-delà de la vision}
+
+Les CNN peuvent aussi traiter d'autres données spatiales :
+
+\begin{itemize}
+    \item \textbf{Traitement du signal audio} : spectrogrammes (convolution 1D ou 2D)
+    \item \textbf{Séries temporelles} : Temporal CNN (TCN)
+    \item \textbf{Texte} : CNN 1D pour classification de textes (moins utilisé que Transformers)
+    \item \textbf{Graphes} : Graph Convolutional Networks (GCN)
+\end{itemize}
+
+% ===== SECTION 10: BONNES PRATIQUES =====
+\section{Bonnes Pratiques}
+
+\subsection{Architecture}
+
+\begin{itemize}
+    \item Utiliser des filtres 3×3 (standard moderne)
+    \item Doubler les canaux quand on divise la résolution spatiale par 2
+    \item Batch Normalization après chaque Conv (avant ReLU)
+    \item Utiliser Global Average Pooling au lieu de FC massifs (réduit overfitting)
+    \item Préférer des réseaux profonds mais avec skip connections (ResNet-style)
+\end{itemize}
+
+\subsection{Entraînement}
+
+\begin{itemize}
+    \item \textbf{Optimizer :} Adam ou SGD avec momentum (0.9)
+    \item \textbf{Learning Rate :} 1e-3 pour Adam, 1e-1 pour SGD
+    \item \textbf{LR Scheduling :} ReduceLROnPlateau ou Cosine Annealing
+    \item \textbf{Batch Size :} 32-128 (compromis vitesse/généralisation)
+    \item \textbf{Régularisation :} L2 (1e-4), Dropout (0.5), Data Augmentation
+    \item \textbf{Early Stopping :} Patience de 10-20 epochs
+\end{itemize}
+
+\subsection{Transfer Learning}
+
+\begin{astuce}
+\textbf{Règle générale :}
+\begin{itemize}
+    \item \textbf{Peu de données (< 1000)} : Feature extraction
+    \item \textbf{Données moyennes (1K-10K)} : Fine-tuning des dernières couches
+    \item \textbf{Beaucoup de données (> 10K)} : Fine-tuning complet ou entraînement from scratch
+\end{itemize}
+\end{astuce}
+
+% ===== SECTION 11: AVANTAGES ET LIMITES =====
+\section{Avantages et Limites}
+
+\subsection{Avantages}
+
+\begin{itemize}
+    \item ✅ Exploitation de la structure spatiale des images
+    \item ✅ Invariance par translation (weight sharing)
+    \item ✅ Beaucoup moins de paramètres qu'un MLP équivalent
+    \item ✅ Hiérarchie automatique de features (bas niveau → haut niveau)
+    \item ✅ State-of-the-art en vision par ordinateur
+    \item ✅ Transfer learning très efficace
+\end{itemize}
+
+\subsection{Limites}
+
+\begin{itemize}
+    \item ❌ Nécessite beaucoup de données (ou transfer learning)
+    \item ❌ Pas invariant aux rotations/échelles (nécessite data augmentation)
+    \item ❌ Sensible aux adversarial examples (perturbations imperceptibles)
+    \item ❌ Coût computationnel élevé (GPU indispensable)
+    \item ❌ Difficile à interpréter (boîte noire)
+    \item ❌ Pas optimal pour données non-spatiales (tableaux, graphes)
+\end{itemize}
+
+% ===== SECTION 12: RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{Convolution} : Produit scalaire local avec partage de poids → invariance translation
+    \item \textbf{Pooling} : Sous-échantillonnage pour réduire dimension et augmenter champ récepteur
+    \item \textbf{Architecture} : [Conv + ReLU + Pool] × N → Flatten → FC → Softmax
+    \item \textbf{LeNet} (1998) : Premier CNN (MNIST)
+    \item \textbf{AlexNet} (2012) : Révolution deep learning (ImageNet)
+    \item \textbf{VGG} (2014) : Empilage profond de Conv 3×3
+    \item \textbf{ResNet} (2015) : Skip connections → réseaux très profonds
+    \item \textbf{Transfer Learning} : Réutilisation de modèles pré-entraînés
+    \item \textbf{Data Augmentation} : Flip, crop, rotation, color jitter
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\textbf{Convolution 2D :}
+\begin{equation*}
+    \mat{O}[i, j] = \sum_{m=0}^{k-1} \sum_{n=0}^{k-1} \mat{I}[i+m, j+n] \cdot \mat{K}[m, n] + b
+\end{equation*}
+
+\textbf{Taille de sortie :}
+\begin{equation*}
+    H_{out} = \left\lfloor \frac{H + 2p - k}{s} \right\rfloor + 1
+\end{equation*}
+
+\textbf{Nombre de paramètres Conv :}
+\begin{equation*}
+    \text{Params} = (k \times k \times C_{in} + 1) \times C_{out}
+\end{equation*}
+
+\textbf{Residual Block :}
+\begin{equation*}
+    \vect{y} = \mathcal{F}(\vect{x}, \{W_i\}) + \vect{x}
+\end{equation*}
+\end{tcolorbox}
+
+% ===== SECTION 13: EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de compréhension}
+
+\begin{enumerate}
+    \item Pourquoi un CNN a-t-il moins de paramètres qu'un MLP pour traiter des images ?
+    \item Expliquer l'intuition derrière le max pooling.
+    \item Quelle est la différence entre valid padding et same padding ?
+    \item Pourquoi VGG utilise exclusivement des filtres 3×3 ?
+    \item Comment les skip connections de ResNet aident-elles à entraîner des réseaux profonds ?
+    \item Quelle est la différence entre feature extraction et fine-tuning ?
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+
+\begin{enumerate}
+    \item \textbf{CNN pour CIFAR-10}
+    \begin{itemize}
+        \item Implémenter un CNN from scratch pour CIFAR-10
+        \item Architecture libre, objectif : > 75\% accuracy
+        \item Utiliser data augmentation
+    \end{itemize}
+
+    \item \textbf{Transfer Learning}
+    \begin{itemize}
+        \item Charger ResNet-18 pré-entraîné
+        \item Fine-tuner sur un petit dataset (ex: Cats vs Dogs)
+        \item Comparer feature extraction vs fine-tuning
+    \end{itemize}
+
+    \item \textbf{Visualisation}
+    \begin{itemize}
+        \item Visualiser les filtres de Conv1
+        \item Visualiser les feature maps pour différentes couches
+        \item Implémenter Grad-CAM
+    \end{itemize}
+
+    \item \textbf{Architecture ResNet}
+    \begin{itemize}
+        \item Implémenter un ResNet-18 from scratch
+        \item Comparer avec un CNN classique de même profondeur (sans skip connections)
+    \end{itemize}
+\end{enumerate}
+
+\textit{Solutions disponibles dans} \texttt{07_exercices.ipynb} \textit{(solutions intégrées dans le notebook)}
+
+% ===== SECTION 14: POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\begin{itemize}
+    \item LeCun et al. (1998) - "Gradient-based learning applied to document recognition" (LeNet)
+    \item Krizhevsky et al. (2012) - "ImageNet Classification with Deep CNNs" (AlexNet)
+    \item Simonyan \& Zisserman (2014) - "Very Deep Convolutional Networks" (VGG)
+    \item He et al. (2015) - "Deep Residual Learning for Image Recognition" (ResNet)
+    \item Szegedy et al. (2015) - "Going Deeper with Convolutions" (Inception)
+\end{itemize}
+
+\subsection{Ressources en Ligne}
+
+\begin{itemize}
+    \item CS231n Stanford : \url{http://cs231n.stanford.edu/}
+    \item PyTorch Tutorials : \url{https://pytorch.org/tutorials/}
+    \item Papers With Code : \url{https://paperswithcode.com/}
+    \item Distill.pub : Articles interactifs sur les CNN
+\end{itemize}
+
+\subsection{Architectures Avancées}
+
+\begin{itemize}
+    \item \textbf{EfficientNet} : Scaling optimal (width, depth, resolution)
+    \item \textbf{MobileNet} : CNN légers pour mobile/edge devices
+    \item \textbf{Vision Transformers (ViT)} : Alternatives aux CNN basées sur attention
+    \item \textbf{YOLO, Faster R-CNN} : Détection d'objets
+    \item \textbf{U-Net, Mask R-CNN} : Segmentation
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+
+Chapitre suivant recommandé : \textbf{Chapitre 08 - Deep Learning : RNN et Transformers}
+
+Les RNN et Transformers sont des architectures pour les données séquentielles (texte, séries temporelles, audio).
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item LeCun, Y., et al. (1998). "Gradient-based learning applied to document recognition". \textit{Proceedings of the IEEE}, 86(11), 2278-2324.
+    \item Krizhevsky, A., Sutskever, I., \& Hinton, G. E. (2012). "ImageNet classification with deep convolutional neural networks". \textit{NIPS}.
+    \item Simonyan, K., \& Zisserman, A. (2014). "Very deep convolutional networks for large-scale image recognition". \textit{arXiv:1409.1556}.
+    \item He, K., et al. (2015). "Deep residual learning for image recognition". \textit{CVPR}.
+    \item Szegedy, C., et al. (2015). "Going deeper with convolutions". \textit{CVPR}.
+    \item Goodfellow, I., Bengio, Y., \& Courville, A. (2016). \textit{Deep Learning}. MIT Press.
+\end{enumerate}
+
+\end{document}

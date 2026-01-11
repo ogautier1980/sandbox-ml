@@ -1,0 +1,785 @@
+% Chapitre 03 - Régression
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 03 - Régression},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 03 - Régression}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=Attention,
+    breakable
+}
+
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+% ===== DÉBUT DU DOCUMENT =====
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 03}\\[0.3cm]
+    {\LARGE\bfseries Régression}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Maîtriser la régression linéaire (simple, multiple, polynomiale)
+        \item Comprendre les techniques de régularisation (Ridge, Lasso, Elastic Net)
+        \item Diagnostiquer et valider un modèle de régression
+        \item Implémenter et optimiser des modèles de régression
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitres 00, 01, 02\\[0.3cm]
+    \textbf{Durée estimée :} 5-6 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{03_demo_*.ipynb}, \texttt{03_exercices.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+% ===== TABLE DES MATIÈRES =====
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: INTRODUCTION =====
+\section{Introduction à la Régression}
+
+\subsection{Problématique}
+
+\begin{definition}{Régression}
+La régression est une tâche d'apprentissage supervisé où l'objectif est de prédire une variable cible \textbf{continue} $y \in \R$ à partir de features $\vect{x} \in \R^d$.
+\end{definition}
+
+\textbf{Formulation mathématique :}
+
+Étant donné un dataset $\{(\vect{x}_i, y_i)\}_{i=1}^n$, on cherche une fonction $f: \R^d \to \R$ telle que :
+\begin{equation}
+    \hat{y}_i = f(\vect{x}_i) \approx y_i
+\end{equation}
+
+\textbf{Différence avec la classification :}
+\begin{itemize}
+    \item \textbf{Régression :} $y$ est continu (ex: prix, température, âge)
+    \item \textbf{Classification :} $y$ est discret (ex: spam/non-spam, classe 0/1/2)
+\end{itemize}
+
+\begin{exemple}{Applications de la régression}
+\begin{itemize}
+    \item \textbf{Immobilier :} Prédire le prix d'une maison (surface, nb pièces, localisation)
+    \item \textbf{Finance :} Prédire le cours d'une action, le risque de défaut
+    \item \textbf{Santé :} Prédire la durée d'hospitalisation, la progression d'une maladie
+    \item \textbf{Marketing :} Prédire les ventes futures, le chiffre d'affaires
+    \item \textbf{Météo :} Prédire la température, les précipitations
+\end{itemize}
+\end{exemple}
+
+\subsection{Fonction de Coût}
+
+La fonction de coût (loss) mesure l'erreur de prédiction. Pour la régression, les plus courantes sont :
+
+\textbf{1. Mean Squared Error (MSE) :}
+\begin{equation}
+    \text{MSE} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2
+\end{equation}
+
+\textbf{2. Mean Absolute Error (MAE) :}
+\begin{equation}
+    \text{MAE} = \frac{1}{n} \sum_{i=1}^n |y_i - \hat{y}_i|
+\end{equation}
+
+\textbf{3. Root Mean Squared Error (RMSE) :}
+\begin{equation}
+    \text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2}
+\end{equation}
+
+\begin{astuce}
+\textbf{Choix de la métrique :}
+\begin{itemize}
+    \item \textbf{MSE/RMSE :} Plus sensibles aux outliers (erreurs au carré), différentiables
+    \item \textbf{MAE :} Plus robuste aux outliers, moins sensible aux valeurs extrêmes
+    \item En pratique, MSE est la plus utilisée car différentiable et optimisable analytiquement
+\end{itemize}
+\end{astuce}
+
+% ===== SECTION 2: RÉGRESSION LINÉAIRE SIMPLE =====
+\section{Régression Linéaire Simple}
+
+\subsection{Modèle}
+
+\begin{definition}{Régression linéaire simple}
+Modèle avec une seule feature $x$ :
+\begin{equation}
+    \hat{y} = w_1 x + w_0
+\end{equation}
+où $w_1$ est la pente et $w_0$ l'intercept (ordonnée à l'origine).
+\end{definition}
+
+\textbf{Notation alternative :} $\hat{y} = \beta_1 x + \beta_0$ ou $\hat{y} = ax + b$
+
+\subsection{Solution Analytique}
+
+Pour minimiser le MSE, on résout :
+\begin{equation}
+    \min_{w_0, w_1} \sum_{i=1}^n (y_i - w_1 x_i - w_0)^2
+\end{equation}
+
+En dérivant par rapport à $w_0$ et $w_1$ et en annulant, on obtient les \textbf{équations normales} :
+
+\begin{align}
+    w_1 &= \frac{\sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})}{\sum_{i=1}^n (x_i - \bar{x})^2} = \frac{\text{Cov}(x, y)}{\Var(x)} \\
+    w_0 &= \bar{y} - w_1 \bar{x}
+\end{align}
+
+où $\bar{x}$ et $\bar{y}$ sont les moyennes de $x$ et $y$.
+
+\subsection{Coefficient de Détermination $R^2$}
+
+\begin{definition}{Coefficient $R^2$}
+Le coefficient de détermination mesure la proportion de variance expliquée par le modèle :
+\begin{equation}
+    R^2 = 1 - \frac{\sum_{i=1}^n (y_i - \hat{y}_i)^2}{\sum_{i=1}^n (y_i - \bar{y})^2} = 1 - \frac{\text{SS}_{\text{res}}}{\text{SS}_{\text{tot}}}
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation :}
+\begin{itemize}
+    \item $R^2 = 1$ : Modèle parfait (toutes les prédictions exactes)
+    \item $R^2 = 0$ : Modèle aussi bon qu'une prédiction constante ($\hat{y} = \bar{y}$)
+    \item $R^2 < 0$ : Modèle pire que la moyenne (rare, indique un problème)
+\end{itemize}
+
+\textbf{Relation avec la corrélation :} Pour la régression simple, $R^2 = \rho^2$ où $\rho$ est le coefficient de corrélation de Pearson.
+
+% ===== SECTION 3: RÉGRESSION LINÉAIRE MULTIPLE =====
+\section{Régression Linéaire Multiple}
+
+\subsection{Modèle Vectoriel}
+
+\begin{definition}{Régression linéaire multiple}
+Modèle avec $d$ features :
+\begin{equation}
+    \hat{y} = w_1 x_1 + w_2 x_2 + \cdots + w_d x_d + w_0 = \vect{w}^T \vect{x} + w_0
+\end{equation}
+\end{definition}
+
+En notation matricielle, pour $n$ instances :
+\begin{equation}
+    \vect{\hat{y}} = \mat{X} \vect{w}
+\end{equation}
+où $\mat{X} \in \R^{n \times (d+1)}$ inclut une colonne de 1 pour l'intercept, et $\vect{w} \in \R^{d+1}$ contient tous les poids.
+
+\subsection{Solution par Moindres Carrés}
+
+\textbf{Problème d'optimisation :}
+\begin{equation}
+    \vect{w}^* = \argmin_{\vect{w}} \|\mat{X}\vect{w} - \vect{y}\|_2^2
+\end{equation}
+
+\begin{theoreme}{Équations normales}
+La solution optimale des moindres carrés est :
+\begin{equation}
+    \vect{w}^* = (\mat{X}^T\mat{X})^{-1}\mat{X}^T\vect{y}
+\end{equation}
+sous réserve que $\mat{X}^T\mat{X}$ soit inversible (rang plein).
+\end{theoreme}
+
+\textbf{Démonstration (esquisse) :}
+\begin{align}
+    \text{Minimiser } & f(\vect{w}) = \|\mat{X}\vect{w} - \vect{y}\|_2^2 \\
+    \nabla_{\vect{w}} f &= 2\mat{X}^T(\mat{X}\vect{w} - \vect{y}) = \vect{0} \\
+    \mat{X}^T\mat{X}\vect{w} &= \mat{X}^T\vect{y} \\
+    \vect{w}^* &= (\mat{X}^T\mat{X})^{-1}\mat{X}^T\vect{y}
+\end{align}
+
+\begin{attention}
+\textbf{Problèmes numériques :}
+\begin{itemize}
+    \item Si $\mat{X}^T\mat{X}$ est singulière ou mal conditionnée, l'inversion est instable
+    \item Causes : multicollinéarité (features corrélées), $n < d$ (plus de features que d'instances)
+    \item Solutions : régularisation (Ridge, Lasso), sélection de features, PCA
+\end{itemize}
+\end{attention}
+
+\subsection{Implémentation}
+
+\begin{lstlisting}[language=Python, caption=Régression linéaire avec scikit-learn]
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+import numpy as np
+
+# Données
+X = np.random.randn(100, 5)  # 100 instances, 5 features
+y = 3*X[:, 0] + 2*X[:, 1] - X[:, 2] + np.random.randn(100)*0.5
+
+# Split train/test
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Entraînement
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Prédiction
+y_pred = model.predict(X_test)
+
+# Évaluation
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"MSE: {mse:.4f}")
+print(f"R²: {r2:.4f}")
+print(f"Coefficients: {model.coef_}")
+print(f"Intercept: {model.intercept_:.4f}")
+\end{lstlisting}
+
+% ===== SECTION 4: RÉGRESSION POLYNOMIALE =====
+\section{Régression Polynomiale}
+
+\subsection{Motivation}
+
+La régression linéaire suppose une relation linéaire entre features et cible. Si la relation est non-linéaire, on peut utiliser des features polynomiales.
+
+\begin{definition}{Régression polynomiale}
+Pour une feature $x$, on crée des features polynomiales :
+\begin{equation}
+    \hat{y} = w_0 + w_1 x + w_2 x^2 + w_3 x^3 + \cdots + w_p x^p
+\end{equation}
+Le modèle reste linéaire en les poids $\vect{w}$, mais non-linéaire en $x$.
+\end{definition}
+
+\textbf{Généralisation à plusieurs features :}
+Pour $d$ features, on peut créer tous les termes de degré $\leq p$ :
+\begin{equation}
+    \vect{\phi}(\vect{x}) = [1, x_1, x_2, x_1^2, x_1 x_2, x_2^2, \ldots]
+\end{equation}
+
+Le nombre de features polynomiales croît combinatoirement : $\binom{d+p}{p}$.
+
+\subsection{Exemple}
+
+Données 1D non-linéaires : $y = \sin(2\pi x) + \epsilon$
+
+\begin{itemize}
+    \item \textbf{Degré 1 (linéaire)} : sous-ajustement (underfitting)
+    \item \textbf{Degré 3-5} : bon ajustement
+    \item \textbf{Degré 15} : sur-ajustement (overfitting)
+\end{itemize}
+
+\begin{lstlisting}[language=Python, caption=Régression polynomiale]
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
+
+# Créer un pipeline : features polynomiales + régression
+degree = 3
+model = make_pipeline(
+    PolynomialFeatures(degree=degree),
+    LinearRegression()
+)
+
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+\end{lstlisting}
+
+\begin{attention}
+\textbf{Risque d'overfitting :}
+\begin{itemize}
+    \item Augmenter le degré $p$ améliore le fit sur le train set
+    \item Mais peut dégrader la généralisation (test set)
+    \item Solution : validation croisée pour choisir $p$, régularisation
+\end{itemize}
+\end{attention}
+
+% ===== SECTION 5: RÉGULARISATION =====
+\section{Régularisation}
+
+La régularisation pénalise la complexité du modèle pour éviter l'overfitting.
+
+\subsection{Ridge Regression ($L^2$)}
+
+\begin{definition}{Ridge (Régression $L^2$)}
+Ajoute une pénalité sur la norme $L^2$ des poids :
+\begin{equation}
+    \vect{w}^* = \argmin_{\vect{w}} \left\{ \|\mat{X}\vect{w} - \vect{y}\|_2^2 + \lambda \|\vect{w}\|_2^2 \right\}
+\end{equation}
+où $\lambda \geq 0$ est le coefficient de régularisation.
+\end{definition}
+
+\textbf{Solution analytique :}
+\begin{equation}
+    \vect{w}^*_{\text{Ridge}} = (\mat{X}^T\mat{X} + \lambda \mat{I})^{-1}\mat{X}^T\vect{y}
+\end{equation}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item Pénalise les poids de grande magnitude
+    \item Réduit l'overfitting
+    \item Solution toujours unique (même si $\mat{X}^T\mat{X}$ singulière)
+    \item Les poids sont \textbf{rétrécis} (shrinkage) mais rarement nuls
+\end{itemize}
+
+\subsection{Lasso Regression ($L^1$)}
+
+\begin{definition}{Lasso (Régression $L^1$)}
+Ajoute une pénalité sur la norme $L^1$ des poids :
+\begin{equation}
+    \vect{w}^* = \argmin_{\vect{w}} \left\{ \|\mat{X}\vect{w} - \vect{y}\|_2^2 + \lambda \|\vect{w}\|_1 \right\}
+\end{equation}
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item Pénalise les poids en valeur absolue
+    \item Effectue une \textbf{sélection de features automatique} : certains poids deviennent exactement 0
+    \item Pas de solution analytique simple, résolu par optimisation (coordinate descent, proximal gradient)
+    \item Utile quand on suspecte que peu de features sont pertinentes
+\end{itemize}
+
+\subsection{Elastic Net}
+
+\begin{definition}{Elastic Net}
+Combinaison de Ridge et Lasso :
+\begin{equation}
+    \vect{w}^* = \argmin_{\vect{w}} \left\{ \|\mat{X}\vect{w} - \vect{y}\|_2^2 + \lambda_1 \|\vect{w}\|_1 + \lambda_2 \|\vect{w}\|_2^2 \right\}
+\end{equation}
+ou avec un ratio $\rho \in [0, 1]$ :
+\begin{equation}
+    \text{Pénalité} = \lambda \left[\rho \|\vect{w}\|_1 + \frac{1-\rho}{2} \|\vect{w}\|_2^2\right]
+\end{equation}
+\end{definition}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Combine les avantages de Ridge et Lasso
+    \item Sélection de features (comme Lasso)
+    \item Stabilité quand features corrélées (comme Ridge)
+\end{itemize}
+
+\subsection{Comparaison Ridge vs Lasso}
+
+\begin{table}[h]
+\centering
+\caption{Ridge vs Lasso}
+\begin{tabular}{lll}
+\toprule
+\textbf{Aspect} & \textbf{Ridge ($L^2$)} & \textbf{Lasso ($L^1$)} \\
+\midrule
+Pénalité & $\lambda \sum w_i^2$ & $\lambda \sum |w_i|$ \\
+Solution analytique & Oui & Non \\
+Sélection de features & Non & Oui \\
+Poids à zéro & Jamais exactement & Oui \\
+Features corrélées & Stable & Instable (choix arbitraire) \\
+Interprétabilité & Moyenne & Élevée (sparse) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{astuce}
+\textbf{Quand utiliser quoi ?}
+\begin{itemize}
+    \item \textbf{Ridge :} Toutes les features potentiellement utiles, features corrélées
+    \item \textbf{Lasso :} Peu de features importantes, besoin d'interprétabilité
+    \item \textbf{Elastic Net :} Compromis, features corrélées + sélection
+\end{itemize}
+\end{astuce}
+
+\subsection{Choix de $\lambda$ (Hyperparamètre)}
+
+Le coefficient de régularisation $\lambda$ contrôle le trade-off biais-variance :
+\begin{itemize}
+    \item $\lambda = 0$ : Pas de régularisation (risque d'overfitting)
+    \item $\lambda$ petit : Régularisation faible
+    \item $\lambda$ grand : Régularisation forte (risque d'underfitting)
+\end{itemize}
+
+\textbf{Méthode de sélection :} Validation croisée
+
+\begin{lstlisting}[language=Python, caption=Ridge avec validation croisée]
+from sklearn.linear_model import RidgeCV
+
+# Tester plusieurs valeurs de lambda (alpha en scikit-learn)
+alphas = np.logspace(-3, 3, 50)
+model = RidgeCV(alphas=alphas, cv=5)
+model.fit(X_train, y_train)
+
+print(f"Meilleur alpha: {model.alpha_:.4f}")
+\end{lstlisting}
+
+% ===== SECTION 6: DIAGNOSTIC =====
+\section{Diagnostic et Analyse des Résidus}
+
+\subsection{Résidus}
+
+\begin{definition}{Résidus}
+Les résidus sont les erreurs de prédiction :
+\begin{equation}
+    e_i = y_i - \hat{y}_i
+\end{equation}
+\end{definition}
+
+\textbf{Hypothèses de la régression linéaire :}
+\begin{enumerate}
+    \item \textbf{Linéarité :} Relation linéaire entre $X$ et $y$
+    \item \textbf{Indépendance :} Les résidus sont indépendants
+    \item \textbf{Homoscédasticité :} Variance constante des résidus
+    \item \textbf{Normalité :} Les résidus suivent une loi normale
+    \item \textbf{Absence de multicollinéarité :} Features non (trop) corrélées
+\end{enumerate}
+
+\subsection{Graphiques de Diagnostic}
+
+\textbf{1. Résidus vs Prédictions :}
+\begin{itemize}
+    \item Vérifier l'homoscédasticité
+    \item Pattern : résidus dispersés aléatoirement autour de 0
+    \item Problème : tendance, forme en entonnoir (hétéroscédasticité)
+\end{itemize}
+
+\textbf{2. Q-Q Plot :}
+\begin{itemize}
+    \item Vérifier la normalité des résidus
+    \item Points alignés sur la diagonale = normalité
+\end{itemize}
+
+\textbf{3. Résidus vs Features :}
+\begin{itemize}
+    \item Détecter des relations non-linéaires manquées
+\end{itemize}
+
+\subsection{Multicollinéarité}
+
+\begin{definition}{Multicollinéarité}
+Corrélation forte entre plusieurs features. Rend l'estimation des coefficients instable.
+\end{definition}
+
+\textbf{Détection :}
+\begin{itemize}
+    \item Matrice de corrélation : $|\rho_{ij}| > 0.8$ problématique
+    \item VIF (Variance Inflation Factor) : VIF $> 10$ indique multicollinéarité
+\end{itemize}
+
+\textbf{Solutions :}
+\begin{itemize}
+    \item Supprimer une des features corrélées
+    \item PCA (réduction de dimensionnalité)
+    \item Régularisation (Ridge)
+\end{itemize}
+
+% ===== SECTION 7: VALIDATION =====
+\section{Validation et Sélection de Modèle}
+
+\subsection{Train/Validation/Test Split}
+
+\textbf{Procédure standard :}
+\begin{enumerate}
+    \item \textbf{Train set (70\%)} : Entraîner le modèle
+    \item \textbf{Validation set (15\%)} : Tuner les hyperparamètres
+    \item \textbf{Test set (15\%)} : Évaluation finale (une seule fois)
+\end{enumerate}
+
+\subsection{Validation Croisée (Cross-Validation)}
+
+\begin{definition}{K-Fold Cross-Validation}
+Diviser les données en $K$ folds. Pour chaque fold :
+\begin{itemize}
+    \item Entraîner sur $K-1$ folds
+    \item Valider sur le fold restant
+    \item Répéter $K$ fois, moyenner les scores
+\end{itemize}
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Validation croisée]
+from sklearn.model_selection import cross_val_score
+
+model = Ridge(alpha=1.0)
+scores = cross_val_score(model, X, y, cv=5,
+                          scoring='neg_mean_squared_error')
+rmse_scores = np.sqrt(-scores)
+
+print(f"RMSE: {rmse_scores.mean():.4f} (+/- {rmse_scores.std():.4f})")
+\end{lstlisting}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Utilise toutes les données pour train et validation
+    \item Estimation plus robuste de la performance
+    \item Réduit le risque de chance (lucky/unlucky split)
+\end{itemize}
+
+\subsection{Courbe d'Apprentissage}
+
+Tracer la performance (MSE, $R^2$) en fonction de la taille du train set.
+
+\textbf{Diagnostic :}
+\begin{itemize}
+    \item \textbf{Underfitting :} Train et validation scores bas et proches
+    \item \textbf{Overfitting :} Grand écart entre train et validation scores
+    \item \textbf{Bon fit :} Scores convergent vers une valeur élevée
+\end{itemize}
+
+% ===== SECTION 8: EXTENSIONS =====
+\section{Extensions et Variantes}
+
+\subsection{Régression Robuste}
+
+Pour gérer les outliers :
+\begin{itemize}
+    \item \textbf{Huber Regression :} Loss hybride (MSE + MAE)
+    \item \textbf{RANSAC :} Fit sur inliers, ignore outliers
+\end{itemize}
+
+\subsection{Régression Non-Linéaire}
+
+Au-delà des polynômes :
+\begin{itemize}
+    \item \textbf{Kernel Ridge Regression :} Kernels (RBF, polynomial)
+    \item \textbf{Support Vector Regression (SVR)} : SVM pour la régression
+    \item \textbf{Decision Trees, Random Forests :} Modèles non-linéaires
+    \item \textbf{Gradient Boosting (XGBoost, LightGBM)} : État de l'art pour données tabulaires
+    \item \textbf{Réseaux de neurones :} Deep Learning pour régression
+\end{itemize}
+
+\subsection{Régression Généralisée (GLM)}
+
+Extension de la régression linéaire pour distributions non-gaussiennes :
+\begin{itemize}
+    \item Régression logistique (Bernoulli)
+    \item Régression de Poisson
+    \item Régression Gamma
+\end{itemize}
+
+% ===== RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{Régression linéaire :} Modèle simple, interprétable, solution analytique
+    \item \textbf{Équations normales :} $\vect{w}^* = (\mat{X}^T\mat{X})^{-1}\mat{X}^T\vect{y}$
+    \item \textbf{$R^2$ :} Mesure de qualité du fit (0 à 1)
+    \item \textbf{Régression polynomiale :} Capture des relations non-linéaires
+    \item \textbf{Ridge ($L^2$) :} Régularisation, stabilité
+    \item \textbf{Lasso ($L^1$) :} Sélection de features, sparsité
+    \item \textbf{Diagnostic :} Analyse des résidus, détection de problèmes
+    \item \textbf{Validation croisée :} Sélection d'hyperparamètres robuste
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\textbf{Régression linéaire simple :}
+\begin{equation}
+    w_1 = \frac{\text{Cov}(x, y)}{\Var(x)}, \quad w_0 = \bar{y} - w_1 \bar{x}
+\end{equation}
+
+\textbf{Régression multiple (équations normales) :}
+\begin{equation}
+    \vect{w}^* = (\mat{X}^T\mat{X})^{-1}\mat{X}^T\vect{y}
+\end{equation}
+
+\textbf{Ridge :}
+\begin{equation}
+    \vect{w}^* = (\mat{X}^T\mat{X} + \lambda\mat{I})^{-1}\mat{X}^T\vect{y}
+\end{equation}
+
+\textbf{Coefficient $R^2$ :}
+\begin{equation}
+    R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}
+\end{equation}
+\end{tcolorbox}
+
+% ===== EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de Compréhension}
+
+\begin{enumerate}
+    \item Quelle est la différence entre régression et classification ?
+
+    \item Pourquoi utilise-t-on le MSE plutôt que le MAE en régression linéaire ?
+
+    \item Expliquez pourquoi la régression polynomiale de degré élevé peut causer de l'overfitting.
+
+    \item Quelle est la différence principale entre Ridge et Lasso ?
+
+    \item Comment détecte-t-on la multicollinéarité ? Quelles sont les solutions ?
+
+    \item Pourquoi la validation croisée est-elle préférable à un simple train/test split ?
+\end{enumerate}
+
+\subsection{Exercices Pratiques}
+
+\textit{Voir le notebook} \texttt{03_exercices.ipynb} \textit{(solutions intégrées)}
+
+% ===== POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\begin{itemize}
+    \item \textit{An Introduction to Statistical Learning} (2e éd., 2021) - James et al. (Ch. 3)
+    \item \textit{The Elements of Statistical Learning} (2009) - Hastie et al. (Ch. 3)
+    \item Scikit-learn documentation : Linear Models
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+
+Chapitre suivant : \textbf{Chapitre 04 - Classification Supervisée}
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item Hastie, T., Tibshirani, R., \& Friedman, J. (2009). \textit{The Elements of Statistical Learning}. Springer.
+
+    \item James, G., Witten, D., Hastie, T., \& Tibshirani, R. (2021). \textit{An Introduction to Statistical Learning} (2e éd.). Springer.
+
+    \item Géron, A. (2022). \textit{Hands-On Machine Learning} (3e éd.). O'Reilly.
+\end{enumerate}
+
+\end{document}

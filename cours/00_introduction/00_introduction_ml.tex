@@ -1,0 +1,1419 @@
+% Chapitre 00 - Introduction au Machine Learning
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 00 - Introduction au Machine Learning},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 00 - Introduction au Machine Learning}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS (code Python) =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+% Box pour définitions
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+% Box pour théorèmes
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+% Box pour exemples
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+% Box pour attention/warning
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=Attention,
+    breakable
+}
+
+% Box pour astuce/tips
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}  % Vecteur
+\newcommand{\mat}[1]{\mathbf{#1}}   % Matrice
+\newcommand{\R}{\mathbb{R}}         % Réels
+\newcommand{\N}{\mathbb{N}}         % Naturels
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+% ===== DÉBUT DU DOCUMENT =====
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 00}\\[0.3cm]
+    {\LARGE\bfseries Introduction au Machine Learning}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Comprendre ce qu'est le Machine Learning et son évolution historique
+        \item Maîtriser les différents types d'apprentissage automatique
+        \item Connaître le vocabulaire fondamental et le pipeline ML typique
+        \item Distinguer ML classique et Deep Learning
+        \item Identifier les applications concrètes et les enjeux éthiques
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Aucun (chapitre d'introduction)\\[0.3cm]
+    \textbf{Durée estimée :} 4-6 heures (incluant formation Python)\\[0.3cm]
+    \textbf{Notebooks :} \texttt{00\_prerequis\_python.ipynb}, \texttt{00_demo_ml\_pipeline.ipynb}, \texttt{00_exercices.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+% ===== TABLE DES MATIÈRES =====
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: QU'EST-CE QUE LE MACHINE LEARNING ? =====
+\section{Qu'est-ce que le Machine Learning ?}
+
+\subsection{Définition}
+
+\begin{definition}{Machine Learning (Apprentissage Automatique)}
+Le Machine Learning est un sous-domaine de l'intelligence artificielle qui permet aux ordinateurs d'apprendre à partir de données sans être explicitement programmés. Un programme apprend d'une expérience $E$ par rapport à une tâche $T$ et une mesure de performance $P$, si sa performance sur $T$, mesurée par $P$, s'améliore avec l'expérience $E$.
+\end{definition}
+
+Cette définition classique de Tom Mitchell (1997) met en évidence trois composantes essentielles :
+
+\begin{itemize}
+    \item \textbf{Tâche (T)} : Ce que le système doit accomplir (classification, prédiction, recommandation, etc.)
+    \item \textbf{Expérience (E)} : Les données utilisées pour l'apprentissage
+    \item \textbf{Performance (P)} : La métrique utilisée pour évaluer la qualité du système
+\end{itemize}
+
+\begin{exemple}{Reconnaissance de spam}
+\begin{itemize}
+    \item \textbf{Tâche :} Classifier un email comme spam ou non-spam
+    \item \textbf{Expérience :} Base de données d'emails déjà étiquetés (spam/non-spam)
+    \item \textbf{Performance :} Pourcentage d'emails correctement classifiés
+\end{itemize}
+\end{exemple}
+
+\subsection{Programmation Traditionnelle vs Machine Learning}
+
+Le Machine Learning inverse le paradigme de la programmation traditionnelle :
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=2cm,
+    box/.style={rectangle, draw, minimum width=2.5cm, minimum height=1cm, align=center},
+    arrow/.style={->, thick}
+]
+    % Programmation traditionnelle
+    \node[box] (prog_data) {Données};
+    \node[box, right of=prog_data] (prog_rules) {Règles\\(code)};
+    \node[box, right of=prog_rules] (prog_output) {Résultats};
+
+    \draw[arrow] (prog_data) -- (prog_output);
+    \draw[arrow] (prog_rules) -- (prog_output);
+
+    \node[above=0.5cm of prog_rules] {\textbf{Programmation Traditionnelle}};
+
+    % Machine Learning
+    \node[box, below=2cm of prog_data] (ml_data) {Données};
+    \node[box, right of=ml_data] (ml_output) {Résultats\\(labels)};
+    \node[box, right of=ml_output] (ml_rules) {Règles\\(modèle)};
+
+    \draw[arrow] (ml_data) -- (ml_rules);
+    \draw[arrow] (ml_output) -- (ml_rules);
+
+    \node[above=0.5cm of ml_output] {\textbf{Machine Learning}};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Programmation traditionnelle :} On écrit des règles explicites pour transformer les données en résultats.
+
+\textbf{Machine Learning :} On fournit des données et des résultats attendus, et l'algorithme apprend les règles automatiquement.
+
+\subsection{Quand utiliser le Machine Learning ?}
+
+\begin{astuce}
+Le Machine Learning est particulièrement adapté quand :
+\begin{itemize}
+    \item Le problème est trop complexe pour être résolu par des règles explicites
+    \item Les règles changent fréquemment (adaptation dynamique nécessaire)
+    \item Il existe de grandes quantités de données disponibles
+    \item Le problème nécessite de la personnalisation (recommandations, publicité ciblée)
+    \item On cherche à découvrir des patterns cachés dans les données
+\end{itemize}
+\end{astuce}
+
+\begin{attention}
+Éviter le Machine Learning quand :
+\begin{itemize}
+    \item Des règles simples et explicites suffisent
+    \item Les données sont insuffisantes ou de mauvaise qualité
+    \item L'explicabilité est critique et le modèle doit être interprétable
+    \item Le coût de calcul est prohibitif pour le bénéfice attendu
+\end{itemize}
+\end{attention}
+
+% ===== SECTION 2: HISTOIRE DU MACHINE LEARNING =====
+\section{Histoire du Machine Learning (1950-2026)}
+
+\subsection{Chronologie des Événements Majeurs}
+
+\begin{table}[h]
+\centering
+\caption{Principales étapes historiques du Machine Learning}
+\label{tab:histoire}
+\small
+\begin{tabular}{p{2cm}p{10cm}}
+\toprule
+\textbf{Période} & \textbf{Événements Marquants} \\
+\midrule
+\textbf{1950s} &
+    \begin{itemize}
+        \item 1950 : Test de Turing (Alan Turing)
+        \item 1957 : Perceptron (Frank Rosenblatt)
+        \item 1959 : Terme "Machine Learning" (Arthur Samuel)
+    \end{itemize} \\
+\midrule
+\textbf{1960-70s} &
+    \begin{itemize}
+        \item 1969 : Limitations du perceptron (Minsky \& Papert)
+        \item Premier "hiver de l'IA" (1974-1980)
+        \item 1979 : Backpropagation (Werbos)
+    \end{itemize} \\
+\midrule
+\textbf{1980s} &
+    \begin{itemize}
+        \item 1986 : Popularisation du backpropagation (Rumelhart et al.)
+        \item Développement des réseaux de neurones multicouches
+        \item Systèmes experts et IA symbolique
+    \end{itemize} \\
+\midrule
+\textbf{1990s} &
+    \begin{itemize}
+        \item 1995 : Support Vector Machines (Vapnik)
+        \item 1997 : Random Forests (Ho), LSTM (Hochreiter \& Schmidhuber)
+        \item 1997 : Deep Blue bat Kasparov aux échecs
+    \end{itemize} \\
+\midrule
+\textbf{2000s} &
+    \begin{itemize}
+        \item 2001 : Gradient Boosting Machines
+        \item 2006 : Deep Learning renaissance (Hinton et al.)
+        \item 2009 : ImageNet dataset créé
+    \end{itemize} \\
+\midrule
+\textbf{2010s} &
+    \begin{itemize}
+        \item 2012 : AlexNet révolutionne la vision par ordinateur
+        \item 2014 : GANs (Generative Adversarial Networks - Goodfellow)
+        \item 2016 : AlphaGo bat Lee Sedol au Go
+        \item 2017 : Transformers (Attention is All You Need)
+        \item 2018 : BERT pour le NLP
+    \end{itemize} \\
+\midrule
+\textbf{2020s} &
+    \begin{itemize}
+        \item 2020 : GPT-3 (175B paramètres)
+        \item 2021 : AlphaFold résout le repliement des protéines
+        \item 2022 : ChatGPT, Stable Diffusion, DALL-E 2
+        \item 2023 : GPT-4, LLaMA, modèles multimodaux
+        \item 2024-2026 : Démocratisation de l'IA générative, LLMs open-source
+    \end{itemize} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Les Trois Vagues du Machine Learning}
+
+\textbf{Première vague (1950-1980) : L'ère symbolique}
+\begin{itemize}
+    \item Règles logiques et systèmes experts
+    \item Limitations : incapacité à gérer l'incertitude et la complexité
+\end{itemize}
+
+\textbf{Deuxième vague (1980-2010) : L'apprentissage statistique}
+\begin{itemize}
+    \item Approches probabilistes et statistiques
+    \item SVMs, Random Forests, Gradient Boosting
+    \item Méthodes basées sur des features engineered manuellement
+\end{itemize}
+
+\textbf{Troisième vague (2010-aujourd'hui) : Le Deep Learning}
+\begin{itemize}
+    \item Réseaux de neurones profonds
+    \item Apprentissage automatique de représentations hiérarchiques
+    \item Performances surhumaines sur certaines tâches
+\end{itemize}
+
+% ===== SECTION 3: TYPES D'APPRENTISSAGE =====
+\section{Types d'Apprentissage Automatique}
+
+\subsection{Apprentissage Supervisé}
+
+\begin{definition}{Apprentissage Supervisé}
+L'apprentissage supervisé consiste à apprendre une fonction de mapping $f: X \to Y$ à partir d'un ensemble de données étiquetées $\{(\vect{x}_i, y_i)\}_{i=1}^n$ où $\vect{x}_i$ sont les features (entrées) et $y_i$ sont les labels (sorties attendues).
+\end{definition}
+
+\textbf{Formulation mathématique :}
+
+On cherche à minimiser le risque empirique :
+\begin{equation}
+    \hat{f} = \argmin_{f \in \mathcal{F}} \frac{1}{n} \sum_{i=1}^n L(y_i, f(\vect{x}_i))
+\end{equation}
+
+où $L$ est une fonction de perte et $\mathcal{F}$ est l'espace des fonctions considérées.
+
+\textbf{Deux grandes familles :}
+
+\begin{itemize}
+    \item \textbf{Régression :} $Y$ est continu (ex: prédire le prix d'une maison)
+    \begin{itemize}
+        \item Régression linéaire, Ridge, Lasso
+        \item Arbres de décision, Random Forests
+        \item SVR (Support Vector Regression)
+        \item Réseaux de neurones
+    \end{itemize}
+
+    \item \textbf{Classification :} $Y$ est discret (ex: spam/non-spam)
+    \begin{itemize}
+        \item Régression logistique
+        \item K-Nearest Neighbors (KNN)
+        \item Arbres de décision, Random Forests
+        \item SVM (Support Vector Machines)
+        \item Réseaux de neurones
+    \end{itemize}
+\end{itemize}
+
+\begin{exemple}{Applications de l'apprentissage supervisé}
+\begin{itemize}
+    \item \textbf{Vision :} Détection de visages, classification d'images médicales
+    \item \textbf{NLP :} Analyse de sentiment, traduction automatique
+    \item \textbf{Finance :} Prédiction de cours boursiers, scoring crédit
+    \item \textbf{Santé :} Diagnostic médical, prédiction de maladies
+\end{itemize}
+\end{exemple}
+
+\subsection{Apprentissage Non-Supervisé}
+
+\begin{definition}{Apprentissage Non-Supervisé}
+L'apprentissage non-supervisé consiste à découvrir des structures cachées dans des données non étiquetées $\{\vect{x}_i\}_{i=1}^n$. Le but est d'apprendre la distribution sous-jacente des données ou de les organiser de manière significative.
+\end{definition}
+
+\textbf{Principales tâches :}
+
+\begin{itemize}
+    \item \textbf{Clustering :} Regrouper des données similaires
+    \begin{itemize}
+        \item K-Means, DBSCAN, Hierarchical Clustering
+        \item Gaussian Mixture Models
+    \end{itemize}
+
+    \item \textbf{Réduction de dimensionnalité :} Projeter les données dans un espace de dimension réduite
+    \begin{itemize}
+        \item PCA (Principal Component Analysis)
+        \item t-SNE, UMAP
+        \item Autoencoders
+    \end{itemize}
+
+    \item \textbf{Détection d'anomalies :} Identifier les points atypiques
+    \begin{itemize}
+        \item Isolation Forest
+        \item One-Class SVM
+        \item Autoencoders variationnels
+    \end{itemize}
+\end{itemize}
+
+\begin{exemple}{Applications de l'apprentissage non-supervisé}
+\begin{itemize}
+    \item \textbf{Marketing :} Segmentation de clients
+    \item \textbf{Sécurité :} Détection de fraudes, intrusions réseau
+    \item \textbf{Biologie :} Découverte de nouveaux types cellulaires
+    \item \textbf{Recommandation :} Systèmes de recommandation (collaborative filtering)
+\end{itemize}
+\end{exemple}
+
+\subsection{Apprentissage Semi-Supervisé}
+
+\begin{definition}{Apprentissage Semi-Supervisé}
+L'apprentissage semi-supervisé combine un petit ensemble de données étiquetées $\{(\vect{x}_i, y_i)\}_{i=1}^{n_l}$ avec un grand ensemble de données non étiquetées $\{\vect{x}_j\}_{j=1}^{n_u}$ où généralement $n_u \gg n_l$.
+\end{definition}
+
+\textbf{Motivation :} L'étiquetage des données est souvent coûteux et chronophage, tandis que les données non étiquetées sont abondantes.
+
+\textbf{Approches principales :}
+\begin{itemize}
+    \item Self-training et co-training
+    \item Modèles génératifs semi-supervisés
+    \item Graph-based methods
+    \item Consistency regularization (modèles modernes)
+\end{itemize}
+
+\subsection{Apprentissage par Renforcement}
+
+\begin{definition}{Apprentissage par Renforcement}
+L'apprentissage par renforcement consiste à apprendre une politique $\pi$ qui maximise la récompense cumulative d'un agent interagissant avec un environnement. L'agent apprend par essai-erreur en recevant des récompenses (positives ou négatives) pour ses actions.
+\end{definition}
+
+\textbf{Composantes principales :}
+\begin{itemize}
+    \item \textbf{Agent :} Entité qui prend des décisions
+    \item \textbf{Environnement :} Monde avec lequel l'agent interagit
+    \item \textbf{État :} Configuration actuelle de l'environnement
+    \item \textbf{Action :} Choix effectué par l'agent
+    \item \textbf{Récompense :} Signal de feedback (positif/négatif)
+    \item \textbf{Politique :} Stratégie de l'agent ($\pi: S \to A$)
+\end{itemize}
+
+\textbf{Objectif :} Maximiser la récompense cumulative espérée
+\begin{equation}
+    J(\pi) = \mathbb{E}\left[\sum_{t=0}^\infty \gamma^t r_t \mid \pi\right]
+\end{equation}
+où $\gamma \in [0,1]$ est le facteur de discount et $r_t$ la récompense au temps $t$.
+
+\begin{exemple}{Applications de l'apprentissage par renforcement}
+\begin{itemize}
+    \item \textbf{Jeux :} AlphaGo, AlphaZero (Go, échecs, shogi)
+    \item \textbf{Robotique :} Contrôle de robots, manipulation d'objets
+    \item \textbf{Finance :} Trading automatique
+    \item \textbf{Véhicules autonomes :} Conduite autonome
+    \item \textbf{Optimisation :} Gestion de datacenters, allocation de ressources
+\end{itemize}
+\end{exemple}
+
+% ===== SECTION 4: VOCABULAIRE FONDAMENTAL =====
+\section{Vocabulaire Fondamental}
+
+\subsection{Terminologie des Données}
+
+\begin{table}[h]
+\centering
+\caption{Vocabulaire clé du Machine Learning}
+\label{tab:vocab}
+\begin{tabular}{p{3.5cm}p{8.5cm}}
+\toprule
+\textbf{Terme} & \textbf{Définition} \\
+\midrule
+\textbf{Dataset} & Ensemble complet de données utilisées pour le ML \\
+\textbf{Sample/Instance} & Une observation individuelle (une ligne du dataset) \\
+\textbf{Feature/Variable} & Attribut ou caractéristique mesurée (colonne) \\
+\textbf{Label/Target} & Valeur à prédire (variable dépendante) \\
+\textbf{Training Set} & Données utilisées pour entraîner le modèle (70-80\%) \\
+\textbf{Validation Set} & Données pour ajuster les hyperparamètres (10-15\%) \\
+\textbf{Test Set} & Données pour évaluer la performance finale (10-15\%) \\
+\textbf{Feature Vector} & Vecteur $\vect{x} \in \R^d$ représentant une instance \\
+\textbf{Dimensionnalité} & Nombre de features ($d$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Terminologie des Modèles}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{p{3.5cm}p{8.5cm}}
+\toprule
+\textbf{Terme} & \textbf{Définition} \\
+\midrule
+\textbf{Modèle} & Fonction mathématique apprise $f: X \to Y$ \\
+\textbf{Paramètres} & Variables internes apprises par le modèle (poids $\vect{w}$) \\
+\textbf{Hyperparamètres} & Paramètres fixés avant l'entraînement (learning rate, etc.) \\
+\textbf{Entraînement/Fit} & Processus d'apprentissage des paramètres \\
+\textbf{Inférence/Prédiction} & Utilisation du modèle entraîné sur de nouvelles données \\
+\textbf{Fonction de perte} & Mesure de l'erreur du modèle $L(y, \hat{y})$ \\
+\textbf{Optimisation} & Processus de minimisation de la fonction de perte \\
+\textbf{Epoch} & Une passe complète sur tout le dataset d'entraînement \\
+\textbf{Batch} & Sous-ensemble de données traité simultanément \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Problématiques Clés}
+
+\begin{definition}{Overfitting (Surapprentissage)}
+Un modèle en overfitting apprend trop bien les données d'entraînement, incluant le bruit, et généralise mal sur de nouvelles données. Performance élevée sur le train set, faible sur le test set.
+\end{definition}
+
+\begin{definition}{Underfitting (Sous-apprentissage)}
+Un modèle en underfitting est trop simple pour capturer les patterns des données. Performance faible sur le train set et le test set.
+\end{definition}
+
+\begin{definition}{Compromis Biais-Variance}
+\begin{itemize}
+    \item \textbf{Biais élevé :} Le modèle fait des hypothèses trop fortes (underfitting)
+    \item \textbf{Variance élevée :} Le modèle est trop sensible aux variations des données (overfitting)
+    \item \textbf{Objectif :} Trouver le bon équilibre entre biais et variance
+\end{itemize}
+\end{definition}
+
+\begin{center}
+\begin{tikzpicture}
+    \draw[->] (0,0) -- (8,0) node[right] {Complexité du modèle};
+    \draw[->] (0,0) -- (0,5) node[above] {Erreur};
+
+    % Courbes
+    \draw[blue, thick] (0.5,4) .. controls (2,2) and (4,1) .. (7.5,1.5) node[right] {Biais};
+    \draw[red, thick] (0.5,1) .. controls (2,0.8) and (4,1) .. (7.5,4) node[right] {Variance};
+    \draw[green!50!black, thick] (0.5,2.5) .. controls (2,1.5) and (4,1) .. (5,1.2) .. controls (6,1.5) and (7,2.5) .. (7.5,3);
+
+    \node[green!50!black] at (4,0.5) {$\downarrow$ Zone optimale};
+    \draw[dashed] (4,0) -- (4,1);
+
+    \node[align=center] at (1.5,5.5) {\small Underfitting\\(biais élevé)};
+    \node[align=center] at (6.5,5.5) {\small Overfitting\\(variance élevée)};
+\end{tikzpicture}
+\end{center}
+
+% ===== SECTION 5: PIPELINE ML TYPIQUE =====
+\section{Pipeline Typique d'un Projet Machine Learning}
+
+Un projet ML suit généralement les étapes suivantes :
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=3cm, minimum height=0.8cm, align=center, fill=blue!10},
+    arrow/.style={->, thick}
+]
+    \node[box] (prob) {1. Définition du\\problème};
+    \node[box, below of=prob] (data) {2. Collecte et\\exploration des données};
+    \node[box, below of=data] (prep) {3. Préparation\\des données};
+    \node[box, below of=prep] (feat) {4. Feature\\Engineering};
+    \node[box, below of=feat] (model) {5. Sélection et\\entraînement du modèle};
+    \node[box, below of=model] (eval) {6. Évaluation};
+    \node[box, below of=eval] (deploy) {7. Déploiement et\\monitoring};
+
+    \draw[arrow] (prob) -- (data);
+    \draw[arrow] (data) -- (prep);
+    \draw[arrow] (prep) -- (feat);
+    \draw[arrow] (feat) -- (model);
+    \draw[arrow] (model) -- (eval);
+    \draw[arrow] (eval) -- (deploy);
+
+    % Boucle de rétroaction
+    \draw[arrow, dashed, red] (eval.east) -- ++(1,0) |- (feat.east);
+    \node[red, right] at (6,-6) {\small Itération};
+\end{tikzpicture}
+\end{center}
+
+\subsection{1. Définition du Problème}
+
+\textbf{Questions à se poser :}
+\begin{itemize}
+    \item Quel est le problème business/scientifique à résoudre ?
+    \item Est-ce un problème de classification, régression, clustering, etc. ?
+    \item Quelles métriques de succès utiliser ?
+    \item Quelles sont les contraintes (temps, ressources, explicabilité) ?
+\end{itemize}
+
+\subsection{2. Collecte et Exploration des Données}
+
+\textbf{Analyse exploratoire des données (EDA) :}
+\begin{itemize}
+    \item Taille du dataset ($n$ instances, $d$ features)
+    \item Types de variables (numériques, catégorielles, textuelles)
+    \item Distribution des variables
+    \item Valeurs manquantes
+    \item Outliers (valeurs aberrantes)
+    \item Corrélations entre features
+    \item Déséquilibre des classes (pour la classification)
+\end{itemize}
+
+\subsection{3. Préparation des Données}
+
+\textbf{Nettoyage des données :}
+\begin{itemize}
+    \item \textbf{Gestion des valeurs manquantes :}
+    \begin{itemize}
+        \item Suppression des lignes/colonnes
+        \item Imputation (moyenne, médiane, mode, KNN, etc.)
+    \end{itemize}
+
+    \item \textbf{Gestion des outliers :}
+    \begin{itemize}
+        \item Détection (IQR, Z-score)
+        \item Suppression ou transformation
+    \end{itemize}
+
+    \item \textbf{Encodage des variables catégorielles :}
+    \begin{itemize}
+        \item One-Hot Encoding
+        \item Label Encoding
+        \item Target Encoding
+    \end{itemize}
+
+    \item \textbf{Normalisation/Standardisation :}
+    \begin{itemize}
+        \item Min-Max scaling: $x' = \frac{x - x_{min}}{x_{max} - x_{min}}$
+        \item Z-score standardization: $x' = \frac{x - \mu}{\sigma}$
+    \end{itemize}
+\end{itemize}
+
+\subsection{4. Feature Engineering}
+
+Création de nouvelles features pertinentes à partir des données brutes :
+
+\begin{itemize}
+    \item Combinaisons de features existantes
+    \item Transformations mathématiques (log, sqrt, polynomiales)
+    \item Extraction de features temporelles (jour, mois, jour de la semaine)
+    \item Agrégations et statistiques
+    \item Sélection de features (élimination des redondantes)
+\end{itemize}
+
+\subsection{5. Entraînement du Modèle}
+
+\begin{lstlisting}[language=Python, caption=Schéma général d'entraînement]
+# 1. Split train/validation/test
+from sklearn.model_selection import train_test_split
+
+X_train, X_temp, y_train, y_temp = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+X_val, X_test, y_val, y_test = train_test_split(
+    X_temp, y_temp, test_size=0.5, random_state=42
+)
+
+# 2. Choix et instanciation du modèle
+from sklearn.ensemble import RandomForestClassifier
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+
+# 3. Entraînement
+model.fit(X_train, y_train)
+
+# 4. Prédictions
+y_pred = model.predict(X_test)
+y_proba = model.predict_proba(X_test)
+\end{lstlisting}
+
+\subsection{6. Évaluation}
+
+\textbf{Métriques pour la classification :}
+\begin{itemize}
+    \item Accuracy, Precision, Recall, F1-score
+    \item Confusion Matrix
+    \item ROC-AUC, PR-AUC
+\end{itemize}
+
+\textbf{Métriques pour la régression :}
+\begin{itemize}
+    \item MAE (Mean Absolute Error)
+    \item MSE (Mean Squared Error)
+    \item RMSE (Root Mean Squared Error)
+    \item R² (Coefficient de détermination)
+\end{itemize}
+
+\textbf{Validation croisée :}
+\begin{lstlisting}[language=Python]
+from sklearn.model_selection import cross_val_score
+
+scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
+print(f"Accuracy: {scores.mean():.3f} (+/- {scores.std():.3f})")
+\end{lstlisting}
+
+\subsection{7. Déploiement et Monitoring}
+
+\begin{itemize}
+    \item Sauvegarde du modèle (pickle, joblib, ONNX)
+    \item Mise en production (API REST, batch processing)
+    \item Monitoring des performances en production
+    \item Réentraînement périodique (drift des données)
+\end{itemize}
+
+% ===== SECTION 6: ML CLASSIQUE vs DEEP LEARNING =====
+\section{Machine Learning Classique vs Deep Learning}
+
+\subsection{Machine Learning Classique}
+
+\textbf{Caractéristiques :}
+\begin{itemize}
+    \item Features engineered manuellement
+    \item Modèles relativement simples (arbres, SVMs, régression)
+    \item Nécessite expertise domaine pour feature engineering
+    \item Moins de données nécessaires
+    \item Plus rapide à entraîner
+    \item Plus interprétable
+\end{itemize}
+
+\textbf{Algorithmes typiques :}
+\begin{itemize}
+    \item Régression linéaire/logistique
+    \item Arbres de décision, Random Forests, Gradient Boosting (XGBoost, LightGBM)
+    \item Support Vector Machines
+    \item K-Nearest Neighbors
+    \item Naive Bayes
+\end{itemize}
+
+\subsection{Deep Learning}
+
+\textbf{Caractéristiques :}
+\begin{itemize}
+    \item Apprentissage automatique de features hiérarchiques
+    \item Réseaux de neurones multicouches (profonds)
+    \item Nécessite beaucoup de données
+    \item Gourmand en ressources de calcul (GPU/TPU)
+    \item Performances supérieures sur données non structurées (images, texte, audio)
+    \item Moins interprétable ("boîte noire")
+\end{itemize}
+
+\textbf{Architectures typiques :}
+\begin{itemize}
+    \item \textbf{MLP (Multi-Layer Perceptron)} : Réseaux fully-connected
+    \item \textbf{CNN (Convolutional Neural Networks)} : Vision par ordinateur
+    \item \textbf{RNN/LSTM/GRU} : Séquences temporelles
+    \item \textbf{Transformers} : NLP moderne, vision, multimodal
+    \item \textbf{Autoencoders, GANs} : Génération et représentation
+\end{itemize}
+
+\subsection{Comparaison}
+
+\begin{table}[h]
+\centering
+\caption{ML Classique vs Deep Learning}
+\begin{tabular}{p{4cm}p{5cm}p{5cm}}
+\toprule
+\textbf{Critère} & \textbf{ML Classique} & \textbf{Deep Learning} \\
+\midrule
+\textbf{Données} & Fonctionne avec peu de données & Nécessite beaucoup de données \\
+\textbf{Features} & Engineering manuel & Apprises automatiquement \\
+\textbf{Performance} & Plateaux rapidement & S'améliore avec plus de données \\
+\textbf{Temps d'entraînement} & Rapide (minutes-heures) & Lent (heures-jours) \\
+\textbf{Hardware} & CPU suffit & GPU/TPU recommandé \\
+\textbf{Interprétabilité} & Bonne & Faible \\
+\textbf{Données structurées} & Excellent & Bon \\
+\textbf{Données non structurées} & Limité & Excellent \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{astuce}
+\textbf{Quand utiliser quoi ?}
+\begin{itemize}
+    \item \textbf{ML Classique :} Données tabulaires, peu de données, besoin d'interprétabilité, ressources limitées
+    \item \textbf{Deep Learning :} Images, texte, audio, grandes quantités de données, performance maximale
+\end{itemize}
+\end{astuce}
+
+% ===== SECTION 7: APPLICATIONS CONCRÈTES =====
+\section{Applications Concrètes du Machine Learning}
+
+\subsection{Vision par Ordinateur}
+
+\textbf{Tâches :}
+\begin{itemize}
+    \item \textbf{Classification d'images :} Reconnaître des objets, animaux, scènes
+    \item \textbf{Détection d'objets :} Localiser et identifier plusieurs objets (YOLO, R-CNN)
+    \item \textbf{Segmentation :} Délimiter précisément les objets pixel par pixel
+    \item \textbf{Reconnaissance faciale :} Identification biométrique
+    \item \textbf{Génération d'images :} GANs, Diffusion Models (Stable Diffusion, DALL-E)
+\end{itemize}
+
+\textbf{Applications :}
+\begin{itemize}
+    \item Véhicules autonomes (détection piétons, panneaux, véhicules)
+    \item Diagnostic médical (radiologie, dermatologie)
+    \item Surveillance et sécurité
+    \item Contrôle qualité industriel
+    \item Réalité augmentée
+\end{itemize}
+
+\subsection{Natural Language Processing (NLP)}
+
+\textbf{Tâches :}
+\begin{itemize}
+    \item \textbf{Classification de texte :} Analyse de sentiment, détection de spam
+    \item \textbf{Named Entity Recognition :} Extraction d'entités (personnes, lieux, organisations)
+    \item \textbf{Traduction automatique :} Google Translate, DeepL
+    \item \textbf{Question-Answering :} Systèmes de Q\&A
+    \item \textbf{Génération de texte :} GPT-4, LLaMA, chatbots
+    \item \textbf{Résumé automatique :} Synthèse de documents
+\end{itemize}
+
+\textbf{Applications :}
+\begin{itemize}
+    \item Assistants virtuels (Alexa, Siri, Google Assistant)
+    \item Chatbots customer service
+    \item Traduction en temps réel
+    \item Analyse de documents légaux/médicaux
+    \item Génération de code (GitHub Copilot)
+\end{itemize}
+
+\subsection{Systèmes de Recommandation}
+
+\textbf{Approches :}
+\begin{itemize}
+    \item \textbf{Filtrage collaboratif :} Basé sur les préférences d'utilisateurs similaires
+    \item \textbf{Filtrage basé contenu :} Basé sur les caractéristiques des items
+    \item \textbf{Approches hybrides :} Combinaison des deux
+\end{itemize}
+
+\textbf{Applications :}
+\begin{itemize}
+    \item Netflix, YouTube (recommandations de vidéos)
+    \item Amazon, Alibaba (produits)
+    \item Spotify, Apple Music (musique)
+    \item Publicité ciblée
+\end{itemize}
+
+\subsection{Jeux et Stratégie}
+
+\textbf{Succès remarquables :}
+\begin{itemize}
+    \item 1997 : Deep Blue bat Kasparov aux échecs
+    \item 2016 : AlphaGo bat Lee Sedol au Go
+    \item 2017 : AlphaZero maîtrise échecs, shogi, Go sans connaissance humaine
+    \item 2019 : AlphaStar atteint niveau grand-maître à StarCraft II
+    \item 2021 : AlphaCode résout des problèmes de programmation compétitive
+\end{itemize}
+
+\subsection{Autres Domaines}
+
+\begin{itemize}
+    \item \textbf{Finance :} Trading algorithmique, détection de fraude, scoring crédit
+    \item \textbf{Santé :} Découverte de médicaments (AlphaFold), diagnostic, médecine personnalisée
+    \item \textbf{Climatologie :} Prévisions météorologiques, modélisation climatique
+    \item \textbf{Agriculture :} Optimisation de rendements, détection de maladies
+    \item \textbf{Énergie :} Optimisation de réseaux électriques, prévision de consommation
+    \item \textbf{Cybersécurité :} Détection d'intrusions, malware analysis
+\end{itemize}
+
+% ===== SECTION 8: ÉTHIQUE ET BIAIS =====
+\section{Éthique et Biais en Machine Learning}
+
+\subsection{Problématiques Éthiques}
+
+\begin{attention}
+Le Machine Learning soulève des questions éthiques importantes :
+\begin{itemize}
+    \item \textbf{Biais algorithmiques :} Discrimination basée sur race, genre, âge
+    \item \textbf{Vie privée :} Collecte et utilisation de données personnelles
+    \item \textbf{Transparence :} Modèles opaques ("boîtes noires")
+    \item \textbf{Responsabilité :} Qui est responsable des erreurs ?
+    \item \textbf{Sécurité :} Attaques adverses, deepfakes
+    \item \textbf{Impact social :} Automatisation et emploi
+\end{itemize}
+\end{attention}
+
+\subsection{Biais dans les Données et les Modèles}
+
+\textbf{Sources de biais :}
+
+\begin{enumerate}
+    \item \textbf{Biais de collecte :} Données non représentatives de la population
+    \item \textbf{Biais de labeling :} Étiquetage subjectif ou inconsistant
+    \item \textbf{Biais historique :} Données reflétant des discriminations passées
+    \item \textbf{Biais de sélection :} Échantillonnage non aléatoire
+    \item \textbf{Biais de confirmation :} Chercher des patterns qui confirment des préjugés
+\end{enumerate}
+
+\begin{exemple}{Cas concrets de biais}
+\begin{itemize}
+    \item \textbf{COMPAS :} Système de prédiction de récidive aux USA biaisé contre les minorités
+    \item \textbf{Recrutement :} Amazon a dû abandonner un outil de tri de CV biaisé contre les femmes
+    \item \textbf{Reconnaissance faciale :} Taux d'erreur plus élevés pour les personnes de couleur
+    \item \textbf{Traduction :} Associations stéréotypées (ex: "doctor" $\to$ "il", "nurse" $\to$ "elle")
+\end{itemize}
+\end{exemple}
+
+\subsection{Fairness et Équité}
+
+\textbf{Définitions de fairness :}
+\begin{itemize}
+    \item \textbf{Demographic parity :} Prédictions indépendantes des attributs sensibles
+    \item \textbf{Equalized odds :} Taux de vrais/faux positifs égaux entre groupes
+    \item \textbf{Individual fairness :} Individus similaires traités de manière similaire
+\end{itemize}
+
+\textbf{Techniques de mitigation :}
+\begin{itemize}
+    \item Pré-traitement : Correction des biais dans les données
+    \item In-processing : Contraintes de fairness pendant l'entraînement
+    \item Post-processing : Ajustement des prédictions pour assurer l'équité
+\end{itemize}
+
+\subsection{Bonnes Pratiques}
+
+\begin{astuce}
+\textbf{Développement responsable de ML :}
+\begin{itemize}
+    \item \textbf{Auditer les données :} Vérifier la représentativité et les biais
+    \item \textbf{Tester la fairness :} Évaluer les performances par sous-groupes
+    \item \textbf{Documenter :} Model cards, datasheets pour les datasets
+    \item \textbf{Explicabilité :} Utiliser LIME, SHAP pour comprendre les prédictions
+    \item \textbf{Human-in-the-loop :} Validation humaine pour décisions critiques
+    \item \textbf{Monitoring continu :} Surveiller les performances en production
+    \item \textbf{Diversité :} Équipes diverses pour identifier les angles morts
+\end{itemize}
+\end{astuce}
+
+\subsection{Réglementation}
+
+\textbf{Cadres légaux émergents :}
+\begin{itemize}
+    \item \textbf{RGPD (Europe)} : Protection des données personnelles, droit à l'explication
+    \item \textbf{AI Act (UE)} : Classification des systèmes IA par niveau de risque
+    \item \textbf{Algorithmic Accountability Act (USA)} : Transparence des algorithmes
+    \item \textbf{IEEE, ISO :} Standards techniques pour l'IA éthique
+\end{itemize}
+
+% ===== SECTION 9: ÉCOSYSTÈME ET OUTILS =====
+\section{Écosystème et Outils}
+
+\subsection{Bibliothèques Python Essentielles}
+
+\textbf{Manipulation de données :}
+\begin{itemize}
+    \item \texttt{NumPy} : Calcul numérique, arrays multidimensionnels
+    \item \texttt{Pandas} : DataFrames, manipulation de données tabulaires
+    \item \texttt{Polars} : Alternative rapide à Pandas
+\end{itemize}
+
+\textbf{Machine Learning classique :}
+\begin{itemize}
+    \item \texttt{scikit-learn} : ML général (classification, régression, clustering)
+    \item \texttt{XGBoost, LightGBM, CatBoost} : Gradient boosting optimisé
+    \item \texttt{statsmodels} : Modèles statistiques
+\end{itemize}
+
+\textbf{Deep Learning :}
+\begin{itemize}
+    \item \texttt{PyTorch} : Framework DL flexible et pythonic
+    \item \texttt{TensorFlow/Keras} : Framework DL production-ready
+    \item \texttt{JAX} : Calcul numérique haute performance
+    \item \texttt{Hugging Face Transformers} : NLP state-of-the-art
+\end{itemize}
+
+\textbf{Visualisation :}
+\begin{itemize}
+    \item \texttt{Matplotlib} : Graphiques standard
+    \item \texttt{Seaborn} : Visualisations statistiques
+    \item \texttt{Plotly} : Graphiques interactifs
+\end{itemize}
+
+\subsection{Plateformes et Environnements}
+
+\begin{itemize}
+    \item \textbf{Jupyter Notebooks} : Développement interactif
+    \item \textbf{Google Colab} : Jupyter gratuit avec GPU/TPU
+    \item \textbf{Kaggle} : Compétitions, datasets, notebooks
+    \item \textbf{Weights \& Biases, MLflow} : Tracking d'expériences
+    \item \textbf{TensorBoard} : Visualisation d'entraînement
+\end{itemize}
+
+% ===== PRÉREQUIS PYTHON =====
+\section{Prérequis Python pour le Machine Learning}
+
+Avant de vous lancer dans le Machine Learning, il est essentiel de maîtriser les outils Python de base. Cette section vous guide à travers les bibliothèques fondamentales que vous utiliserez tout au long du cours.
+
+\begin{tcolorbox}[colback=green!5!white, colframe=green!75!black, title=Notebook Pratique]
+Le notebook \texttt{00\_prerequis\_python.ipynb} couvre en détail tous ces prérequis avec des exemples exécutables et des exercices pratiques.
+
+\textbf{Si vous connaissez déjà Python, NumPy et Pandas}, vous pouvez passer cette section et ce notebook.
+\end{tcolorbox}
+
+\subsection{Python : Syntaxe Essentielle}
+
+\textbf{Types de base et structures :}
+\begin{itemize}
+    \item Types : \texttt{int}, \texttt{float}, \texttt{str}, \texttt{bool}
+    \item Listes : collections ordonnées modifiables
+    \item Dictionnaires : paires clé-valeur
+    \item Tuples : collections immuables
+\end{itemize}
+
+\textbf{List comprehensions :} Construction compacte de listes, très utilisée en ML.
+\begin{lstlisting}[language=Python]
+# Exemple : normaliser des scores
+scores = [0.85, 0.92, 0.78, 0.95, 0.88]
+scores_percent = [score * 100 for score in scores]
+# [85.0, 92.0, 78.0, 95.0, 88.0]
+
+# Filtrage
+bons_scores = [s for s in scores if s >= 0.90]
+# [0.92, 0.95]
+\end{lstlisting}
+
+\textbf{Fonctions :} Encapsulation de logique réutilisable.
+\begin{lstlisting}[language=Python]
+def normaliser(valeur, min_val, max_val):
+    """Normalise une valeur entre 0 et 1"""
+    return (valeur - min_val) / (max_val - min_val)
+\end{lstlisting}
+
+\subsection{NumPy : Calcul Numérique}
+
+NumPy est \textbf{la bibliothèque fondamentale} pour le calcul scientifique en Python. Tous les frameworks ML (scikit-learn, PyTorch, TensorFlow) sont construits sur NumPy.
+
+\textbf{Arrays multidimensionnels :}
+\begin{lstlisting}[language=Python]
+import numpy as np
+
+# Vecteur (1D)
+v = np.array([1, 2, 3, 4, 5])
+
+# Matrice (2D) : dataset avec 3 personnes, 4 features
+X = np.array([
+    [25, 50000, 1, 1],  # age, salaire, exp, diplome
+    [30, 60000, 3, 2],
+    [35, 75000, 5, 3]
+])
+
+print(X.shape)  # (3, 4) : 3 lignes, 4 colonnes
+\end{lstlisting}
+
+\textbf{Opérations vectorisées (rapides) :}
+\begin{lstlisting}[language=Python]
+# Element-wise operations
+a = np.array([1, 2, 3, 4])
+b = np.array([10, 20, 30, 40])
+
+print(a + b)   # [11 22 33 44]
+print(a * b)   # [10 40 90 160]
+print(a ** 2)  # [1 4 9 16]
+\end{lstlisting}
+
+\textbf{Indexation et slicing :}
+\begin{lstlisting}[language=Python]
+X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+# Selection
+X[0, :]     # Premiere ligne : [1, 2, 3]
+X[:, 1]     # Deuxieme colonne : [2, 5, 8]
+X[0, 1]     # Element : 2
+
+# Masquage booleen (tres utilise en ML)
+X[X > 5]    # [6, 7, 8, 9]
+\end{lstlisting}
+
+\textbf{Broadcasting :} Opérations entre arrays de shapes différentes.
+\begin{lstlisting}[language=Python]
+matrice = np.array([[1, 2, 3], [4, 5, 6]])
+vecteur = np.array([10, 20, 30])
+
+# Le vecteur est "diffuse" sur chaque ligne
+resultat = matrice + vecteur
+# [[11 22 33]
+#  [14 25 36]]
+\end{lstlisting}
+
+\textbf{Fonctions d'agrégation :}
+\begin{lstlisting}[language=Python]
+scores = np.array([0.75, 0.82, 0.91, 0.88, 0.79])
+
+print(scores.mean())     # 0.83
+print(scores.std())      # 0.059
+print(scores.min())      # 0.75
+print(scores.max())      # 0.91
+
+# Agregation par axe
+X.mean(axis=0)  # Moyenne par colonne
+X.mean(axis=1)  # Moyenne par ligne
+\end{lstlisting}
+
+\subsection{Pandas : Manipulation de Données}
+
+Pandas permet de manipuler des données tabulaires (comme Excel ou CSV). C'est l'outil principal pour l'exploration et le preprocessing de données.
+
+\textbf{DataFrames :} Tableaux avec labels de colonnes et lignes.
+\begin{lstlisting}[language=Python]
+import pandas as pd
+
+# Creation
+data = {
+    'nom': ['Alice', 'Bob', 'Charlie'],
+    'age': [25, 30, 35],
+    'salaire': [45000, 55000, 65000]
+}
+df = pd.DataFrame(data)
+
+#       nom  age  salaire
+# 0   Alice   25    45000
+# 1     Bob   30    55000
+# 2 Charlie   35    65000
+\end{lstlisting}
+
+\textbf{Sélection et filtrage :}
+\begin{lstlisting}[language=Python]
+# Selection de colonnes
+df['age']              # Serie (1 colonne)
+df[['nom', 'age']]     # DataFrame (plusieurs colonnes)
+
+# Filtrage
+seniors = df[df['age'] >= 30]
+riches = df[(df['age'] >= 30) & (df['salaire'] > 50000)]
+\end{lstlisting}
+
+\textbf{Statistiques descriptives :}
+\begin{lstlisting}[language=Python]
+df.describe()          # Statistiques sur colonnes numeriques
+df['salaire'].mean()   # Salaire moyen
+df['age'].median()     # Age median
+df['nom'].value_counts()  # Comptage des valeurs
+\end{lstlisting}
+
+\textbf{Groupby (SQL GROUP BY) :}
+\begin{lstlisting}[language=Python]
+# Salaire moyen par diplome
+df.groupby('diplome')['salaire'].mean()
+\end{lstlisting}
+
+\textbf{Lecture de fichiers :}
+\begin{lstlisting}[language=Python]
+# CSV (le plus courant)
+df = pd.read_csv('data.csv')
+
+# Excel
+df = pd.read_excel('data.xlsx')
+
+# JSON
+df = pd.read_json('data.json')
+\end{lstlisting}
+
+\subsection{Matplotlib : Visualisation}
+
+Matplotlib est la bibliothèque de base pour créer des graphiques. Elle est utilisée pour visualiser les données et les résultats des modèles.
+
+\textbf{Graphiques de base :}
+\begin{lstlisting}[language=Python]
+import matplotlib.pyplot as plt
+
+# Courbe
+plt.plot([1, 2, 3, 4], [1, 4, 2, 3])
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Mon graphique')
+plt.show()
+
+# Nuage de points
+plt.scatter(X, y)
+plt.show()
+
+# Histogramme
+plt.hist(scores, bins=20)
+plt.show()
+\end{lstlisting}
+
+\textbf{Subplots (plusieurs graphiques) :}
+\begin{lstlisting}[language=Python]
+fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+axes[0, 0].plot(x, y)        # Haut gauche
+axes[0, 1].scatter(x, y)     # Haut droite
+axes[1, 0].hist(scores)      # Bas gauche
+axes[1, 1].bar(['A','B'], [1, 2])  # Bas droite
+
+plt.tight_layout()
+plt.show()
+\end{lstlisting}
+
+\subsection{Installation et Vérification}
+
+Si vous utilisez ce cours avec Docker, toutes les bibliothèques sont déjà installées. Sinon, installez-les avec :
+
+\begin{lstlisting}[language=bash]
+pip install numpy pandas matplotlib scikit-learn jupyter
+\end{lstlisting}
+
+\textbf{Vérification :}
+\begin{lstlisting}[language=Python]
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+print(f"NumPy: {np.__version__}")
+print(f"Pandas: {pd.__version__}")
+print("Tout est pret !")
+\end{lstlisting}
+
+\begin{attention}{Ordre d'apprentissage recommandé}
+Pour bien démarrer ce cours :
+\begin{enumerate}
+    \item Commencez par le notebook \texttt{00\_prerequis\_python.ipynb}
+    \item Faites tous les exercices (normalisation, analyse de dataset)
+    \item Une fois à l'aise, passez au chapitre 01 (Fondamentaux Mathématiques)
+\end{enumerate}
+
+\textbf{Temps estimé :} 1-2 heures pour le notebook Python si vous êtes débutant, 15-30 minutes si vous connaissez déjà les bases.
+\end{attention}
+
+% ===== RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{Machine Learning :} Apprendre à partir de données sans programmation explicite
+    \item \textbf{Types d'apprentissage :} Supervisé (labels), non-supervisé (patterns), semi-supervisé (mix), renforcement (récompenses)
+    \item \textbf{Pipeline ML :} Problème $\to$ Données $\to$ Préparation $\to$ Features $\to$ Modèle $\to$ Évaluation $\to$ Déploiement
+    \item \textbf{ML vs DL :} ML classique (peu de données, interprétable) vs Deep Learning (beaucoup de données, performance)
+    \item \textbf{Applications :} Vision, NLP, recommandation, jeux, santé, finance...
+    \item \textbf{Éthique :} Attention aux biais, fairness, transparence, responsabilité
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Concepts à retenir]
+\textbf{Apprentissage supervisé :}
+\begin{equation}
+    \hat{f} = \argmin_{f \in \mathcal{F}} \frac{1}{n} \sum_{i=1}^n L(y_i, f(\vect{x}_i))
+\end{equation}
+
+\textbf{Compromis biais-variance :}
+\begin{equation}
+    \text{Erreur totale} = \text{Biais}^2 + \text{Variance} + \text{Bruit irréductible}
+\end{equation}
+
+\textbf{Train/Validation/Test :} Typiquement 70\% / 15\% / 15\%
+\end{tcolorbox}
+
+% ===== EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de Compréhension}
+
+\begin{enumerate}
+    \item Expliquez la différence entre un paramètre et un hyperparamètre. Donnez des exemples.
+
+    \item Pourquoi divise-t-on les données en ensembles d'entraînement, validation et test ?
+
+    \item Qu'est-ce que l'overfitting ? Comment peut-on le détecter et le prévenir ?
+
+    \item Comparez l'apprentissage supervisé et non-supervisé. Donnez un exemple d'application pour chaque.
+
+    \item Dans quelles situations privilégieriez-vous le Deep Learning par rapport au ML classique ?
+
+    \item Expliquez comment les biais dans les données peuvent mener à des modèles discriminatoires.
+
+    \item Décrivez les étapes du pipeline ML pour un problème de prédiction de prix immobiliers.
+
+    \item Pourquoi la standardisation des features est-elle importante pour certains algorithmes (ex: SVM, KNN) ?
+\end{enumerate}
+
+\subsection{Exercices Pratiques}
+
+\begin{enumerate}
+    \item \textbf{Pipeline ML complet sur Iris :}
+    \begin{itemize}
+        \item Charger le dataset Iris depuis scikit-learn
+        \item Effectuer une analyse exploratoire (EDA)
+        \item Séparer train/test
+        \item Entraîner un classifieur (KNN, Decision Tree, ou Random Forest)
+        \item Évaluer avec accuracy, confusion matrix, et classification report
+    \end{itemize}
+
+    \textit{Voir le notebook} \texttt{00_demo_ml\_pipeline.ipynb}
+
+    \item \textbf{Comparaison de modèles :}
+    \begin{itemize}
+        \item Sur le dataset Iris, comparer 3 algorithmes différents
+        \item Utiliser la validation croisée
+        \item Analyser les résultats et expliquer les différences
+    \end{itemize}
+
+    \item \textbf{Détection d'overfitting :}
+    \begin{itemize}
+        \item Créer un dataset synthétique avec peu d'échantillons
+        \item Entraîner un modèle complexe (ex: Decision Tree sans limitation de profondeur)
+        \item Comparer les performances train vs test
+        \item Appliquer des techniques de régularisation et observer l'impact
+    \end{itemize}
+\end{enumerate}
+
+\textit{Solutions détaillées disponibles dans} \texttt{00_exercices\_solutions.ipynb}
+
+% ===== POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\textbf{Livres :}
+\begin{itemize}
+    \item \textit{Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow} (3e éd., 2022) - Aurélien Géron
+    \item \textit{Pattern Recognition and Machine Learning} (2006) - Christopher Bishop
+    \item \textit{The Elements of Statistical Learning} (2009) - Hastie, Tibshirani, Friedman
+    \item \textit{Deep Learning} (2016) - Goodfellow, Bengio, Courville
+\end{itemize}
+
+\textbf{Cours en ligne :}
+\begin{itemize}
+    \item Andrew Ng - Machine Learning (Coursera)
+    \item Fast.ai - Practical Deep Learning for Coders
+    \item Stanford CS229 - Machine Learning
+    \item MIT 6.S191 - Introduction to Deep Learning
+\end{itemize}
+
+\subsection{Ressources en Ligne}
+
+\begin{itemize}
+    \item Documentation scikit-learn : \url{https://scikit-learn.org/}
+    \item PyTorch Tutorials : \url{https://pytorch.org/tutorials/}
+    \item Papers With Code : \url{https://paperswithcode.com/}
+    \item Kaggle Datasets \& Competitions : \url{https://www.kaggle.com/}
+    \item Hugging Face : \url{https://huggingface.co/}
+    \item Distill.pub (visualisations ML) : \url{https://distill.pub/}
+\end{itemize}
+
+\subsection{Datasets pour Pratiquer}
+
+\textbf{Débutants :}
+\begin{itemize}
+    \item Iris, Wine, Digits (scikit-learn)
+    \item Titanic, House Prices (Kaggle)
+    \item MNIST (images de chiffres manuscrits)
+\end{itemize}
+
+\textbf{Intermédiaires :}
+\begin{itemize}
+    \item CIFAR-10/100 (images couleur)
+    \item IMDB Reviews (analyse de sentiment)
+    \item UCI Machine Learning Repository
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+
+Chapitre suivant recommandé : \textbf{Chapitre 01 - Fondamentaux Mathématiques}
+
+\textit{Prérequis pour approfondir : algèbre linéaire, calcul différentiel, probabilités, statistiques}
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item Mitchell, T. (1997). \textit{Machine Learning}. McGraw-Hill.
+
+    \item Géron, A. (2022). \textit{Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow} (3e éd.). O'Reilly Media.
+
+    \item Goodfellow, I., Bengio, Y., \& Courville, A. (2016). \textit{Deep Learning}. MIT Press.
+
+    \item Hastie, T., Tibshirani, R., \& Friedman, J. (2009). \textit{The Elements of Statistical Learning} (2e éd.). Springer.
+
+    \item Bishop, C. M. (2006). \textit{Pattern Recognition and Machine Learning}. Springer.
+
+    \item Samuel, A. L. (1959). "Some Studies in Machine Learning Using the Game of Checkers". \textit{IBM Journal of Research and Development}, 3(3), 210-229.
+
+    \item Rumelhart, D. E., Hinton, G. E., \& Williams, R. J. (1986). "Learning representations by back-propagating errors". \textit{Nature}, 323(6088), 533-536.
+
+    \item Barocas, S., Hardt, M., \& Narayanan, A. (2019). \textit{Fairness and Machine Learning: Limitations and Opportunities}. MIT Press.
+\end{enumerate}
+
+\end{document}

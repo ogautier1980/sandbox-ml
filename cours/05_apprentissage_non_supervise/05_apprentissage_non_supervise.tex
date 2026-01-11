@@ -1,0 +1,638 @@
+% Chapitre 05 - Apprentissage Non-Supervisé
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 05 - Apprentissage Non-Supervisé},
+    pdfauthor={Cours ML},
+}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 05 - Apprentissage Non-Supervisé}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIG =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+\newtcolorbox{definition}[1]{colback=blue!5!white, colframe=blue!75!black, fonttitle=\bfseries, title=Définition: #1, breakable}
+\newtcolorbox{theoreme}[1]{colback=green!5!white, colframe=green!75!black, fonttitle=\bfseries, title=Théorème: #1, breakable}
+\newtcolorbox{exemple}[1]{colback=orange!5!white, colframe=orange!75!black, fonttitle=\bfseries, title=Exemple: #1, breakable}
+\newtcolorbox{attention}{colback=red!5!white, colframe=red!75!black, fonttitle=\bfseries, title=Attention, breakable}
+\newtcolorbox{astuce}{colback=yellow!10!white, colframe=yellow!75!black, fonttitle=\bfseries, title=Astuce, breakable}
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+\begin{document}
+
+% ===== TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+    \vspace{1cm}
+    {\LARGE Chapitre 05}\\[0.3cm]
+    {\LARGE\bfseries Apprentissage Non-Supervisé}\\[2cm]
+    \vfill
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Maîtriser les algorithmes de clustering (K-Means, DBSCAN, Hierarchical)
+        \item Comprendre la réduction de dimensionnalité (PCA, t-SNE, UMAP)
+        \item Détecter des anomalies dans les données
+        \item Appliquer ces techniques à des problèmes réels
+    \end{itemize}}
+    \vfill
+    {\large
+    \textbf{Prérequis :} Chapitres 00, 01, 02\\[0.3cm]
+    \textbf{Durée estimée :} 5-7 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{05\_*.ipynb}}
+    \vfill
+    {\large Cours ML - Sandbox-ML\\ Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===== INTRO =====
+\section{Introduction}
+
+\begin{definition}{Apprentissage Non-Supervisé}
+L'apprentissage non-supervisé consiste à découvrir des structures cachées dans des données \textbf{non étiquetées} $\{\vect{x}_i\}_{i=1}^n$ sans labels $y$.
+\end{definition}
+
+\textbf{Différence avec apprentissage supervisé :}
+\begin{itemize}
+    \item \textbf{Supervisé :} Apprendre $f: X \to Y$ à partir de $\{(\vect{x}_i, y_i)\}$
+    \item \textbf{Non-supervisé :} Découvrir la structure de $\{\vect{x}_i\}$ (groupes, dimensions, anomalies)
+\end{itemize}
+
+\textbf{Tâches principales :}
+\begin{enumerate}
+    \item \textbf{Clustering :} Regrouper instances similaires
+    \item \textbf{Réduction de dimensionnalité :} Projeter données dans espace réduit
+    \item \textbf{Détection d'anomalies :} Identifier points atypiques
+    \item \textbf{Apprentissage de représentation :} Autoencoders, embeddings
+\end{enumerate}
+
+\begin{exemple}{Applications}
+\begin{itemize}
+    \item \textbf{Marketing :} Segmentation de clients (clustering)
+    \item \textbf{Biologie :} Découverte de nouveaux types cellulaires
+    \item \textbf{Compression :} PCA pour réduire taille des données
+    \item \textbf{Visualisation :} t-SNE pour visualiser données haute dimension
+    \item \textbf{Sécurité :} Détection de fraudes, intrusions réseau
+\end{itemize}
+\end{exemple}
+
+% ===== PARTIE 1: CLUSTERING =====
+\part{Clustering}
+
+\section{K-Means}
+
+\subsection{Principe}
+
+\begin{definition}{K-Means}
+K-Means partitionne $n$ instances en $K$ clusters en minimisant la variance intra-cluster.
+\end{definition}
+
+\textbf{Objectif :} Minimiser l'inertie (somme des distances carrées au centroïde) :
+\begin{equation}
+    J = \sum_{k=1}^K \sum_{\vect{x}_i \in C_k} \|\vect{x}_i - \vect{\mu}_k\|^2
+\end{equation}
+où $\vect{\mu}_k$ est le centroïde du cluster $C_k$.
+
+\subsection{Algorithme}
+
+\begin{algorithm}[H]
+\caption{K-Means (Lloyd's Algorithm)}
+\begin{algorithmic}[1]
+\REQUIRE Données $\{\vect{x}_i\}_{i=1}^n$, nombre de clusters $K$
+\ENSURE Clusters $\{C_1, \ldots, C_K\}$, centroïdes $\{\vect{\mu}_1, \ldots, \vect{\mu}_K\}$
+\STATE Initialiser $K$ centroïdes aléatoirement
+\REPEAT
+    \STATE \textbf{(E-step)} Assigner chaque point au centroïde le plus proche :
+    \STATE \quad $C_k = \{\vect{x}_i : k = \argmin_j \|\vect{x}_i - \vect{\mu}_j\|^2\}$
+    \STATE \textbf{(M-step)} Recalculer centroïdes :
+    \STATE \quad $\vect{\mu}_k = \frac{1}{|C_k|} \sum_{\vect{x}_i \in C_k} \vect{x}_i$
+\UNTIL{Convergence (centroïdes ne bougent plus)}
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complexité :} $O(nKdT)$ où $T$ = nombre d'itérations (généralement petit).
+
+\subsection{Initialisation}
+
+\textbf{Problème :} K-Means sensible à l'initialisation (peut converger vers minimum local).
+
+\textbf{Solutions :}
+\begin{itemize}
+    \item \textbf{Random :} Choisir $K$ points aléatoires
+    \item \textbf{K-Means++ :} Initialisation intelligente (éloigner les centroïdes initiaux)
+    \item \textbf{Multiple runs :} Exécuter plusieurs fois, garder meilleur résultat
+\end{itemize}
+
+\subsection{Choix de $K$ (Méthode du Coude)}
+
+\textbf{Elbow Method :}
+\begin{enumerate}
+    \item Exécuter K-Means pour différentes valeurs de $K$
+    \item Tracer inertie en fonction de $K$
+    \item Choisir $K$ au "coude" de la courbe (compromis)
+\end{enumerate}
+
+\textbf{Autres méthodes :}
+\begin{itemize}
+    \item \textbf{Silhouette Score :} Mesure la cohésion et séparation des clusters
+    \item \textbf{Gap Statistic :} Compare inertie à une baseline aléatoire
+\end{itemize}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Simple et rapide
+    \item Scalable (grands datasets)
+    \item Facile à interpréter
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Nécessite spécifier $K$ a priori
+    \item Suppose clusters sphériques et de taille similaire
+    \item Sensible aux outliers
+    \item Sensible à l'initialisation
+    \item Nécessite normalisation des features
+\end{itemize}
+
+\begin{lstlisting}[caption=K-Means avec scikit-learn]
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+# Normalisation (important!)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# K-Means
+kmeans = KMeans(n_clusters=3, init='k-means++', n_init=10, random_state=42)
+labels = kmeans.fit_predict(X_scaled)
+centroids = kmeans.cluster_centers_
+
+# Inertie
+print(f"Inertie: {kmeans.inertia_:.2f}")
+\end{lstlisting}
+
+% ===== DBSCAN =====
+\section{DBSCAN}
+
+\subsection{Principe}
+
+\begin{definition}{DBSCAN (Density-Based Spatial Clustering)}
+DBSCAN regroupe les points densément connectés et identifie les outliers. Basé sur deux paramètres : $\epsilon$ (rayon) et \texttt{min\_samples} (densité minimale).
+\end{definition}
+
+\textbf{Types de points :}
+\begin{itemize}
+    \item \textbf{Core point :} Point avec au moins \texttt{min\_samples} voisins dans rayon $\epsilon$
+    \item \textbf{Border point :} Voisin d'un core point mais pas core lui-même
+    \item \textbf{Noise point :} Ni core ni border (outlier)
+\end{itemize}
+
+\subsection{Algorithme}
+
+\begin{algorithm}[H]
+\caption{DBSCAN}
+\begin{algorithmic}[1]
+\REQUIRE Données $\{\vect{x}_i\}$, $\epsilon$, \texttt{min\_samples}
+\STATE Marquer tous points comme non-visités
+\FOR{chaque point $\vect{x}_i$ non-visité}
+    \STATE Marquer $\vect{x}_i$ comme visité
+    \STATE Trouver voisins dans rayon $\epsilon$
+    \IF{moins de \texttt{min\_samples} voisins}
+        \STATE Marquer comme noise
+    \ELSE
+        \STATE Créer nouveau cluster, ajouter $\vect{x}_i$
+        \STATE Étendre cluster récursivement avec voisins
+    \ENDIF
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Pas besoin de spécifier $K$
+    \item Détecte automatiquement les outliers
+    \item Gère clusters de formes arbitraires
+    \item Robuste au bruit
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Choix délicat de $\epsilon$ et \texttt{min\_samples}
+    \item Difficile avec densités variables
+    \item Coût : $O(n^2)$ (ou $O(n \log n)$ avec index spatial)
+\end{itemize}
+
+\begin{lstlisting}[caption=DBSCAN]
+from sklearn.cluster import DBSCAN
+
+dbscan = DBSCAN(eps=0.5, min_samples=5)
+labels = dbscan.fit_predict(X_scaled)
+
+# -1 = noise/outliers
+n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+n_noise = list(labels).count(-1)
+print(f"Clusters: {n_clusters}, Outliers: {n_noise}")
+\end{lstlisting}
+
+% ===== HIERARCHICAL =====
+\section{Clustering Hiérarchique}
+
+\subsection{Principe}
+
+\begin{definition}{Clustering Hiérarchique}
+Construit une hiérarchie de clusters (dendrogramme) en fusionnant ou divisant successivement les clusters.
+\end{definition}
+
+\textbf{Deux approches :}
+\begin{itemize}
+    \item \textbf{Agglomératif (bottom-up) :} Commence avec $n$ clusters (1 point chacun), fusionne itérativement
+    \item \textbf{Divisif (top-down) :} Commence avec 1 cluster (tous points), divise itérativement
+\end{itemize}
+
+L'approche agglomérative est la plus courante.
+
+\subsection{Linkage Criteria}
+
+Critères pour mesurer distance entre clusters :
+
+\begin{itemize}
+    \item \textbf{Single linkage :} Distance minimale entre points de 2 clusters
+    \begin{equation}
+        d(C_i, C_j) = \min_{\vect{x} \in C_i, \vect{y} \in C_j} d(\vect{x}, \vect{y})
+    \end{equation}
+
+    \item \textbf{Complete linkage :} Distance maximale
+    \begin{equation}
+        d(C_i, C_j) = \max_{\vect{x} \in C_i, \vect{y} \in C_j} d(\vect{x}, \vect{y})
+    \end{equation}
+
+    \item \textbf{Average linkage :} Distance moyenne
+    \begin{equation}
+        d(C_i, C_j) = \frac{1}{|C_i||C_j|} \sum_{\vect{x} \in C_i} \sum_{\vect{y} \in C_j} d(\vect{x}, \vect{y})
+    \end{equation}
+
+    \item \textbf{Ward :} Minimise variance intra-cluster (comme K-Means)
+\end{itemize}
+
+\subsection{Dendrogramme}
+
+Le dendrogramme visualise la hiérarchie. On peut "couper" à une hauteur pour obtenir $K$ clusters.
+
+\begin{lstlisting}[caption=Clustering Hiérarchique]
+from sklearn.cluster import AgglomerativeClustering
+from scipy.cluster.hierarchy import dendrogram, linkage
+import matplotlib.pyplot as plt
+
+# Clustering
+hc = AgglomerativeClustering(n_clusters=3, linkage='ward')
+labels = hc.fit_predict(X_scaled)
+
+# Dendrogramme
+linkage_matrix = linkage(X_scaled, method='ward')
+plt.figure(figsize=(10, 5))
+dendrogram(linkage_matrix)
+plt.title('Dendrogramme')
+plt.show()
+\end{lstlisting}
+
+% ===== PARTIE 2: RÉDUCTION DIMENSIONNALITÉ =====
+\part{Réduction de Dimensionnalité}
+
+\section{Principal Component Analysis (PCA)}
+
+\subsection{Motivation}
+
+\textbf{Problèmes en haute dimension :}
+\begin{itemize}
+    \item Visualisation difficile ($d > 3$)
+    \item Curse of dimensionality
+    \item Redondance (features corrélées)
+    \item Coût de calcul élevé
+\end{itemize}
+
+\textbf{Objectif PCA :} Trouver projection linéaire dans espace de dimension $k < d$ qui préserve au maximum la variance.
+
+\subsection{Principe Mathématique}
+
+\begin{definition}{PCA}
+PCA cherche les directions (composantes principales) de variance maximale via décomposition en valeurs propres de la matrice de covariance.
+\end{definition}
+
+\textbf{Algorithme :}
+\begin{enumerate}
+    \item Centrer les données : $\mat{X}_c = \mat{X} - \bar{\vect{x}}$
+    \item Calculer matrice de covariance : $\mat{C} = \frac{1}{n-1}\mat{X}_c^T\mat{X}_c$
+    \item Diagonaliser : trouver valeurs propres $\lambda_i$ et vecteurs propres $\vect{v}_i$ de $\mat{C}$
+    \item Trier par $\lambda_i$ décroissant
+    \item Garder les $k$ premiers vecteurs propres (composantes principales)
+    \item Projeter : $\mat{Z} = \mat{X}_c \mat{V}_k$
+\end{enumerate}
+
+\textbf{Via SVD (plus efficace) :}
+\begin{equation}
+    \mat{X}_c = \mat{U}\mat{\Sigma}\mat{V}^T
+\end{equation}
+Les colonnes de $\mat{V}$ sont les composantes principales.
+
+\subsection{Variance Expliquée}
+
+\textbf{Variance expliquée par $k$ composantes :}
+\begin{equation}
+    \frac{\sum_{i=1}^k \lambda_i}{\sum_{i=1}^d \lambda_i}
+\end{equation}
+
+\textbf{Choix de $k$ :}
+\begin{itemize}
+    \item Conserver 90\% ou 95\% de la variance
+    \item Méthode du coude (scree plot)
+\end{itemize}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Réduction efficace de dimension
+    \item Élimine redondance (décorrèle features)
+    \item Accélère algorithmes downstream
+    \item Visualisation (projection 2D/3D)
+    \item Interprétable (composantes = combinaisons linéaires)
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Transformation \textbf{linéaire} uniquement
+    \item Suppose variance = information (pas toujours vrai)
+    \item Sensible à l'échelle (nécessite standardisation)
+    \item Perte d'interprétabilité des features originales
+\end{itemize}
+
+\begin{lstlisting}[caption=PCA]
+from sklearn.decomposition import PCA
+
+# PCA
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+# Variance expliquée
+print("Variance expliquée par composante:")
+print(pca.explained_variance_ratio_)
+print(f"Total: {pca.explained_variance_ratio_.sum():.2%}")
+
+# Visualisation
+plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='viridis')
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.show()
+\end{lstlisting}
+
+% ===== t-SNE =====
+\section{t-SNE}
+
+\subsection{Principe}
+
+\begin{definition}{t-SNE (t-Distributed Stochastic Neighbor Embedding)}
+t-SNE est une technique de réduction de dimensionnalité \textbf{non-linéaire} optimisée pour la visualisation. Préserve les structures locales (voisinages).
+\end{definition}
+
+\textbf{Idée :}
+\begin{enumerate}
+    \item Modéliser similarités entre points en haute dimension (gaussienne)
+    \item Modéliser similarités en basse dimension (t-Student)
+    \item Minimiser divergence KL entre les deux distributions
+\end{enumerate}
+
+\subsection{Hyperparamètre : Perplexity}
+
+\texttt{perplexity} contrôle le nombre effectif de voisins considérés :
+\begin{itemize}
+    \item Petite perplexity (5-10) : Focus sur structure locale
+    \item Grande perplexity (30-50) : Focus sur structure globale
+    \item Typiquement : 30-50 pour datasets moyens
+\end{itemize}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Excellente visualisation de structures complexes
+    \item Capture relations non-linéaires
+    \item Révèle clusters naturels
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item \textbf{Coût :} $O(n^2)$ (lent pour gros datasets)
+    \item \textbf{Non-déterministe :} Résultats varient selon initialisation
+    \item \textbf{Pas d'embedding new data :} Doit réentraîner
+    \item \textbf{Distances non interprétables :} Uniquement pour visualisation
+    \item \textbf{Sensible à hyperparamètres}
+\end{itemize}
+
+\begin{attention}
+t-SNE est conçu pour \textbf{visualisation}, pas pour réduction de dimension comme preprocessing. Utiliser PCA pour preprocessing.
+\end{attention}
+
+\begin{lstlisting}[caption=t-SNE]
+from sklearn.manifold import TSNE
+
+# t-SNE (lent, réduire dimension avec PCA d'abord si d > 50)
+if X_scaled.shape[1] > 50:
+    pca = PCA(n_components=50)
+    X_reduced = pca.fit_transform(X_scaled)
+else:
+    X_reduced = X_scaled
+
+tsne = TSNE(n_components=2, perplexity=30, random_state=42)
+X_tsne = tsne.fit_transform(X_reduced)
+
+plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c=y, cmap='viridis')
+plt.title('t-SNE Visualization')
+plt.show()
+\end{lstlisting}
+
+% ===== UMAP =====
+\section{UMAP}
+
+\begin{definition}{UMAP (Uniform Manifold Approximation and Projection)}
+UMAP est une alternative récente à t-SNE, basée sur la théorie des variétés. Plus rapide et préserve mieux la structure globale.
+\end{definition}
+
+\textbf{Avantages vs t-SNE :}
+\begin{itemize}
+    \item Plus rapide ($O(n)$ avec approximations)
+    \item Meilleure préservation structure globale
+    \item Peut projeter new data
+    \item Moins sensible aux hyperparamètres
+\end{itemize}
+
+\begin{lstlisting}[caption=UMAP]
+import umap
+
+reducer = umap.UMAP(n_components=2, random_state=42)
+X_umap = reducer.fit_transform(X_scaled)
+
+plt.scatter(X_umap[:, 0], X_umap[:, 1], c=y, cmap='viridis')
+plt.title('UMAP Visualization')
+plt.show()
+\end{lstlisting}
+
+% ===== DÉTECTION ANOMALIES =====
+\part{Détection d'Anomalies}
+
+\section{Introduction}
+
+\begin{definition}{Anomalie (Outlier)}
+Point significativement différent de la majorité des données. Peut être une erreur de mesure, fraude, événement rare.
+\end{definition}
+
+\textbf{Applications :}
+\begin{itemize}
+    \item Détection de fraudes (cartes bancaires)
+    \item Intrusions réseau, cyberattaques
+    \item Défauts de fabrication
+    \item Diagnostic médical (cas atypiques)
+\end{itemize}
+
+\section{Méthodes}
+
+\subsection{Isolation Forest}
+
+\textbf{Idée :} Anomalies sont rares et différentes $\Rightarrow$ faciles à isoler.
+
+\begin{definition}{Isolation Forest}
+Construit arbres aléatoires qui isolent les points. Anomalies nécessitent moins de splits pour être isolées.
+\end{definition}
+
+\textbf{Anomaly Score :} Profondeur moyenne d'isolation (normalisée). Score proche de 1 = anomalie.
+
+\begin{lstlisting}[caption=Isolation Forest]
+from sklearn.ensemble import IsolationForest
+
+iso_forest = IsolationForest(contamination=0.1, random_state=42)
+predictions = iso_forest.fit_predict(X_scaled)
+# -1 = anomalie, 1 = normal
+
+anomaly_scores = iso_forest.score_samples(X_scaled)
+# Scores négatifs, plus négatif = plus anormal
+\end{lstlisting}
+
+\subsection{One-Class SVM}
+
+SVM entraîné à apprendre la frontière de la distribution "normale". Points hors frontière = anomalies.
+
+\subsection{Local Outlier Factor (LOF)}
+
+Mesure la densité locale d'un point vs ses voisins. Point moins dense que ses voisins = outlier.
+
+% ===== RÉSUMÉ =====
+\section{Résumé}
+
+\subsection{Points Clés}
+
+\textbf{Clustering :}
+\begin{itemize}
+    \item \textbf{K-Means :} Rapide, clusters sphériques, nécessite $K$
+    \item \textbf{DBSCAN :} Détecte outliers, formes arbitraires, sensible $\epsilon$
+    \item \textbf{Hiérarchique :} Dendrogramme, flexible
+\end{itemize}
+
+\textbf{Réduction dimensionnalité :}
+\begin{itemize}
+    \item \textbf{PCA :} Linéaire, variance maximale, preprocessing
+    \item \textbf{t-SNE :} Non-linéaire, visualisation, lent
+    \item \textbf{UMAP :} Comme t-SNE mais plus rapide
+\end{itemize}
+
+\textbf{Détection anomalies :}
+\begin{itemize}
+    \item \textbf{Isolation Forest :} Rapide, efficace
+    \item \textbf{One-Class SVM, LOF :} Alternatives
+\end{itemize}
+
+\section{Pour Aller Plus Loin}
+
+Chapitre suivant : \textbf{Chapitre 06 - Réseaux de Neurones Fondamentaux}
+
+\section*{Références}
+
+\begin{enumerate}
+    \item Hastie, T., et al. (2009). \textit{The Elements of Statistical Learning}. Springer.
+    \item van der Maaten, L., \& Hinton, G. (2008). "Visualizing Data using t-SNE". \textit{JMLR}.
+    \item McInnes, L., et al. (2018). "UMAP: Uniform Manifold Approximation and Projection". \textit{arXiv}.
+\end{enumerate}
+
+\end{document}

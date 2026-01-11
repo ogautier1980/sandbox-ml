@@ -1,0 +1,1505 @@
+% Chapitre 13 - Systèmes de Recommandation
+% Cours Machine Learning - Sandbox-ML
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, matrix}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 13 - Systèmes de Recommandation},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 14 - Systèmes de Recommandation}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS (code Python) =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+% Box pour définitions
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+% Box pour théorèmes
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+% Box pour exemples
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+% Box pour attention/warning
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=Attention,
+    breakable
+}
+
+% Box pour astuce/tips
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}  % Vecteur
+\newcommand{\mat}[1]{\mathbf{#1}}   % Matrice
+\newcommand{\R}{\mathbb{R}}         % Réels
+\newcommand{\N}{\mathbb{N}}         % Naturels
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+% ===== DÉBUT DU DOCUMENT =====
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 14}\\[0.3cm]
+    {\LARGE\bfseries Systèmes de Recommandation}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Comprendre les types de systèmes de recommandation (content-based, collaborative filtering, hybrid)
+        \item Maîtriser le collaborative filtering (user-based, item-based, matrix factorization)
+        \item Implémenter des recommenders avec deep learning (NCF, autoencoders, two-tower models)
+        \item Évaluer les systèmes avec les métriques appropriées (RMSE, Precision@K, NDCG)
+        \item Résoudre les problèmes pratiques (cold start, sparsity, diversity)
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitres 01, 06, 14 (Fondamentaux Math, Réseaux de Neurones, Best Practices)\\[0.3cm]
+    \textbf{Durée estimée :} 6-8 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{13_demo_*.ipynb}, \texttt{13_exercices.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+% ===== TABLE DES MATIÈRES =====
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: INTRODUCTION =====
+\section{Introduction aux Systèmes de Recommandation}
+
+\subsection{Motivation}
+
+Les systèmes de recommandation sont omniprésents dans notre quotidien numérique : Netflix suggère des films, Spotify recommande de la musique, Amazon propose des produits, YouTube suggère des vidéos. Ces systèmes sont cruciaux pour l'expérience utilisateur et génèrent une valeur économique considérable.
+
+\begin{exemple}{Impact business des recommandations}
+\begin{itemize}
+    \item \textbf{Netflix} : 80\% du contenu visionné provient de recommandations
+    \item \textbf{Amazon} : 35\% des ventes proviennent de recommandations de produits
+    \item \textbf{YouTube} : 70\% du temps de visionnage provient de recommandations
+    \item \textbf{Spotify} : Les playlists personnalisées augmentent l'engagement de 40\%
+\end{itemize}
+\end{exemple}
+
+\subsection{Problématique}
+
+\begin{definition}{Système de Recommandation}
+Un système de recommandation est un algorithme qui prédit la préférence ou le rating qu'un utilisateur donnerait à un item, dans le but de suggérer les items les plus pertinents.
+
+Formellement : étant donné un ensemble d'utilisateurs $U$, un ensemble d'items $I$, et une fonction de rating partielle $r: U \times I \to \mathbb{R}$, prédire $\hat{r}(u, i)$ pour les paires $(u, i)$ non observées.
+\end{definition}
+
+\subsection{Types de Systèmes de Recommandation}
+
+\begin{table}[h]
+\centering
+\caption{Taxonomie des systèmes de recommandation}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Type} & \textbf{Description} \\
+\midrule
+\textbf{Content-Based} & Recommande des items similaires à ceux appréciés par l'utilisateur (basé sur features des items) \\[0.3cm]
+\textbf{Collaborative Filtering} & Recommande des items aimés par des utilisateurs similaires (basé sur interactions user-item) \\[0.3cm]
+\textbf{Hybrid} & Combine content-based et collaborative filtering pour bénéficier des deux approches \\[0.3cm]
+\textbf{Knowledge-Based} & Utilise des règles explicites et connaissances du domaine \\[0.3cm]
+\textbf{Deep Learning} & Utilise des réseaux de neurones pour apprendre des représentations complexes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 2: COLLABORATIVE FILTERING =====
+\section{Collaborative Filtering (Filtrage Collaboratif)}
+
+Le collaborative filtering est l'approche la plus populaire et repose sur l'hypothèse que les utilisateurs qui ont aimé les mêmes items dans le passé auront des goûts similaires dans le futur.
+
+\subsection{User-Item Matrix}
+
+\begin{definition}{User-Item Matrix}
+La matrice utilisateur-item $\mat{R} \in \mathbb{R}^{m \times n}$ contient les ratings de $m$ utilisateurs pour $n$ items :
+
+\[
+\mat{R} = \begin{bmatrix}
+r_{11} & r_{12} & \cdots & r_{1n} \\
+r_{21} & r_{22} & \cdots & r_{2n} \\
+\vdots & \vdots & \ddots & \vdots \\
+r_{m1} & r_{m2} & \cdots & r_{mn}
+\end{bmatrix}
+\]
+
+où $r_{ui}$ est le rating de l'utilisateur $u$ pour l'item $i$. La plupart des entrées sont manquantes (matrice sparse).
+\end{definition}
+
+\begin{exemple}{Matrice User-Item (MovieLens)}
+\begin{center}
+\begin{tabular}{l|ccccc}
+ & Titanic & Matrix & Inception & Avatar & Interstellar \\
+\hline
+Alice & 5 & ? & 4 & ? & 5 \\
+Bob & 1 & 5 & ? & 3 & ? \\
+Carol & ? & 4 & 5 & 4 & ? \\
+Dave & 5 & 1 & ? & 5 & 4 \\
+\end{tabular}
+\end{center}
+
+Objectif : prédire les ratings manquants (?) pour recommander des films.
+\end{exemple}
+
+\subsection{Mesures de Similarité}
+
+\subsubsection{Similarité Cosine}
+
+\begin{definition}{Similarité Cosine}
+La similarité cosine entre deux vecteurs $\vect{u}$ et $\vect{v}$ est :
+
+\[
+\text{sim}_{\text{cos}}(\vect{u}, \vect{v}) = \frac{\vect{u} \cdot \vect{v}}{\|\vect{u}\| \|\vect{v}\|} = \frac{\sum_{i=1}^{n} u_i v_i}{\sqrt{\sum_{i=1}^{n} u_i^2} \sqrt{\sum_{i=1}^{n} v_i^2}}
+\]
+
+Valeur entre -1 (opposés) et 1 (identiques), 0 signifie orthogonaux.
+\end{definition}
+
+\subsubsection{Corrélation de Pearson}
+
+\begin{definition}{Corrélation de Pearson}
+La corrélation de Pearson mesure la corrélation linéaire entre deux vecteurs :
+
+\[
+\text{sim}_{\text{pearson}}(\vect{u}, \vect{v}) = \frac{\sum_{i} (u_i - \bar{u})(v_i - \bar{v})}{\sqrt{\sum_{i} (u_i - \bar{u})^2} \sqrt{\sum_{i} (v_i - \bar{v})^2}}
+\]
+
+où $\bar{u}$ et $\bar{v}$ sont les moyennes. Capture mieux les préférences relatives.
+\end{definition}
+
+\subsubsection{Similarité Jaccard}
+
+Pour les données binaires (vu/non vu, acheté/non acheté) :
+
+\[
+\text{sim}_{\text{jaccard}}(A, B) = \frac{|A \cap B|}{|A \cup B|}
+\]
+
+\subsection{User-Based Collaborative Filtering}
+
+\begin{definition}{User-Based CF}
+Prédire le rating de l'utilisateur $u$ pour l'item $i$ en agrégeant les ratings des $k$ utilisateurs les plus similaires à $u$ :
+
+\[
+\hat{r}_{ui} = \bar{r}_u + \frac{\sum_{v \in N_k(u)} \text{sim}(u, v) \cdot (r_{vi} - \bar{r}_v)}{\sum_{v \in N_k(u)} |\text{sim}(u, v)|}
+\]
+
+où :
+\begin{itemize}
+    \item $N_k(u)$ : ensemble des $k$ utilisateurs les plus similaires à $u$ ayant raté l'item $i$
+    \item $\bar{r}_u$ : rating moyen de l'utilisateur $u$
+    \item $\text{sim}(u, v)$ : similarité entre utilisateurs $u$ et $v$
+\end{itemize}
+\end{definition}
+
+\begin{algorithm}[H]
+\caption{User-Based Collaborative Filtering}
+\label{alg:user_cf}
+\begin{algorithmic}[1]
+\REQUIRE Matrice de ratings $\mat{R}$, utilisateur $u$, item $i$, nombre de voisins $k$
+\ENSURE Rating prédit $\hat{r}_{ui}$
+\STATE Calculer les similarités entre $u$ et tous les autres utilisateurs
+\STATE Identifier les $k$ utilisateurs les plus similaires ayant raté $i$ : $N_k(u)$
+\STATE Calculer le rating moyen de chaque utilisateur : $\bar{r}_u$, $\bar{r}_v$
+\STATE Calculer la prédiction pondérée :
+\[
+\hat{r}_{ui} = \bar{r}_u + \frac{\sum_{v \in N_k(u)} \text{sim}(u, v) \cdot (r_{vi} - \bar{r}_v)}{\sum_{v \in N_k(u)} |\text{sim}(u, v)|}
+\]
+\RETURN $\hat{r}_{ui}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Complexité User-Based CF}
+
+\begin{itemize}
+    \item \textbf{Temps (calcul similarités)} : $O(m^2 n)$ où $m$ = nb users, $n$ = nb items
+    \item \textbf{Temps (prédiction)} : $O(mk)$ pour trouver $k$ voisins
+    \item \textbf{Espace} : $O(m^2)$ pour stocker la matrice de similarité
+    \item \textbf{Problème} : ne passe pas à l'échelle pour des millions d'utilisateurs
+\end{itemize}
+
+\subsection{Item-Based Collaborative Filtering}
+
+\begin{definition}{Item-Based CF}
+Au lieu de trouver des utilisateurs similaires, on trouve des items similaires. Prédiction :
+
+\[
+\hat{r}_{ui} = \frac{\sum_{j \in N_k(i)} \text{sim}(i, j) \cdot r_{uj}}{\sum_{j \in N_k(i)} |\text{sim}(i, j)|}
+\]
+
+où $N_k(i)$ est l'ensemble des $k$ items les plus similaires à $i$ que l'utilisateur $u$ a ratés.
+\end{definition}
+
+\begin{astuce}
+\textbf{Item-Based vs User-Based :}
+\begin{itemize}
+    \item \textbf{Item-Based} est souvent préféré car :
+    \begin{itemize}
+        \item Les items changent moins que les utilisateurs (similarités stables)
+        \item Plus facile à pré-calculer et mettre en cache
+        \item Meilleure scalabilité pour beaucoup d'utilisateurs
+    \end{itemize}
+    \item \textbf{User-Based} peut être meilleur si :
+    \begin{itemize}
+        \item Il y a beaucoup plus d'items que d'utilisateurs
+        \item Les préférences utilisateurs sont très diversifiées
+    \end{itemize}
+\end{itemize}
+\end{astuce}
+
+\subsection{Matrix Factorization (Factorisation de Matrice)}
+
+L'approche de factorisation de matrice est plus avancée et performante que les approches basées sur les voisins.
+
+\begin{definition}{Matrix Factorization}
+L'idée est de décomposer la matrice user-item $\mat{R} \in \mathbb{R}^{m \times n}$ en deux matrices de faible dimension :
+
+\[
+\mat{R} \approx \mat{U} \mat{V}^T
+\]
+
+où :
+\begin{itemize}
+    \item $\mat{U} \in \mathbb{R}^{m \times k}$ : matrice des features latentes des utilisateurs
+    \item $\mat{V} \in \mathbb{R}^{n \times k}$ : matrice des features latentes des items
+    \item $k \ll \min(m, n)$ : nombre de facteurs latents (typiquement 10-200)
+\end{itemize}
+
+Chaque ligne $\vect{u}_i$ de $\mat{U}$ représente l'utilisateur $i$ dans l'espace latent.\\
+Chaque ligne $\vect{v}_j$ de $\mat{V}$ représente l'item $j$ dans l'espace latent.\\
+Prédiction : $\hat{r}_{ij} = \vect{u}_i \cdot \vect{v}_j$
+\end{definition}
+
+\begin{exemple}{Interprétation des facteurs latents (films)}
+Avec $k=2$ facteurs pour des films :
+\begin{itemize}
+    \item \textbf{Facteur 1} : "Sérieux vs Léger" (drame vs comédie)
+    \item \textbf{Facteur 2} : "Orienté action vs Romance"
+\end{itemize}
+
+Un utilisateur avec $\vect{u} = [0.9, -0.3]$ préfère les films sérieux sans action.\\
+Un film avec $\vect{v} = [0.8, 0.6]$ est un drame d'action (ex: Dark Knight).\\
+Rating prédit : $\hat{r} = 0.9 \times 0.8 + (-0.3) \times 0.6 = 0.72 - 0.18 = 0.54$
+\end{exemple}
+
+\subsubsection{Optimisation : Singular Value Decomposition (SVD)}
+
+\begin{theoreme}{SVD}
+Toute matrice $\mat{R} \in \mathbb{R}^{m \times n}$ peut être décomposée :
+
+\[
+\mat{R} = \mat{U} \mat{\Sigma} \mat{V}^T
+\]
+
+où :
+\begin{itemize}
+    \item $\mat{U} \in \mathbb{R}^{m \times m}$ : vecteurs propres gauches (orthogonaux)
+    \item $\mat{\Sigma} \in \mathbb{R}^{m \times n}$ : valeurs singulières diagonales ($\sigma_1 \geq \sigma_2 \geq \cdots \geq 0$)
+    \item $\mat{V} \in \mathbb{R}^{n \times n}$ : vecteurs propres droits (orthogonaux)
+\end{itemize}
+
+Approximation de rang $k$ : $\mat{R}_k = \mat{U}_k \mat{\Sigma}_k \mat{V}_k^T$ minimise l'erreur de Frobenius.
+\end{theoreme}
+
+\begin{attention}
+Le SVD classique ne fonctionne pas directement sur les matrices sparse (avec valeurs manquantes). On doit utiliser des variantes adaptées ou des algorithmes itératifs.
+\end{attention}
+
+\subsubsection{Alternating Least Squares (ALS)}
+
+ALS est un algorithme itératif pour la factorisation de matrice avec valeurs manquantes.
+
+\begin{algorithm}[H]
+\caption{Alternating Least Squares (ALS)}
+\label{alg:als}
+\begin{algorithmic}[1]
+\REQUIRE Matrice sparse $\mat{R}$, nombre de facteurs $k$, régularisation $\lambda$, nb itérations $T$
+\ENSURE Matrices $\mat{U}$ et $\mat{V}$
+\STATE Initialiser $\mat{U}$ et $\mat{V}$ aléatoirement
+\FOR{$t = 1$ \TO $T$}
+    \STATE \textbf{Fix $\mat{V}$, optimize $\mat{U}$:}
+    \FOR{chaque utilisateur $i$}
+        \STATE $\vect{u}_i \leftarrow \argmin_{\vect{u}_i} \sum_{j: r_{ij} \text{ observed}} (r_{ij} - \vect{u}_i \cdot \vect{v}_j)^2 + \lambda \|\vect{u}_i\|^2$
+        \STATE Solution : $\vect{u}_i = (\mat{V}_i^T \mat{V}_i + \lambda \mat{I})^{-1} \mat{V}_i^T \vect{r}_i$
+    \ENDFOR
+    \STATE \textbf{Fix $\mat{U}$, optimize $\mat{V}$:}
+    \FOR{chaque item $j$}
+        \STATE $\vect{v}_j \leftarrow \argmin_{\vect{v}_j} \sum_{i: r_{ij} \text{ observed}} (r_{ij} - \vect{u}_i \cdot \vect{v}_j)^2 + \lambda \|\vect{v}_j\|^2$
+        \STATE Solution : $\vect{v}_j = (\mat{U}_j^T \mat{U}_j + \lambda \mat{I})^{-1} \mat{U}_j^T \vect{r}_j$
+    \ENDFOR
+\ENDFOR
+\RETURN $\mat{U}$, $\mat{V}$
+\end{algorithmic}
+\end{algorithm}
+
+où $\mat{V}_i$ contient les vecteurs des items ratés par l'utilisateur $i$, et $\vect{r}_i$ leurs ratings.
+
+\subsubsection{Gradient Descent pour Matrix Factorization}
+
+On peut aussi optimiser avec la descente de gradient (SGD) :
+
+\begin{align}
+\text{Loss} &= \sum_{(i,j) \in \text{observed}} (r_{ij} - \vect{u}_i \cdot \vect{v}_j)^2 + \lambda (\|\vect{u}_i\|^2 + \|\vect{v}_j\|^2) \\
+\vect{u}_i &\leftarrow \vect{u}_i + \alpha \cdot \left[ 2(r_{ij} - \hat{r}_{ij}) \vect{v}_j - 2\lambda \vect{u}_i \right] \\
+\vect{v}_j &\leftarrow \vect{v}_j + \alpha \cdot \left[ 2(r_{ij} - \hat{r}_{ij}) \vect{u}_i - 2\lambda \vect{v}_j \right]
+\end{align}
+
+\subsubsection{SVD++ : Incorporating Implicit Feedback}
+
+SVD++ étend la factorisation en incorporant les feedbacks implicites (items vus mais non ratés) :
+
+\[
+\hat{r}_{ui} = \mu + b_u + b_i + \left( \vect{p}_u + |I_u|^{-1/2} \sum_{j \in I_u} \vect{y}_j \right)^T \vect{q}_i
+\]
+
+où :
+\begin{itemize}
+    \item $\mu$ : rating moyen global
+    \item $b_u, b_i$ : biais utilisateur et item
+    \item $\vect{p}_u, \vect{q}_i$ : facteurs latents utilisateur/item
+    \item $I_u$ : ensemble des items pour lesquels l'utilisateur $u$ a fourni un feedback implicite
+    \item $\vect{y}_j$ : facteurs implicites pour l'item $j$
+\end{itemize}
+
+% ===== SECTION 3: DEEP LEARNING POUR RECOMMANDATION =====
+\section{Deep Learning pour Systèmes de Recommandation}
+
+Les approches de deep learning permettent de capturer des interactions non-linéaires complexes entre utilisateurs et items.
+
+\subsection{Neural Collaborative Filtering (NCF)}
+
+\begin{definition}{Neural Collaborative Filtering}
+NCF remplace le produit scalaire de la factorisation de matrice par un réseau de neurones pour modéliser l'interaction entre utilisateurs et items :
+
+\[
+\hat{r}_{ui} = f(\vect{u}_i, \vect{v}_j; \theta)
+\]
+
+où $f$ est un MLP (Multi-Layer Perceptron) et $\theta$ ses paramètres.
+\end{definition}
+
+\subsubsection{Architecture NCF}
+
+\begin{lstlisting}[language=Python, caption=Architecture NCF avec PyTorch]
+import torch
+import torch.nn as nn
+
+class NCF(nn.Module):
+    def __init__(self, n_users, n_items, embedding_dim=64, hidden_layers=[128, 64, 32]):
+        super(NCF, self).__init__()
+
+        # Embeddings
+        self.user_embedding = nn.Embedding(n_users, embedding_dim)
+        self.item_embedding = nn.Embedding(n_items, embedding_dim)
+
+        # MLP layers
+        layers = []
+        input_dim = embedding_dim * 2
+        for hidden_dim in hidden_layers:
+            layers.append(nn.Linear(input_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(0.2))
+            input_dim = hidden_dim
+
+        self.mlp = nn.Sequential(*layers)
+        self.output = nn.Linear(hidden_layers[-1], 1)
+
+    def forward(self, user_ids, item_ids):
+        # Embeddings
+        user_emb = self.user_embedding(user_ids)  # (batch, embedding_dim)
+        item_emb = self.item_embedding(item_ids)  # (batch, embedding_dim)
+
+        # Concatenate
+        x = torch.cat([user_emb, item_emb], dim=-1)  # (batch, 2*embedding_dim)
+
+        # MLP
+        x = self.mlp(x)
+
+        # Output
+        rating = self.output(x).squeeze()  # (batch,)
+        return rating
+\end{lstlisting}
+
+\subsubsection{Variante : Generalized Matrix Factorization (GMF)}
+
+GMF utilise le produit élément par élément des embeddings :
+
+\[
+\hat{r}_{ui} = \vect{h}^T (\vect{p}_u \odot \vect{q}_i)
+\]
+
+où $\odot$ est le produit d'Hadamard (element-wise), et $\vect{h}$ est un vecteur de poids appris.
+
+\subsubsection{NeuMF : Fusion de GMF et MLP}
+
+\begin{definition}{Neural Matrix Factorization (NeuMF)}
+NeuMF combine GMF (linéaire) et MLP (non-linéaire) :
+
+\begin{align}
+\hat{r}_{ui} &= \sigma(\vect{h}^T [\text{GMF}(\vect{p}_u, \vect{q}_i) \oplus \text{MLP}(\vect{u}, \vect{v})]) \\
+&= \sigma(\vect{h}^T [(\vect{p}_u \odot \vect{q}_i) \oplus \phi(\vect{u}, \vect{v})])
+\end{align}
+
+où $\oplus$ est la concaténation et $\sigma$ est sigmoid.
+\end{definition}
+
+\subsection{Autoencoders pour Collaborative Filtering}
+
+Les autoencoders peuvent apprendre des représentations compactes des préférences utilisateurs.
+
+\subsubsection{AutoRec}
+
+\begin{definition}{AutoRec}
+AutoRec est un autoencoder qui prend en entrée le vecteur de ratings d'un utilisateur (ou item) et reconstruit ce vecteur :
+
+\begin{align}
+\vect{h} &= \sigma(\mat{W} \vect{r} + \vect{b}) \quad \text{(encoder)} \\
+\hat{\vect{r}} &= \sigma(\mat{W}' \vect{h} + \vect{b}') \quad \text{(decoder)}
+\end{align}
+
+Loss : $L = \sum_{i \in \text{observed}} (\hat{r}_i - r_i)^2 + \lambda (\|\mat{W}\|^2 + \|\mat{W}'\|^2)$
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=AutoRec avec PyTorch]
+class AutoRec(nn.Module):
+    def __init__(self, n_items, hidden_dim=128):
+        super(AutoRec, self).__init__()
+
+        self.encoder = nn.Sequential(
+            nn.Linear(n_items, hidden_dim),
+            nn.Sigmoid()
+        )
+
+        self.decoder = nn.Sequential(
+            nn.Linear(hidden_dim, n_items),
+            nn.Sigmoid()
+        )
+
+    def forward(self, ratings):
+        # ratings: (batch, n_items) avec 0 pour items non rates
+        h = self.encoder(ratings)  # (batch, hidden_dim)
+        reconstructed = self.decoder(h)  # (batch, n_items)
+        return reconstructed
+
+    def loss(self, ratings, reconstructed, mask):
+        # mask: 1 pour items rates, 0 sinon
+        mse = torch.sum((ratings - reconstructed) ** 2 * mask) / torch.sum(mask)
+        return mse
+\end{lstlisting}
+
+\subsection{Two-Tower Model}
+
+Le modèle Two-Tower est utilisé pour la recommandation à grande échelle (ex: YouTube, Google).
+
+\begin{definition}{Two-Tower Model}
+Architecture avec deux réseaux séparés :
+\begin{itemize}
+    \item \textbf{User Tower} : encode les features utilisateur $\to$ embedding $\vect{u}$
+    \item \textbf{Item Tower} : encode les features item $\to$ embedding $\vect{v}$
+\end{itemize}
+
+Score de recommandation : $s(u, i) = \vect{u} \cdot \vect{v}$ (produit scalaire)
+
+Avantage : les embeddings items peuvent être pré-calculés et indexés pour une recherche rapide (Approximate Nearest Neighbors).
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Two-Tower Model]
+class TwoTowerModel(nn.Module):
+    def __init__(self, user_features_dim, item_features_dim, embedding_dim=128):
+        super(TwoTowerModel, self).__init__()
+
+        # User Tower
+        self.user_tower = nn.Sequential(
+            nn.Linear(user_features_dim, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, embedding_dim)
+        )
+
+        # Item Tower
+        self.item_tower = nn.Sequential(
+            nn.Linear(item_features_dim, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, embedding_dim)
+        )
+
+    def forward(self, user_features, item_features):
+        user_emb = self.user_tower(user_features)  # (batch, embedding_dim)
+        item_emb = self.item_tower(item_features)  # (batch, embedding_dim)
+
+        # Dot product
+        scores = torch.sum(user_emb * item_emb, dim=-1)  # (batch,)
+        return scores
+
+    def get_user_embedding(self, user_features):
+        return self.user_tower(user_features)
+
+    def get_item_embedding(self, item_features):
+        return self.item_tower(item_features)
+\end{lstlisting}
+
+\subsection{Deep Interest Network (DIN)}
+
+DIN utilise un mécanisme d'attention pour capturer l'intérêt de l'utilisateur en fonction du contexte.
+
+\begin{definition}{Deep Interest Network}
+DIN applique une attention sur l'historique de l'utilisateur en fonction de l'item candidat :
+
+\[
+\vect{u}_i = \sum_{j \in H_u} a(i, j) \cdot \vect{v}_j
+\]
+
+où :
+\begin{itemize}
+    \item $H_u$ : historique des items de l'utilisateur $u$
+    \item $a(i, j)$ : score d'attention entre item candidat $i$ et item historique $j$
+    \item $\vect{v}_j$ : embedding de l'item $j$
+\end{itemize}
+
+Le score d'attention est calculé par un petit réseau de neurones.
+\end{definition}
+
+% ===== SECTION 4: CONTENT-BASED FILTERING =====
+\section{Content-Based Filtering (Filtrage par Contenu)}
+
+Les systèmes content-based recommandent des items similaires à ceux appréciés par l'utilisateur, basés sur les features des items.
+
+\subsection{Principe}
+
+\begin{definition}{Content-Based Filtering}
+Créer un profil utilisateur basé sur les features des items qu'il a aimés, puis recommander des items similaires.
+
+\begin{enumerate}
+    \item \textbf{Item Profile} : représenter chaque item par un vecteur de features $\vect{i} \in \mathbb{R}^d$
+    \item \textbf{User Profile} : agréger les features des items aimés : $\vect{u} = \frac{1}{|I_u|} \sum_{i \in I_u} \vect{i}$
+    \item \textbf{Prédiction} : $\text{score}(u, i) = \text{sim}(\vect{u}, \vect{i})$ (ex: cosine similarity)
+\end{enumerate}
+\end{definition}
+
+\subsection{Représentation TF-IDF}
+
+Pour les items textuels (articles, films avec descriptions, produits) :
+
+\begin{definition}{TF-IDF}
+TF-IDF (Term Frequency - Inverse Document Frequency) représente chaque document par un vecteur :
+
+\begin{align}
+\text{TF}(t, d) &= \frac{\text{nb occurrences de } t \text{ dans } d}{\text{nb total de termes dans } d} \\
+\text{IDF}(t) &= \log \frac{\text{nb total de documents}}{\text{nb documents contenant } t} \\
+\text{TF-IDF}(t, d) &= \text{TF}(t, d) \times \text{IDF}(t)
+\end{align}
+
+Les termes fréquents dans un document mais rares globalement ont un poids élevé.
+\end{definition}
+
+\begin{lstlisting}[language=Python, caption=Content-Based Filtering avec TF-IDF]
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Exemple : recommandation de films basee sur les descriptions
+movie_descriptions = [
+    "Action movie with explosions and car chases",
+    "Romantic comedy about love and relationships",
+    "Sci-fi thriller with time travel and paradoxes",
+    # ...
+]
+
+# Vectorization TF-IDF
+vectorizer = TfidfVectorizer(stop_words='english')
+tfidf_matrix = vectorizer.fit_transform(movie_descriptions)  # (n_movies, n_features)
+
+# Similarite entre films
+similarity_matrix = cosine_similarity(tfidf_matrix)  # (n_movies, n_movies)
+
+# Recommander des films similaires au film 0
+movie_idx = 0
+similar_scores = similarity_matrix[movie_idx]
+top_k_indices = similar_scores.argsort()[-6:-1][::-1]  # Top 5 (excluant le film lui-meme)
+\end{lstlisting}
+
+\subsection{Embeddings (Word2Vec, BERT)}
+
+Pour des représentations plus riches, on peut utiliser des embeddings pré-entraînés :
+
+\begin{itemize}
+    \item \textbf{Word2Vec / GloVe} : moyenner les embeddings des mots
+    \item \textbf{BERT / Sentence-BERT} : embeddings de phrases/documents complets
+    \item \textbf{Modèles multimodaux} : combiner texte, images, métadonnées
+\end{itemize}
+
+\subsection{Avantages et Limites du Content-Based}
+
+\begin{table}[h]
+\centering
+\caption{Content-Based : Avantages vs Limites}
+\begin{tabular}{p{6cm}p{6cm}}
+\toprule
+\textbf{Avantages} & \textbf{Limites} \\
+\midrule
+Pas de cold start pour nouveaux items (si features dispo) & Cold start pour nouveaux utilisateurs \\[0.2cm]
+Recommandations explicables & Manque de diversité (filter bubble) \\[0.2cm]
+Pas besoin de données d'autres utilisateurs & Nécessite des features de qualité \\[0.2cm]
+Fonctionne avec peu de données utilisateur & Ne capture pas les préférences émergentes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 5: SYSTÈMES HYBRIDES =====
+\section{Systèmes Hybrides}
+
+Les systèmes hybrides combinent collaborative filtering et content-based pour bénéficier des deux approches.
+
+\subsection{Stratégies de Combinaison}
+
+\begin{table}[h]
+\centering
+\caption{Stratégies de systèmes hybrides}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Stratégie} & \textbf{Description} \\
+\midrule
+\textbf{Weighted} & Combiner les scores : $s = \alpha \cdot s_{\text{CF}} + (1-\alpha) \cdot s_{\text{CB}}$ \\[0.3cm]
+\textbf{Switching} & Choisir une approche selon le contexte (ex: CF si assez de données, sinon CB) \\[0.3cm]
+\textbf{Mixed} & Présenter des recommandations des deux approches ensemble \\[0.3cm]
+\textbf{Feature Combination} & Utiliser les features content comme entrées du CF \\[0.3cm]
+\textbf{Cascade} & Raffiner les résultats d'une approche avec l'autre \\[0.3cm]
+\textbf{Meta-level} & Utiliser le modèle d'une approche comme entrée de l'autre \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Exemple : Hybrid Neural Model}
+
+\begin{lstlisting}[language=Python, caption=Modele hybride neural]
+class HybridRecommender(nn.Module):
+    def __init__(self, n_users, n_items, item_features_dim, emb_dim=64):
+        super(HybridRecommender, self).__init__()
+
+        # Collaborative Filtering part
+        self.user_embedding = nn.Embedding(n_users, emb_dim)
+        self.item_embedding = nn.Embedding(n_items, emb_dim)
+
+        # Content-Based part
+        self.item_content_encoder = nn.Sequential(
+            nn.Linear(item_features_dim, 128),
+            nn.ReLU(),
+            nn.Linear(128, emb_dim)
+        )
+
+        # Fusion layer
+        self.fusion = nn.Sequential(
+            nn.Linear(emb_dim * 3, 128),  # user_emb + item_emb + content_emb
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        )
+
+    def forward(self, user_ids, item_ids, item_features):
+        # Collaborative embeddings
+        user_emb = self.user_embedding(user_ids)  # (batch, emb_dim)
+        item_emb = self.item_embedding(item_ids)  # (batch, emb_dim)
+
+        # Content embeddings
+        content_emb = self.item_content_encoder(item_features)  # (batch, emb_dim)
+
+        # Concatenate all
+        x = torch.cat([user_emb, item_emb, content_emb], dim=-1)  # (batch, 3*emb_dim)
+
+        # Predict
+        rating = self.fusion(x).squeeze()  # (batch,)
+        return rating
+\end{lstlisting}
+
+% ===== SECTION 6: MÉTRIQUES D'ÉVALUATION =====
+\section{Métriques d'Évaluation}
+
+\subsection{Métriques de Prédiction de Rating}
+
+\subsubsection{Root Mean Squared Error (RMSE)}
+
+\[
+\text{RMSE} = \sqrt{\frac{1}{|\Omega|} \sum_{(u,i) \in \Omega} (r_{ui} - \hat{r}_{ui})^2}
+\]
+
+où $\Omega$ est l'ensemble des ratings de test.
+
+\subsubsection{Mean Absolute Error (MAE)}
+
+\[
+\text{MAE} = \frac{1}{|\Omega|} \sum_{(u,i) \in \Omega} |r_{ui} - \hat{r}_{ui}|
+\]
+
+MAE est moins sensible aux outliers que RMSE.
+
+\subsection{Métriques de Ranking (Top-K)}
+
+Pour évaluer les recommandations top-K, on utilise des métriques de ranking.
+
+\subsubsection{Precision@K et Recall@K}
+
+\begin{definition}{Precision@K et Recall@K}
+Pour un utilisateur $u$, soit $R_u$ l'ensemble des items pertinents (ex: ratés 4+) et $T_u$ les top-K items recommandés :
+
+\begin{align}
+\text{Precision@K} &= \frac{|R_u \cap T_u|}{K} \\
+\text{Recall@K} &= \frac{|R_u \cap T_u|}{|R_u|}
+\end{align}
+
+\textbf{Precision@K} : proportion d'items pertinents parmi les K recommandés.\\
+\textbf{Recall@K} : proportion d'items pertinents qui ont été recommandés.
+\end{definition}
+
+\subsubsection{F1@K}
+
+Moyenne harmonique de Precision@K et Recall@K :
+
+\[
+\text{F1@K} = 2 \cdot \frac{\text{Precision@K} \cdot \text{Recall@K}}{\text{Precision@K} + \text{Recall@K}}
+\]
+
+\subsubsection{Mean Average Precision (MAP)}
+
+\begin{definition}{Average Precision (AP)}
+Pour un utilisateur, AP est la moyenne des précisions calculées à chaque position pertinente :
+
+\[
+\text{AP@K} = \frac{1}{|R_u|} \sum_{k=1}^{K} \text{Precision@k} \cdot \text{rel}(k)
+\]
+
+où $\text{rel}(k) = 1$ si l'item en position $k$ est pertinent, 0 sinon.
+
+MAP est la moyenne des AP sur tous les utilisateurs :
+
+\[
+\text{MAP@K} = \frac{1}{|U|} \sum_{u \in U} \text{AP@K}_u
+\]
+\end{definition}
+
+\subsubsection{Normalized Discounted Cumulative Gain (NDCG)}
+
+NDCG prend en compte l'ordre des recommandations et permet des relevances graduelles.
+
+\begin{definition}{NDCG@K}
+\begin{align}
+\text{DCG@K} &= \sum_{i=1}^{K} \frac{2^{\text{rel}_i} - 1}{\log_2(i+1)} \\
+\text{IDCG@K} &= \text{DCG@K avec classement parfait} \\
+\text{NDCG@K} &= \frac{\text{DCG@K}}{\text{IDCG@K}}
+\end{align}
+
+où $\text{rel}_i$ est la relevance de l'item en position $i$ (ex: rating réel).
+
+NDCG est entre 0 (pire) et 1 (parfait).
+\end{definition}
+
+\subsection{Métriques de Diversité et Coverage}
+
+\subsubsection{Coverage}
+
+\begin{definition}{Catalog Coverage}
+Proportion d'items recommandés au moins une fois :
+
+\[
+\text{Coverage} = \frac{|\bigcup_{u \in U} T_u|}{|I|}
+\]
+
+Une bonne coverage signifie que le système ne recommande pas toujours les mêmes items populaires.
+\end{definition}
+
+\subsubsection{Diversity}
+
+\begin{definition}{Intra-List Diversity}
+Mesure la diversité au sein des K recommandations d'un utilisateur :
+
+\[
+\text{Diversity}(T_u) = \frac{2}{K(K-1)} \sum_{i,j \in T_u, i \neq j} (1 - \text{sim}(i, j))
+\]
+
+Plus les items sont différents, plus la diversité est élevée.
+\end{definition}
+
+\subsubsection{Novelty}
+
+\begin{definition}{Novelty}
+Capacité à recommander des items peu connus :
+
+\[
+\text{Novelty}(T_u) = -\frac{1}{K} \sum_{i \in T_u} \log_2 p(i)
+\]
+
+où $p(i)$ est la popularité de l'item $i$ (proportion d'utilisateurs l'ayant raté).
+\end{definition}
+
+\subsection{Évaluation Offline vs Online}
+
+\begin{table}[h]
+\centering
+\caption{Évaluation offline vs online}
+\begin{tabular}{lp{5cm}p{5cm}}
+\toprule
+ & \textbf{Offline} & \textbf{Online (A/B Test)} \\
+\midrule
+\textbf{Données} & Historique (train/test split) & Utilisateurs réels en temps réel \\[0.2cm]
+\textbf{Métriques} & RMSE, Precision@K, NDCG & CTR, conversion, engagement, revenue \\[0.2cm]
+\textbf{Coût} & Faible & Élevé (risque business) \\[0.2cm]
+\textbf{Rapidité} & Rapide (itérations) & Lent (plusieurs semaines) \\[0.2cm]
+\textbf{Réalisme} & Limité (biais historique) & Élevé (comportement réel) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{astuce}
+\textbf{Stratégie d'évaluation recommandée :}
+\begin{enumerate}
+    \item \textbf{Offline} : tester rapidement plusieurs modèles (RMSE, NDCG)
+    \item \textbf{Offline advanced} : simulation avec replay ou counterfactual
+    \item \textbf{Online (A/B test)} : comparer les meilleurs modèles en production sur un petit \% d'utilisateurs
+    \item \textbf{Gradual rollout} : déployer progressivement le meilleur modèle
+\end{enumerate}
+\end{astuce}
+
+% ===== SECTION 7: PROBLÈMES PRATIQUES =====
+\section{Problèmes Pratiques et Solutions}
+
+\subsection{Cold Start Problem}
+
+\begin{definition}{Cold Start Problem}
+Difficulté à faire des recommandations pertinentes pour :
+\begin{itemize}
+    \item \textbf{Nouveaux utilisateurs} : pas d'historique de ratings
+    \item \textbf{Nouveaux items} : pas de ratings reçus
+    \item \textbf{Nouveau système} : peu de données globalement
+\end{itemize}
+\end{definition}
+
+\subsubsection{Solutions pour Cold Start}
+
+\begin{table}[h]
+\centering
+\caption{Solutions au cold start}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Approche} & \textbf{Description} \\
+\midrule
+\textbf{Content-Based} & Utiliser les features des items pour nouveaux items, ou les features démographiques pour nouveaux users \\[0.2cm]
+\textbf{Hybrid} & Combiner CF et content-based (CF pour users établis, CB pour nouveaux) \\[0.2cm]
+\textbf{Popularité} & Recommander les items les plus populaires aux nouveaux utilisateurs \\[0.2cm]
+\textbf{Onboarding} & Demander explicitement les préférences initiales (ex: Netflix demande de rater 3 films) \\[0.2cm]
+\textbf{Transfer Learning} & Utiliser des connaissances d'un domaine similaire (ex: musique $\to$ podcasts) \\[0.2cm]
+\textbf{Meta-Learning} & Apprendre à recommander rapidement avec peu de données \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sparsity (Matrice Creuse)}
+
+\begin{definition}{Sparsity}
+La matrice user-item est très sparse : la plupart des utilisateurs n'ont raté qu'une infime fraction des items.
+
+Exemple MovieLens : 100,000 ratings pour 1,682 films et 943 users $\to$ densité = $\frac{100,000}{1,682 \times 943} \approx 6.3\%$
+\end{definition}
+
+\subsubsection{Solutions}
+
+\begin{itemize}
+    \item \textbf{Matrix Factorization} : capture les patterns sous-jacents mieux que les approches basées voisins
+    \item \textbf{Implicit Feedback} : utiliser des données implicites (vues, clics, temps passé) en plus des ratings explicites
+    \item \textbf{Regularization} : éviter l'overfitting sur les rares ratings observés
+    \item \textbf{Side Information} : incorporer des features utilisateurs/items (hybrid)
+\end{itemize}
+
+\subsection{Scalability (Passage à l'Échelle)}
+
+\subsubsection{Défis}
+
+\begin{itemize}
+    \item \textbf{Millions d'utilisateurs} : impossible de stocker toute la matrice de similarité ($O(m^2)$)
+    \item \textbf{Millions d'items} : recherche exhaustive trop lente pour top-K
+    \item \textbf{Temps réel} : latence < 100ms pour recommandations
+\end{itemize}
+
+\subsubsection{Solutions}
+
+\begin{table}[h]
+\centering
+\caption{Solutions pour la scalabilité}
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Technique} & \textbf{Description} \\
+\midrule
+\textbf{Item-Based CF} & Similarités items plus stables que users, pré-calcul possible \\[0.2cm]
+\textbf{ALS} & Parallélisable sur Spark/Hadoop pour grandes matrices \\[0.2cm]
+\textbf{ANN (Approx NN)} & FAISS, Annoy, ScaNN pour recherche rapide de voisins ($O(\log n)$ au lieu de $O(n)$) \\[0.2cm]
+\textbf{Two-Tower} & Pré-calculer embeddings items, recherche ANN en temps réel \\[0.2cm]
+\textbf{Candidate Generation + Ranking} & Pipeline 2 étapes : générer 100-1000 candidats rapides, puis ranker finement \\[0.2cm]
+\textbf{Caching} & Mettre en cache les recommandations pour utilisateurs actifs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Diversity vs Accuracy Trade-off}
+
+\begin{attention}
+Maximiser uniquement l'accuracy (RMSE, NDCG) peut conduire à :
+\begin{itemize}
+    \item \textbf{Filter bubble} : recommander toujours le même type de contenu
+    \item \textbf{Popularité bias} : recommander principalement les items populaires
+    \item \textbf{Manque de découverte} : utilisateurs ne découvrent pas de nouveaux contenus
+\end{itemize}
+\end{attention}
+
+\subsubsection{Solutions}
+
+\begin{itemize}
+    \item \textbf{Re-ranking} : après avoir généré les top-K, re-ranker pour diversifier
+    \item \textbf{MMR (Maximal Marginal Relevance)} : maximiser la pertinence tout en minimisant la similarité intra-liste
+    \item \textbf{Calibration} : s'assurer que les recommandations reflètent la distribution des préférences de l'utilisateur
+    \item \textbf{Exploration} : introduire occasionnellement des items aléatoires ou peu connus (multi-armed bandit)
+\end{itemize}
+
+\subsection{Fairness et Biais}
+
+\subsubsection{Types de Biais}
+
+\begin{itemize}
+    \item \textbf{Popularité bias} : les items populaires sont sur-recommandés (rich get richer)
+    \item \textbf{Position bias} : les utilisateurs cliquent plus sur les premiers items affichés
+    \item \textbf{Biais démographiques} : sous-représentation de certains groupes
+    \item \textbf{Feedback loops} : recommandations $\to$ interactions $\to$ renforcement du biais
+\end{itemize}
+
+\subsubsection{Solutions}
+
+\begin{itemize}
+    \item \textbf{Débiasing} : pondérer les données pour corriger les biais (inverse propensity scoring)
+    \item \textbf{Fairness constraints} : contraindre le modèle à être équitable (ex: parité de recommandations par groupe)
+    \item \textbf{Exploration} : recommander activement des items sous-exposés
+    \item \textbf{Transparency} : expliquer pourquoi un item est recommandé
+\end{itemize}
+
+% ===== SECTION 8: APPLICATIONS RÉELLES =====
+\section{Applications Pratiques}
+
+\subsection{E-commerce (Amazon, Alibaba)}
+
+\begin{itemize}
+    \item \textbf{Produits recommandés} : "Customers who bought X also bought Y"
+    \item \textbf{Session-based} : recommandations basées sur la session en cours (séquences)
+    \item \textbf{Bundles} : recommander des groupes de produits complémentaires
+    \item \textbf{Métriques} : CTR (click-through rate), conversion rate, revenue
+\end{itemize}
+
+\subsection{Streaming Vidéo (Netflix, YouTube)}
+
+\begin{itemize}
+    \item \textbf{Content recommendations} : films/séries basés sur historique
+    \item \textbf{Continue watching} : reprendre là où l'utilisateur s'est arrêté
+    \item \textbf{Thumbnails personnalisés} : choisir la vignette selon les préférences de l'utilisateur
+    \item \textbf{Two-stage} : candidate generation (retrieval) + ranking
+    \item \textbf{Métriques} : watch time, retention, engagement
+\end{itemize}
+
+\subsection{Streaming Musical (Spotify, Apple Music)}
+
+\begin{itemize}
+    \item \textbf{Discover Weekly} : playlist personnalisée hebdomadaire
+    \item \textbf{Radio} : générer une playlist infinie basée sur une chanson/artiste
+    \item \textbf{Audio features} : tempo, énergie, valence, danceability
+    \item \textbf{Sequential models} : prendre en compte l'ordre des écoutes (RNN, Transformers)
+\end{itemize}
+
+\subsection{Réseaux Sociaux (Facebook, LinkedIn, TikTok)}
+
+\begin{itemize}
+    \item \textbf{News feed ranking} : classer les posts par pertinence
+    \item \textbf{Friend/connection suggestions} : link prediction
+    \item \textbf{Ads targeting} : publicités personnalisées
+    \item \textbf{Challenges} : biais de confirmation, filter bubbles, fake news
+\end{itemize}
+
+\subsection{Publicité en Ligne (Google Ads, Facebook Ads)}
+
+\begin{itemize}
+    \item \textbf{CTR prediction} : prédire la probabilité de clic
+    \item \textbf{Conversion prediction} : prédire l'achat
+    \item \textbf{Bidding optimization} : optimiser les enchères en temps réel (RTB)
+    \item \textbf{Métriques} : CTR, CPC (cost per click), ROAS (return on ad spend)
+\end{itemize}
+
+% ===== SECTION 9: IMPLÉMENTATION COMPLÈTE =====
+\section{Implémentation Complète d'un Système de Recommandation}
+
+\subsection{Pipeline End-to-End}
+
+\begin{lstlisting}[language=Python, caption=Pipeline complet de recommandation]
+# 1. Data Loading et Preprocessing
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+# Charger les donnees (ex: MovieLens)
+ratings = pd.read_csv('ratings.csv')  # user_id, item_id, rating, timestamp
+users = pd.read_csv('users.csv')  # user_id, age, gender, occupation
+items = pd.read_csv('items.csv')  # item_id, title, genres
+
+# Train/Test split (temporal ou random)
+train, test = train_test_split(ratings, test_size=0.2, random_state=42)
+
+# 2. Matrix Factorization avec Surprise
+from surprise import SVD, Dataset, Reader
+from surprise.model_selection import cross_validate
+
+reader = Reader(rating_scale=(1, 5))
+data = Dataset.load_from_df(train[['user_id', 'item_id', 'rating']], reader)
+
+# Entrainement SVD
+svd = SVD(n_factors=100, n_epochs=20, lr_all=0.005, reg_all=0.02)
+cross_validate(svd, data, measures=['RMSE', 'MAE'], cv=5, verbose=True)
+
+# Fit sur toutes les donnees train
+trainset = data.build_full_trainset()
+svd.fit(trainset)
+
+# 3. Predictions
+def predict_rating(user_id, item_id):
+    return svd.predict(user_id, item_id).est
+
+# 4. Top-K Recommendations
+def recommend_top_k(user_id, k=10):
+    # Items non rates par l'utilisateur
+    rated_items = set(train[train['user_id'] == user_id]['item_id'])
+    all_items = set(items['item_id'])
+    candidates = all_items - rated_items
+
+    # Predire pour tous les candidats
+    predictions = [(item_id, predict_rating(user_id, item_id))
+                   for item_id in candidates]
+
+    # Trier et retourner top-K
+    predictions.sort(key=lambda x: x[1], reverse=True)
+    return predictions[:k]
+
+# Exemple
+top_10 = recommend_top_k(user_id=42, k=10)
+print(f"Top 10 recommendations for user 42: {top_10}")
+
+# 5. Evaluation sur test set
+from sklearn.metrics import mean_squared_error, mean_absolute_error
+
+y_true = test['rating'].values
+y_pred = [predict_rating(row['user_id'], row['item_id'])
+          for _, row in test.iterrows()]
+
+rmse = mean_squared_error(y_true, y_pred, squared=False)
+mae = mean_absolute_error(y_true, y_pred)
+print(f"Test RMSE: {rmse:.4f}, MAE: {mae:.4f}")
+\end{lstlisting}
+
+\subsection{Évaluation Ranking (Precision@K, NDCG)}
+
+\begin{lstlisting}[language=Python, caption=Calcul des metriques de ranking]
+import numpy as np
+from sklearn.metrics import ndcg_score
+
+def precision_at_k(recommendations, relevant_items, k):
+    """
+    recommendations: liste ordonnee d'item_ids recommandes
+    relevant_items: set d'item_ids pertinents (ex: rating >= 4)
+    """
+    top_k = recommendations[:k]
+    relevant_in_top_k = len(set(top_k) & relevant_items)
+    return relevant_in_top_k / k
+
+def recall_at_k(recommendations, relevant_items, k):
+    top_k = recommendations[:k]
+    relevant_in_top_k = len(set(top_k) & relevant_items)
+    return relevant_in_top_k / len(relevant_items) if len(relevant_items) > 0 else 0
+
+def ndcg_at_k(recommendations, true_relevances, k):
+    """
+    recommendations: liste ordonnee d'item_ids recommandes
+    true_relevances: dict {item_id: relevance_score}
+    """
+    # Construire le vecteur de relevances pour les top-K recommandes
+    relevances = [true_relevances.get(item_id, 0) for item_id in recommendations[:k]]
+
+    # Ideal ranking (trier par relevance)
+    ideal_relevances = sorted(true_relevances.values(), reverse=True)[:k]
+
+    # Calculer NDCG
+    if sum(ideal_relevances) == 0:
+        return 0
+
+    dcg = sum([(2**rel - 1) / np.log2(i + 2) for i, rel in enumerate(relevances)])
+    idcg = sum([(2**rel - 1) / np.log2(i + 2) for i, rel in enumerate(ideal_relevances)])
+
+    return dcg / idcg if idcg > 0 else 0
+
+# Exemple
+user_id = 42
+recommendations = [item_id for item_id, score in recommend_top_k(user_id, k=20)]
+relevant_items = set(test[(test['user_id'] == user_id) & (test['rating'] >= 4)]['item_id'])
+
+print(f"Precision@10: {precision_at_k(recommendations, relevant_items, 10):.4f}")
+print(f"Recall@10: {recall_at_k(recommendations, relevant_items, 10):.4f}")
+
+# Pour NDCG, on a besoin des relevances reelles
+true_relevances = test[test['user_id'] == user_id].set_index('item_id')['rating'].to_dict()
+print(f"NDCG@10: {ndcg_at_k(recommendations, true_relevances, 10):.4f}")
+\end{lstlisting}
+
+% ===== SECTION 10: RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{Collaborative Filtering} : recommander basé sur les utilisateurs/items similaires (user-based, item-based, matrix factorization)
+    \item \textbf{Matrix Factorization} : décomposer la matrice user-item en facteurs latents (SVD, ALS), plus efficace que les approches basées voisins
+    \item \textbf{Deep Learning} : NCF, autoencoders, two-tower models pour capturer des interactions complexes
+    \item \textbf{Content-Based} : recommander basé sur les features des items (TF-IDF, embeddings)
+    \item \textbf{Hybrid Systems} : combiner CF et content-based pour robustesse
+    \item \textbf{Métriques} : RMSE/MAE pour rating prediction, Precision@K/Recall@K/NDCG pour ranking
+    \item \textbf{Défis pratiques} : cold start, sparsity, scalability, diversity, fairness
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\begin{align}
+\text{User-Based CF:} \quad & \hat{r}_{ui} = \bar{r}_u + \frac{\sum_{v \in N_k(u)} \text{sim}(u, v) (r_{vi} - \bar{r}_v)}{\sum_{v \in N_k(u)} |\text{sim}(u, v)|} \\[0.3cm]
+\text{Matrix Factorization:} \quad & \mat{R} \approx \mat{U} \mat{V}^T, \quad \hat{r}_{ui} = \vect{u}_i \cdot \vect{v}_j \\[0.3cm]
+\text{Cosine Similarity:} \quad & \text{sim}(\vect{u}, \vect{v}) = \frac{\vect{u} \cdot \vect{v}}{\|\vect{u}\| \|\vect{v}\|} \\[0.3cm]
+\text{NDCG@K:} \quad & \text{NDCG} = \frac{\sum_{i=1}^{K} \frac{2^{\text{rel}_i} - 1}{\log_2(i+1)}}{\text{IDCG}} \\[0.3cm]
+\text{Precision@K:} \quad & \frac{|R_u \cap T_u|}{K}
+\end{align}
+\end{tcolorbox}
+
+\subsection{Comparaison des Approches}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des approches de recommandation}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Approche} & \textbf{Cold Start} & \textbf{Scalabilité} & \textbf{Accuracy} & \textbf{Explicabilité} \\
+\midrule
+User-Based CF & Mauvais & Faible & Moyen & Bon \\
+Item-Based CF & Mauvais & Moyen & Moyen & Bon \\
+Matrix Factorization & Mauvais & Bon & Élevé & Faible \\
+Deep Learning & Mauvais & Bon & Très élevé & Très faible \\
+Content-Based & Bon (items) & Bon & Moyen & Très bon \\
+Hybrid & Bon & Bon & Très élevé & Moyen \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 11: EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de Compréhension}
+
+\begin{enumerate}
+    \item Expliquez la différence entre user-based et item-based collaborative filtering. Dans quels contextes préférer l'un à l'autre ?
+
+    \item Pourquoi la matrice user-item est-elle sparse ? Quelles sont les conséquences pour les algorithmes de recommandation ?
+
+    \item Décrivez l'intuition derrière la matrix factorization. Que représentent les facteurs latents ?
+
+    \item Comparez les métriques RMSE et NDCG. Quand utiliser l'une plutôt que l'autre ?
+
+    \item Qu'est-ce que le cold start problem ? Proposez 3 solutions différentes.
+
+    \item Pourquoi le popularity bias est-il problématique dans les systèmes de recommandation ? Comment le réduire ?
+
+    \item Expliquez l'architecture d'un two-tower model. Quel est son principal avantage pour la scalabilité ?
+
+    \item Quelle est la différence entre évaluation offline et online (A/B testing) ? Quels sont les avantages et inconvénients de chaque approche ?
+\end{enumerate}
+
+\subsection{Exercices Pratiques}
+
+\begin{enumerate}
+    \item \textbf{Recommandation de films avec Collaborative Filtering}
+    \begin{itemize}
+        \item Charger le dataset MovieLens 100K
+        \item Implémenter user-based CF avec similarité cosine
+        \item Implémenter item-based CF
+        \item Comparer les deux approches (RMSE, temps de calcul)
+    \end{itemize}
+
+    \item \textbf{Matrix Factorization avec ALS}
+    \begin{itemize}
+        \item Utiliser la bibliothèque Surprise (SVD, NMF)
+        \item Tuner les hyperparamètres (nb facteurs, régularisation)
+        \item Évaluer avec cross-validation (RMSE, MAE)
+        \item Visualiser les embeddings avec t-SNE
+    \end{itemize}
+
+    \item \textbf{Système de recommandation avec Deep Learning}
+    \begin{itemize}
+        \item Implémenter NCF avec PyTorch
+        \item Entraîner sur MovieLens
+        \item Évaluer avec Precision@K, Recall@K, NDCG@K
+        \item Comparer avec SVD classique
+    \end{itemize}
+
+    \item \textbf{Content-Based Filtering}
+    \begin{itemize}
+        \item Créer un recommender basé sur les descriptions/genres de films
+        \item Utiliser TF-IDF pour vectoriser les features textuelles
+        \item Recommander des films similaires avec cosine similarity
+        \item Évaluer la diversité des recommandations
+    \end{itemize}
+
+    \item \textbf{Système Hybride}
+    \begin{itemize}
+        \item Combiner collaborative filtering et content-based
+        \item Tester différentes stratégies de combinaison (weighted, switching)
+        \item Comparer performance vs systèmes individuels
+        \item Analyser les cas où le système hybride est meilleur
+    \end{itemize}
+\end{enumerate}
+
+\textit{Solutions complètes disponibles dans les notebooks :}
+\begin{itemize}
+    \item \texttt{13_demo_collaborative\_filtering.ipynb}
+    \item \texttt{13_demo_neural\_recommenders.ipynb}
+    \item \texttt{13_exercices.ipynb}
+\end{itemize}
+
+% ===== SECTION 12: POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\subsubsection{Articles Fondateurs}
+
+\begin{itemize}
+    \item \textbf{Matrix Factorization Techniques for Recommender Systems} (Koren et al., 2009) - IEEE Computer
+    \item \textbf{Neural Collaborative Filtering} (He et al., 2017) - WWW 2017
+    \item \textbf{Deep Neural Networks for YouTube Recommendations} (Covington et al., 2016) - RecSys 2016
+    \item \textbf{Wide \& Deep Learning for Recommender Systems} (Cheng et al., 2016) - DLRS 2016
+\end{itemize}
+
+\subsubsection{Livres}
+
+\begin{itemize}
+    \item \textit{Recommender Systems: The Textbook} - Charu C. Aggarwal (2016)
+    \item \textit{Practical Recommender Systems} - Kim Falk (2019)
+    \item \textit{Deep Learning for Search} - Tommaso Teofili (2019)
+\end{itemize}
+
+\subsection{Bibliothèques et Frameworks}
+
+\begin{table}[h]
+\centering
+\caption{Bibliothèques pour systèmes de recommandation}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{Bibliothèque} & \textbf{Description} \\
+\midrule
+\textbf{Surprise} & scikit pour recommandation (SVD, KNN, NMF) \\
+\textbf{LightFM} & Hybrid recommenders (CF + content) \\
+\textbf{Implicit} & Collaborative filtering pour implicit feedback (ALS) \\
+\textbf{RecBole} & Framework PyTorch pour research en recommandation \\
+\textbf{TensorFlow Recommenders} & Modèles DL pour recommandation (Google) \\
+\textbf{FAISS} & Approximate nearest neighbors (Facebook AI) \\
+\textbf{Annoy} & ANN pour embeddings (Spotify) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Datasets}
+
+\begin{itemize}
+    \item \textbf{MovieLens} : 100K, 1M, 10M, 25M ratings de films
+    \item \textbf{Amazon Reviews} : millions de reviews de produits
+    \item \textbf{Netflix Prize} : 100M ratings (historique)
+    \item \textbf{Spotify Million Playlist} : playlists et interactions
+    \item \textbf{Yelp Dataset} : reviews de restaurants/services
+    \item \textbf{Last.fm} : écoutes musicales
+    \item \textbf{Book-Crossing} : ratings de livres
+\end{itemize}
+
+\subsection{Compétitions et Challenges}
+
+\begin{itemize}
+    \item \textbf{RecSys Challenge} : compétition annuelle (Twitter, Spotify, etc.)
+    \item \textbf{Kaggle} : diverses compétitions de recommandation
+    \item \textbf{WSDM Cup} : recommandation et web mining
+\end{itemize}
+
+\subsection{Sujets Avancés}
+
+\begin{enumerate}
+    \item \textbf{Sequential Recommendations} : modéliser les séquences (RNN, Transformers, SASRec)
+    \item \textbf{Session-Based} : recommander basé sur la session en cours (GRU4Rec)
+    \item \textbf{Multi-Armed Bandits} : équilibrer exploration/exploitation en ligne
+    \item \textbf{Contextual Recommendations} : incorporer le contexte (temps, localisation, device)
+    \item \textbf{Cross-Domain Recommendations} : transférer des connaissances entre domaines
+    \item \textbf{Conversational Recommendations} : systèmes de recommandation interactifs
+    \item \textbf{Explainable AI for RecSys} : rendre les recommandations interprétables
+    \item \textbf{Causal Inference} : débiaser les recommandations avec inférence causale
+\end{enumerate}
+
+\subsection{Prochaines Étapes}
+
+\begin{itemize}
+    \item \textbf{Chapitre 15} : Natural Language Processing (NLP)
+    \item \textbf{Chapitre 16} : Computer Vision Avancée
+    \item \textbf{Projets} : construire un système de recommandation end-to-end en production
+\end{itemize}
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item Koren, Y., Bell, R., \& Volinsky, C. (2009). \textit{Matrix Factorization Techniques for Recommender Systems}. IEEE Computer, 42(8), 30-37.
+
+    \item He, X., Liao, L., Zhang, H., Nie, L., Hu, X., \& Chua, T. S. (2017). \textit{Neural Collaborative Filtering}. WWW 2017.
+
+    \item Covington, P., Adams, J., \& Sargin, E. (2016). \textit{Deep Neural Networks for YouTube Recommendations}. RecSys 2016.
+
+    \item Cheng, H. T., et al. (2016). \textit{Wide \& Deep Learning for Recommender Systems}. DLRS 2016.
+
+    \item Aggarwal, C. C. (2016). \textit{Recommender Systems: The Textbook}. Springer.
+
+    \item Ricci, F., Rokach, L., \& Shapira, B. (2015). \textit{Recommender Systems Handbook} (2nd ed.). Springer.
+
+    \item Hu, Y., Koren, Y., \& Volinsky, C. (2008). \textit{Collaborative Filtering for Implicit Feedback Datasets}. ICDM 2008.
+
+    \item Zhou, G., et al. (2018). \textit{Deep Interest Network for Click-Through Rate Prediction}. KDD 2018.
+\end{enumerate}
+
+\end{document}

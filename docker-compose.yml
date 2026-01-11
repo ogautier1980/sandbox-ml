@@ -14,7 +14,8 @@ services:
       - ./models:/workspace/models
       - ./src:/workspace/src
       - ./docs:/workspace/docs
-      - ./TPs:/workspace/TPs
+      - ./cours:/workspace/cours
+      - ./scripts:/workspace/scripts
     environment:
       - JUPYTER_ENABLE_LAB=yes
     restart: unless-stopped

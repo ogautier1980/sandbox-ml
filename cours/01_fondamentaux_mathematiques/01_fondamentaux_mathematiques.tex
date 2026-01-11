@@ -1,0 +1,1375 @@
+% Chapitre 01 - Fondamentaux Mathématiques pour le Machine Learning
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, matrix}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 01 - Fondamentaux Mathématiques},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 01 - Fondamentaux Mathématiques}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS (code Python) =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+% Box pour définitions
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+% Box pour théorèmes
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+% Box pour exemples
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+% Box pour attention/warning
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=Attention,
+    breakable
+}
+
+% Box pour astuce/tips
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}  % Vecteur
+\newcommand{\mat}[1]{\mathbf{#1}}   % Matrice
+\newcommand{\R}{\mathbb{R}}         % Réels
+\newcommand{\N}{\mathbb{N}}         % Naturels
+\newcommand{\Z}{\mathbb{Z}}         % Entiers
+\newcommand{\C}{\mathbb{C}}         % Complexes
+\newcommand{\E}{\mathbb{E}}         % Espérance
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+\newcommand{\tr}{\operatorname{tr}}  % Trace
+\newcommand{\rank}{\operatorname{rank}}  % Rang
+
+% ===== DÉBUT DU DOCUMENT =====
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre 01}\\[0.3cm]
+    {\LARGE\bfseries Fondamentaux Mathématiques}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Maîtriser les concepts d'algèbre linéaire essentiels (vecteurs, matrices, décompositions)
+        \item Comprendre les probabilités et statistiques nécessaires au ML
+        \item Appréhender le calcul différentiel et les techniques d'optimisation
+        \item Savoir appliquer ces outils mathématiques aux algorithmes de ML
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Mathématiques niveau Licence (algèbre, analyse)\\[0.3cm]
+    \textbf{Durée estimée :} 5-7 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{01_demo_*.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+% ===== TABLE DES MATIÈRES =====
+\tableofcontents
+\newpage
+
+% ===== PARTIE I: ALGÈBRE LINÉAIRE =====
+\part{Algèbre Linéaire}
+
+\section{Vecteurs et Espaces Vectoriels}
+
+\subsection{Définitions Fondamentales}
+
+\begin{definition}{Vecteur}
+Un vecteur $\vect{v} \in \R^n$ est un tuple ordonné de $n$ nombres réels :
+\begin{equation}
+    \vect{v} = \begin{pmatrix} v_1 \\ v_2 \\ \vdots \\ v_n \end{pmatrix}
+\end{equation}
+On le représente comme un vecteur colonne par défaut. Un vecteur ligne s'écrit $\vect{v}^T$.
+\end{definition}
+
+\textbf{Interprétations :}
+\begin{itemize}
+    \item \textbf{Géométrique :} Point ou flèche dans l'espace $\R^n$
+    \item \textbf{ML :} Une instance de données (sample), un vecteur de features
+    \item \textbf{Algébrique :} Élément d'un espace vectoriel
+\end{itemize}
+
+\begin{exemple}{Vecteur de features}
+Un appartement décrit par 3 features :
+\begin{equation}
+    \vect{x} = \begin{pmatrix} 75 \\ 3 \\ 2010 \end{pmatrix} \quad
+    \begin{matrix}
+        \text{(surface en m}^2\text{)} \\
+        \text{(nombre de pièces)} \\
+        \text{(année de construction)}
+    \end{matrix}
+\end{equation}
+\end{exemple}
+
+\subsection{Opérations sur les Vecteurs}
+
+\textbf{Addition vectorielle :}
+\begin{equation}
+    \vect{u} + \vect{v} = \begin{pmatrix} u_1 + v_1 \\ u_2 + v_2 \\ \vdots \\ u_n + v_n \end{pmatrix}
+\end{equation}
+
+\textbf{Multiplication par un scalaire :}
+\begin{equation}
+    \alpha \vect{v} = \begin{pmatrix} \alpha v_1 \\ \alpha v_2 \\ \vdots \\ \alpha v_n \end{pmatrix}
+\end{equation}
+
+\subsection{Produit Scalaire (Dot Product)}
+
+\begin{definition}{Produit scalaire}
+Le produit scalaire de deux vecteurs $\vect{u}, \vect{v} \in \R^n$ est :
+\begin{equation}
+    \vect{u} \cdot \vect{v} = \vect{u}^T \vect{v} = \sum_{i=1}^n u_i v_i = u_1 v_1 + u_2 v_2 + \cdots + u_n v_n
+\end{equation}
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item Commutativité : $\vect{u} \cdot \vect{v} = \vect{v} \cdot \vect{u}$
+    \item Linéarité : $(\alpha\vect{u} + \beta\vect{w}) \cdot \vect{v} = \alpha(\vect{u} \cdot \vect{v}) + \beta(\vect{w} \cdot \vect{v})$
+    \item $\vect{v} \cdot \vect{v} \geq 0$, égalité ssi $\vect{v} = \vect{0}$
+\end{itemize}
+
+\textbf{Interprétation géométrique :}
+\begin{equation}
+    \vect{u} \cdot \vect{v} = \|\vect{u}\| \|\vect{v}\| \cos(\theta)
+\end{equation}
+où $\theta$ est l'angle entre $\vect{u}$ et $\vect{v}$.
+
+\begin{astuce}
+\textbf{En Machine Learning :}
+\begin{itemize}
+    \item Le produit scalaire mesure la \textbf{similarité} entre vecteurs
+    \item Deux vecteurs orthogonaux ($\vect{u} \cdot \vect{v} = 0$) sont \textbf{non corrélés}
+    \item Utilisé partout : régression linéaire ($\vect{w}^T\vect{x}$), réseaux de neurones, kernels...
+\end{itemize}
+\end{astuce}
+
+\subsection{Norme Vectorielle}
+
+\begin{definition}{Norme $L^p$}
+La norme $L^p$ d'un vecteur $\vect{v} \in \R^n$ est :
+\begin{equation}
+    \|\vect{v}\|_p = \left(\sum_{i=1}^n |v_i|^p\right)^{1/p}
+\end{equation}
+\end{definition}
+
+\textbf{Normes principales :}
+
+\begin{itemize}
+    \item \textbf{Norme $L^1$ (Manhattan)} :
+    \begin{equation}
+        \|\vect{v}\|_1 = \sum_{i=1}^n |v_i|
+    \end{equation}
+    Utilisée pour la régularisation Lasso, robuste aux outliers.
+
+    \item \textbf{Norme $L^2$ (Euclidienne)} :
+    \begin{equation}
+        \|\vect{v}\|_2 = \sqrt{\sum_{i=1}^n v_i^2} = \sqrt{\vect{v}^T \vect{v}}
+    \end{equation}
+    La plus courante en ML. Utilisée pour mesurer des distances.
+
+    \item \textbf{Norme $L^\infty$ (Maximum)} :
+    \begin{equation}
+        \|\vect{v}\|_\infty = \max_i |v_i|
+    \end{equation}
+\end{itemize}
+
+\begin{exemple}{Calcul de normes}
+Pour $\vect{v} = \begin{pmatrix} 3 \\ -4 \end{pmatrix}$ :
+\begin{align}
+    \|\vect{v}\|_1 &= |3| + |-4| = 7 \\
+    \|\vect{v}\|_2 &= \sqrt{3^2 + (-4)^2} = \sqrt{25} = 5 \\
+    \|\vect{v}\|_\infty &= \max(|3|, |-4|) = 4
+\end{align}
+\end{exemple}
+
+\subsection{Distance entre Vecteurs}
+
+\begin{definition}{Distance euclidienne}
+La distance entre deux points $\vect{u}, \vect{v} \in \R^n$ est :
+\begin{equation}
+    d(\vect{u}, \vect{v}) = \|\vect{u} - \vect{v}\|_2 = \sqrt{\sum_{i=1}^n (u_i - v_i)^2}
+\end{equation}
+\end{definition}
+
+\textbf{Applications en ML :}
+\begin{itemize}
+    \item K-Nearest Neighbors (KNN)
+    \item Clustering (K-Means)
+    \item Embeddings (mesurer similarité sémantique)
+\end{itemize}
+
+% ===== SECTION 2: MATRICES =====
+\section{Matrices}
+
+\subsection{Définitions et Notation}
+
+\begin{definition}{Matrice}
+Une matrice $\mat{A} \in \R^{m \times n}$ est un tableau rectangulaire de $m$ lignes et $n$ colonnes :
+\begin{equation}
+    \mat{A} = \begin{pmatrix}
+        a_{11} & a_{12} & \cdots & a_{1n} \\
+        a_{21} & a_{22} & \cdots & a_{2n} \\
+        \vdots & \vdots & \ddots & \vdots \\
+        a_{m1} & a_{m2} & \cdots & a_{mn}
+    \end{pmatrix}
+\end{equation}
+\end{definition}
+
+\textbf{Notation :}
+\begin{itemize}
+    \item $a_{ij}$ : élément ligne $i$, colonne $j$
+    \item $\mat{A}_{i:}$ : $i$-ème ligne (vecteur ligne)
+    \item $\mat{A}_{:j}$ : $j$-ème colonne (vecteur colonne)
+\end{itemize}
+
+\textbf{Interprétation ML :}
+\begin{itemize}
+    \item \textbf{Dataset} : $\mat{X} \in \R^{n \times d}$ où $n$ = nombre d'instances, $d$ = nombre de features
+    \item Chaque ligne $\mat{X}_{i:} = \vect{x}_i^T$ est une instance
+    \item Chaque colonne $\mat{X}_{:j}$ est une feature
+\end{itemize}
+
+\subsection{Opérations Matricielles}
+
+\textbf{Addition :} $(\mat{A} + \mat{B})_{ij} = a_{ij} + b_{ij}$ (même dimension)
+
+\textbf{Multiplication par scalaire :} $(\alpha \mat{A})_{ij} = \alpha a_{ij}$
+
+\textbf{Transposée :}
+\begin{equation}
+    (\mat{A}^T)_{ij} = a_{ji}
+\end{equation}
+
+\textbf{Propriétés de la transposée :}
+\begin{itemize}
+    \item $(\mat{A}^T)^T = \mat{A}$
+    \item $(\mat{A} + \mat{B})^T = \mat{A}^T + \mat{B}^T$
+    \item $(\mat{A}\mat{B})^T = \mat{B}^T\mat{A}^T$
+\end{itemize}
+
+\subsection{Multiplication Matricielle}
+
+\begin{definition}{Produit matriciel}
+Si $\mat{A} \in \R^{m \times n}$ et $\mat{B} \in \R^{n \times p}$, alors $\mat{C} = \mat{A}\mat{B} \in \R^{m \times p}$ avec :
+\begin{equation}
+    c_{ij} = \sum_{k=1}^n a_{ik} b_{kj} = \mat{A}_{i:} \cdot \mat{B}_{:j}
+\end{equation}
+\end{definition}
+
+\begin{attention}
+\textbf{Attention :}
+\begin{itemize}
+    \item La multiplication matricielle n'est \textbf{pas commutative} : $\mat{A}\mat{B} \neq \mat{B}\mat{A}$ en général
+    \item Les dimensions doivent être compatibles : $(m \times n) \times (n \times p) \to (m \times p)$
+\end{itemize}
+\end{attention}
+
+\textbf{Complexité :} Multiplication naïve : $O(mnp)$ opérations
+
+\begin{exemple}{Prédiction en régression linéaire}
+Pour $n$ instances avec $d$ features, la prédiction vectorielle s'écrit :
+\begin{equation}
+    \vect{\hat{y}} = \mat{X} \vect{w} + b\mathbf{1}
+\end{equation}
+où $\mat{X} \in \R^{n \times d}$, $\vect{w} \in \R^d$, $\vect{\hat{y}} \in \R^n$. Une seule opération matricielle remplace $n$ produits scalaires !
+\end{exemple}
+
+\subsection{Matrices Spéciales}
+
+\textbf{Matrice identité :}
+\begin{equation}
+    \mat{I}_n = \begin{pmatrix}
+        1 & 0 & \cdots & 0 \\
+        0 & 1 & \cdots & 0 \\
+        \vdots & \vdots & \ddots & \vdots \\
+        0 & 0 & \cdots & 1
+    \end{pmatrix}, \quad \mat{A}\mat{I} = \mat{I}\mat{A} = \mat{A}
+\end{equation}
+
+\textbf{Matrice diagonale :}
+\begin{equation}
+    \mat{D} = \begin{pmatrix}
+        d_1 & 0 & \cdots & 0 \\
+        0 & d_2 & \cdots & 0 \\
+        \vdots & \vdots & \ddots & \vdots \\
+        0 & 0 & \cdots & d_n
+    \end{pmatrix}
+\end{equation}
+
+\textbf{Matrice symétrique :} $\mat{A} = \mat{A}^T$ (ex: matrices de covariance)
+
+\textbf{Matrice orthogonale :} $\mat{Q}^T\mat{Q} = \mat{Q}\mat{Q}^T = \mat{I}$
+
+\subsection{Déterminant}
+
+\begin{definition}{Déterminant}
+Pour une matrice carrée $\mat{A} \in \R^{n \times n}$, le déterminant $\det(\mat{A})$ mesure le « volume orienté » de la transformation linéaire associée.
+\end{definition}
+
+\textbf{Cas $2 \times 2$ :}
+\begin{equation}
+    \det\begin{pmatrix} a & b \\ c & d \end{pmatrix} = ad - bc
+\end{equation}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item $\det(\mat{A}\mat{B}) = \det(\mat{A}) \det(\mat{B})$
+    \item $\det(\mat{A}^T) = \det(\mat{A})$
+    \item $\det(\mat{A}^{-1}) = 1/\det(\mat{A})$
+    \item Si $\det(\mat{A}) = 0$, alors $\mat{A}$ n'est pas inversible (singulière)
+\end{itemize}
+
+\subsection{Inverse de Matrice}
+
+\begin{definition}{Matrice inverse}
+Pour une matrice carrée $\mat{A} \in \R^{n \times n}$, l'inverse $\mat{A}^{-1}$ (si elle existe) vérifie :
+\begin{equation}
+    \mat{A}\mat{A}^{-1} = \mat{A}^{-1}\mat{A} = \mat{I}
+\end{equation}
+\end{definition}
+
+\textbf{Conditions d'existence :}
+\begin{itemize}
+    \item $\mat{A}$ doit être carrée
+    \item $\det(\mat{A}) \neq 0$ (matrice non-singulière)
+\end{itemize}
+
+\textbf{Cas $2 \times 2$ :}
+\begin{equation}
+    \begin{pmatrix} a & b \\ c & d \end{pmatrix}^{-1} = \frac{1}{ad-bc} \begin{pmatrix} d & -b \\ -c & a \end{pmatrix}
+\end{equation}
+
+\begin{attention}
+En pratique, on \textbf{n'inverse jamais explicitement} une matrice ! On résout plutôt le système linéaire $\mat{A}\vect{x} = \vect{b}$ via des méthodes numériques (décomposition LU, Cholesky, etc.).
+\end{attention}
+
+\subsection{Trace}
+
+\begin{definition}{Trace}
+La trace d'une matrice carrée $\mat{A} \in \R^{n \times n}$ est la somme de ses éléments diagonaux :
+\begin{equation}
+    \tr(\mat{A}) = \sum_{i=1}^n a_{ii}
+\end{equation}
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item $\tr(\mat{A} + \mat{B}) = \tr(\mat{A}) + \tr(\mat{B})$
+    \item $\tr(\mat{A}\mat{B}) = \tr(\mat{B}\mat{A})$ (propriété cyclique)
+    \item $\tr(\mat{A}) = \sum_i \lambda_i$ où $\lambda_i$ sont les valeurs propres
+\end{itemize}
+
+\subsection{Rang}
+
+\begin{definition}{Rang}
+Le rang d'une matrice $\mat{A} \in \R^{m \times n}$ est le nombre maximal de colonnes (ou lignes) linéairement indépendantes.
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item $\rank(\mat{A}) \leq \min(m, n)$
+    \item $\rank(\mat{A}) = \rank(\mat{A}^T)$
+    \item Si $\rank(\mat{A}) = n$ (rang plein en colonnes), alors $\mat{A}^T\mat{A}$ est inversible
+\end{itemize}
+
+\textbf{En ML :}
+\begin{itemize}
+    \item Rang faible $\Rightarrow$ redondance dans les features
+    \item PCA, SVD exploitent les structures de rang faible
+\end{itemize}
+
+% ===== SECTION 3: SYSTÈMES LINÉAIRES =====
+\section{Systèmes Linéaires et Résolution}
+
+\subsection{Formulation}
+
+Un système linéaire de $m$ équations à $n$ inconnues s'écrit :
+\begin{equation}
+    \mat{A}\vect{x} = \vect{b}
+\end{equation}
+où $\mat{A} \in \R^{m \times n}$, $\vect{x} \in \R^n$, $\vect{b} \in \R^m$.
+
+\textbf{Cas en ML :}
+\begin{itemize}
+    \item \textbf{Régression linéaire} : Trouver $\vect{w}$ tel que $\mat{X}\vect{w} \approx \vect{y}$
+    \item \textbf{Optimisation} : Résoudre $\nabla f(\vect{x}) = \vect{0}$ (gradient nul)
+\end{itemize}
+
+\subsection{Solutions}
+
+\textbf{Cas carré ($m = n$) :}
+\begin{itemize}
+    \item Si $\det(\mat{A}) \neq 0$ : solution unique $\vect{x} = \mat{A}^{-1}\vect{b}$
+    \item Si $\det(\mat{A}) = 0$ : aucune solution ou infinité de solutions
+\end{itemize}
+
+\textbf{Cas rectangulaire ($m \neq n$) :}
+\begin{itemize}
+    \item $m > n$ (surdéterminé) : en général pas de solution exacte $\Rightarrow$ solution des moindres carrés
+    \item $m < n$ (sous-déterminé) : infinité de solutions $\Rightarrow$ choisir celle de norme minimale
+\end{itemize}
+
+\subsection{Solution des Moindres Carrés}
+
+\begin{theoreme}{Solution des moindres carrés}
+Pour le système surdéterminé $\mat{A}\vect{x} \approx \vect{b}$, la solution qui minimise $\|\mat{A}\vect{x} - \vect{b}\|_2^2$ est :
+\begin{equation}
+    \vect{x}^* = (\mat{A}^T\mat{A})^{-1}\mat{A}^T\vect{b}
+\end{equation}
+sous réserve que $\mat{A}^T\mat{A}$ soit inversible.
+\end{theoreme}
+
+\textbf{Application directe :} Régression linéaire ! Si $\mat{X} \in \R^{n \times d}$ et $\vect{y} \in \R^n$, alors :
+\begin{equation}
+    \vect{w}^* = (\mat{X}^T\mat{X})^{-1}\mat{X}^T\vect{y}
+\end{equation}
+
+\begin{astuce}
+La matrice $\mat{A}^\dagger = (\mat{A}^T\mat{A})^{-1}\mat{A}^T$ s'appelle la \textbf{pseudo-inverse de Moore-Penrose}. En Python : \texttt{numpy.linalg.pinv(A)}.
+\end{astuce}
+
+% ===== SECTION 4: VALEURS PROPRES =====
+\section{Valeurs et Vecteurs Propres}
+
+\subsection{Définitions}
+
+\begin{definition}{Valeur propre et vecteur propre}
+Pour une matrice carrée $\mat{A} \in \R^{n \times n}$, $\lambda \in \C$ est une \textbf{valeur propre} et $\vect{v} \neq \vect{0}$ est un \textbf{vecteur propre} associé si :
+\begin{equation}
+    \mat{A}\vect{v} = \lambda \vect{v}
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation :} La transformation $\mat{A}$ étire le vecteur $\vect{v}$ par un facteur $\lambda$, sans changer sa direction.
+
+\subsection{Calcul des Valeurs Propres}
+
+Les valeurs propres sont les racines du \textbf{polynôme caractéristique} :
+\begin{equation}
+    \det(\mat{A} - \lambda \mat{I}) = 0
+\end{equation}
+
+\begin{exemple}{Matrice $2 \times 2$}
+Pour $\mat{A} = \begin{pmatrix} 4 & 2 \\ 1 & 3 \end{pmatrix}$ :
+\begin{align}
+    \det(\mat{A} - \lambda\mat{I}) &= \det\begin{pmatrix} 4-\lambda & 2 \\ 1 & 3-\lambda \end{pmatrix} \\
+    &= (4-\lambda)(3-\lambda) - 2 \times 1 \\
+    &= \lambda^2 - 7\lambda + 10 = 0
+\end{align}
+Solutions : $\lambda_1 = 5$, $\lambda_2 = 2$.
+\end{exemple}
+
+\subsection{Diagonalisation}
+
+\begin{theoreme}{Diagonalisation}
+Si $\mat{A} \in \R^{n \times n}$ possède $n$ vecteurs propres linéairement indépendants $\vect{v}_1, \ldots, \vect{v}_n$ avec valeurs propres $\lambda_1, \ldots, \lambda_n$, alors :
+\begin{equation}
+    \mat{A} = \mat{P}\mat{D}\mat{P}^{-1}
+\end{equation}
+où $\mat{P} = [\vect{v}_1 \, \vect{v}_2 \, \cdots \, \vect{v}_n]$ et $\mat{D} = \text{diag}(\lambda_1, \ldots, \lambda_n)$.
+\end{theoreme}
+
+\textbf{Avantages de la diagonalisation :}
+\begin{itemize}
+    \item Calcul de puissances : $\mat{A}^k = \mat{P}\mat{D}^k\mat{P}^{-1}$
+    \item Exponentielle : $e^{\mat{A}} = \mat{P}e^{\mat{D}}\mat{P}^{-1}$
+    \item Comprendre la dynamique des systèmes linéaires
+\end{itemize}
+
+\subsection{Matrices Symétriques Réelles}
+
+\begin{theoreme}{Théorème spectral}
+Toute matrice symétrique réelle $\mat{A} \in \R^{n \times n}$ est diagonalisable avec :
+\begin{itemize}
+    \item Toutes les valeurs propres sont \textbf{réelles}
+    \item Les vecteurs propres peuvent être choisis \textbf{orthonormaux}
+    \item Décomposition : $\mat{A} = \mat{Q}\mat{\Lambda}\mat{Q}^T$ où $\mat{Q}$ est orthogonale
+\end{itemize}
+\end{theoreme}
+
+\textbf{Applications en ML :}
+\begin{itemize}
+    \item PCA (Principal Component Analysis)
+    \item Matrices de covariance
+    \item Kernel PCA
+\end{itemize}
+
+% ===== SECTION 5: DÉCOMPOSITIONS =====
+\section{Décompositions Matricielles}
+
+\subsection{Décomposition en Valeurs Singulières (SVD)}
+
+\begin{theoreme}{SVD (Singular Value Decomposition)}
+Toute matrice $\mat{A} \in \R^{m \times n}$ peut être décomposée en :
+\begin{equation}
+    \mat{A} = \mat{U}\mat{\Sigma}\mat{V}^T
+\end{equation}
+où :
+\begin{itemize}
+    \item $\mat{U} \in \R^{m \times m}$ : matrice orthogonale (vecteurs singuliers gauches)
+    \item $\mat{\Sigma} \in \R^{m \times n}$ : matrice diagonale avec valeurs singulières $\sigma_1 \geq \sigma_2 \geq \cdots \geq 0$
+    \item $\mat{V} \in \R^{n \times n}$ : matrice orthogonale (vecteurs singuliers droits)
+\end{itemize}
+\end{theoreme}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item Les valeurs singulières sont les racines carrées des valeurs propres de $\mat{A}^T\mat{A}$
+    \item $\rank(\mat{A}) = $ nombre de valeurs singulières non nulles
+    \item Fonctionne pour \textbf{toute} matrice (pas besoin qu'elle soit carrée ou symétrique)
+\end{itemize}
+
+\begin{astuce}
+\textbf{SVD en Python :}
+\begin{lstlisting}[language=Python]
+import numpy as np
+U, Sigma, VT = np.linalg.svd(A, full_matrices=False)
+# Reconstruction: A_approx = U @ np.diag(Sigma) @ VT
+\end{lstlisting}
+\end{astuce}
+
+\subsection{Applications de la SVD}
+
+\textbf{1. Approximation de rang faible :}
+
+On peut approximer $\mat{A}$ en gardant seulement les $k$ plus grandes valeurs singulières :
+\begin{equation}
+    \mat{A}_k = \sum_{i=1}^k \sigma_i \vect{u}_i \vect{v}_i^T
+\end{equation}
+
+C'est l'approximation de rang $k$ optimale au sens de la norme de Frobenius.
+
+\textbf{2. PCA (Principal Component Analysis) :}
+
+La PCA est équivalente à une SVD des données centrées :
+\begin{itemize}
+    \item Centrer : $\mat{X}_c = \mat{X} - \bar{\vect{x}}$
+    \item SVD : $\mat{X}_c = \mat{U}\mat{\Sigma}\mat{V}^T$
+    \item Composantes principales = colonnes de $\mat{V}$
+\end{itemize}
+
+\textbf{3. Compression d'images :}
+
+Une image est une matrice. La SVD permet de compresser en ne gardant que les $k$ premières valeurs singulières.
+
+\textbf{4. Recommandation (Matrix Factorization) :}
+
+Netflix Prize : décomposer la matrice utilisateurs $\times$ films en produit de matrices de rang faible.
+
+\subsection{Autres Décompositions}
+
+\textbf{Décomposition LU :} $\mat{A} = \mat{L}\mat{U}$ (Lower-Upper), pour résoudre $\mat{A}\vect{x} = \vect{b}$ efficacement.
+
+\textbf{Décomposition de Cholesky :} Si $\mat{A}$ est symétrique définie positive, $\mat{A} = \mat{L}\mat{L}^T$.
+
+\textbf{Décomposition QR :} $\mat{A} = \mat{Q}\mat{R}$ où $\mat{Q}$ est orthogonale et $\mat{R}$ est triangulaire supérieure.
+
+% ===== PARTIE II: PROBABILITÉS ET STATISTIQUES =====
+\part{Probabilités et Statistiques}
+
+\section{Probabilités Fondamentales}
+
+\subsection{Concepts de Base}
+
+\begin{definition}{Probabilité}
+Une probabilité $P$ est une mesure sur un espace d'événements $\Omega$ telle que :
+\begin{itemize}
+    \item $0 \leq P(A) \leq 1$ pour tout événement $A$
+    \item $P(\Omega) = 1$
+    \item Si $A_1, A_2, \ldots$ sont disjoints, $P(\cup_i A_i) = \sum_i P(A_i)$
+\end{itemize}
+\end{definition}
+
+\textbf{Règles de base :}
+\begin{align}
+    P(A \cup B) &= P(A) + P(B) - P(A \cap B) \\
+    P(A^c) &= 1 - P(A) \\
+    P(A \mid B) &= \frac{P(A \cap B)}{P(B)} \quad \text{(probabilité conditionnelle)}
+\end{align}
+
+\subsection{Indépendance}
+
+\begin{definition}{Indépendance}
+Deux événements $A$ et $B$ sont indépendants si :
+\begin{equation}
+    P(A \cap B) = P(A) \cdot P(B)
+\end{equation}
+Équivalent à : $P(A \mid B) = P(A)$.
+\end{definition}
+
+\subsection{Théorème de Bayes}
+
+\begin{theoreme}{Théorème de Bayes}
+\begin{equation}
+    P(A \mid B) = \frac{P(B \mid A) \cdot P(A)}{P(B)}
+\end{equation}
+\end{theoreme}
+
+\textbf{Terminologie :}
+\begin{itemize}
+    \item $P(A)$ : probabilité a priori
+    \item $P(A \mid B)$ : probabilité a posteriori
+    \item $P(B \mid A)$ : vraisemblance (likelihood)
+    \item $P(B)$ : évidence
+\end{itemize}
+
+\textbf{Forme étendue :}
+\begin{equation}
+    P(A \mid B) = \frac{P(B \mid A) \cdot P(A)}{\sum_{i} P(B \mid A_i) \cdot P(A_i)}
+\end{equation}
+
+\begin{astuce}
+\textbf{Applications en ML :}
+\begin{itemize}
+    \item Naive Bayes Classifier
+    \item Inférence bayésienne
+    \item Filtres bayésiens (spam, Kalman)
+\end{itemize}
+\end{astuce}
+
+\section{Variables Aléatoires}
+
+\subsection{Variable Aléatoire Discrète}
+
+\begin{definition}{Variable aléatoire discrète}
+Une variable aléatoire $X$ prend des valeurs dans un ensemble discret (fini ou dénombrable). Sa distribution est caractérisée par la \textbf{fonction de masse} :
+\begin{equation}
+    p_X(x) = P(X = x)
+\end{equation}
+avec $\sum_x p_X(x) = 1$.
+\end{definition}
+
+\textbf{Distributions classiques :}
+
+\begin{itemize}
+    \item \textbf{Bernoulli} : $X \in \{0, 1\}$, $P(X=1) = p$
+    \begin{equation}
+        p_X(x) = p^x (1-p)^{1-x}
+    \end{equation}
+
+    \item \textbf{Binomiale} : $X \sim \text{Bin}(n, p)$ (nombre de succès en $n$ essais)
+    \begin{equation}
+        p_X(k) = \binom{n}{k} p^k (1-p)^{n-k}
+    \end{equation}
+
+    \item \textbf{Poisson} : $X \sim \text{Poisson}(\lambda)$ (événements rares)
+    \begin{equation}
+        p_X(k) = \frac{\lambda^k e^{-\lambda}}{k!}
+    \end{equation}
+\end{itemize}
+
+\subsection{Variable Aléatoire Continue}
+
+\begin{definition}{Variable aléatoire continue}
+Une variable continue $X$ est caractérisée par une \textbf{fonction de densité} $f_X(x)$ telle que :
+\begin{equation}
+    P(a \leq X \leq b) = \int_a^b f_X(x) \, dx
+\end{equation}
+avec $\int_{-\infty}^{\infty} f_X(x) \, dx = 1$.
+\end{definition}
+
+\textbf{Distributions classiques :}
+
+\begin{itemize}
+    \item \textbf{Uniforme} : $X \sim \text{Uniform}(a, b)$
+    \begin{equation}
+        f_X(x) = \begin{cases}
+            \frac{1}{b-a} & \text{si } a \leq x \leq b \\
+            0 & \text{sinon}
+        \end{cases}
+    \end{equation}
+
+    \item \textbf{Normale (Gaussienne)} : $X \sim \mathcal{N}(\mu, \sigma^2)$
+    \begin{equation}
+        f_X(x) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)
+    \end{equation}
+
+    \item \textbf{Exponentielle} : $X \sim \text{Exp}(\lambda)$ (temps entre événements)
+    \begin{equation}
+        f_X(x) = \lambda e^{-\lambda x} \quad (x \geq 0)
+    \end{equation}
+\end{itemize}
+
+\subsection{Espérance et Variance}
+
+\begin{definition}{Espérance}
+L'espérance (moyenne) d'une variable aléatoire $X$ est :
+\begin{equation}
+    \E[X] = \begin{cases}
+        \sum_x x \cdot p_X(x) & \text{(discret)} \\
+        \int_{-\infty}^{\infty} x \cdot f_X(x) \, dx & \text{(continu)}
+    \end{cases}
+\end{equation}
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item Linéarité : $\E[aX + bY] = a\E[X] + b\E[Y]$
+    \item $\E[X + c] = \E[X] + c$
+\end{itemize}
+
+\begin{definition}{Variance}
+La variance mesure la dispersion autour de la moyenne :
+\begin{equation}
+    \Var(X) = \E[(X - \E[X])^2] = \E[X^2] - (\E[X])^2
+\end{equation}
+L'écart-type est $\sigma_X = \sqrt{\Var(X)}$.
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item $\Var(aX + b) = a^2 \Var(X)$
+    \item Si $X, Y$ indépendants : $\Var(X + Y) = \Var(X) + \Var(Y)$
+\end{itemize}
+
+\textbf{Exemples :}
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Loi} & \textbf{Espérance} & \textbf{Variance} \\
+\midrule
+Bernoulli$(p)$ & $p$ & $p(1-p)$ \\
+Binomiale$(n, p)$ & $np$ & $np(1-p)$ \\
+Poisson$(\lambda)$ & $\lambda$ & $\lambda$ \\
+Uniforme$(a, b)$ & $\frac{a+b}{2}$ & $\frac{(b-a)^2}{12}$ \\
+Normale$(\mu, \sigma^2)$ & $\mu$ & $\sigma^2$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Loi Normale (Gaussienne)}
+
+La loi normale est \textbf{fondamentale} en ML et statistiques.
+
+\begin{theoreme}{Théorème Central Limite (TCL)}
+Soit $X_1, \ldots, X_n$ des variables i.i.d. d'espérance $\mu$ et variance $\sigma^2$. Alors :
+\begin{equation}
+    \frac{\bar{X}_n - \mu}{\sigma/\sqrt{n}} \xrightarrow{n \to \infty} \mathcal{N}(0, 1)
+\end{equation}
+où $\bar{X}_n = \frac{1}{n}\sum_{i=1}^n X_i$.
+\end{theoreme}
+
+\textbf{Conséquence :} Beaucoup de phénomènes naturels suivent approximativement une loi normale grâce au TCL.
+
+\textbf{Propriétés de la loi normale :}
+\begin{itemize}
+    \item Somme de gaussiennes = gaussienne
+    \item 68\% des valeurs dans $[\mu - \sigma, \mu + \sigma]$
+    \item 95\% dans $[\mu - 2\sigma, \mu + 2\sigma]$
+    \item 99.7\% dans $[\mu - 3\sigma, \mu + 3\sigma]$
+\end{itemize}
+
+\subsection{Loi Normale Multivariée}
+
+\begin{definition}{Loi normale multivariée}
+Un vecteur aléatoire $\vect{X} \in \R^d$ suit une loi normale multivariée $\mathcal{N}(\vect{\mu}, \mat{\Sigma})$ si sa densité est :
+\begin{equation}
+    f_{\vect{X}}(\vect{x}) = \frac{1}{(2\pi)^{d/2} |\mat{\Sigma}|^{1/2}} \exp\left(-\frac{1}{2}(\vect{x} - \vect{\mu})^T \mat{\Sigma}^{-1} (\vect{x} - \vect{\mu})\right)
+\end{equation}
+où $\vect{\mu} \in \R^d$ est le vecteur moyenne et $\mat{\Sigma} \in \R^{d \times d}$ est la matrice de covariance.
+\end{definition}
+
+\textbf{Utilisations en ML :}
+\begin{itemize}
+    \item Gaussian Mixture Models (GMM)
+    \item Analyse discriminante linéaire (LDA)
+    \item Processus gaussiens
+\end{itemize}
+
+\section{Statistiques Descriptives}
+
+\subsection{Mesures de Tendance Centrale}
+
+\textbf{Moyenne empirique :}
+\begin{equation}
+    \bar{x} = \frac{1}{n} \sum_{i=1}^n x_i
+\end{equation}
+
+\textbf{Médiane :} Valeur centrale quand les données sont triées. Robuste aux outliers.
+
+\textbf{Mode :} Valeur la plus fréquente.
+
+\subsection{Mesures de Dispersion}
+
+\textbf{Variance empirique :}
+\begin{equation}
+    s^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2
+\end{equation}
+
+\textbf{Écart-type :} $s = \sqrt{s^2}$
+
+\textbf{Intervalle interquartile (IQR) :} $IQR = Q_3 - Q_1$ (robuste)
+
+\subsection{Covariance et Corrélation}
+
+\begin{definition}{Covariance}
+La covariance entre deux variables $X$ et $Y$ mesure leur variation conjointe :
+\begin{equation}
+    \Cov(X, Y) = \E[(X - \E[X])(Y - \E[Y])] = \E[XY] - \E[X]\E[Y]
+\end{equation}
+Version empirique :
+\begin{equation}
+    \text{cov}(x, y) = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})
+\end{equation}
+\end{definition}
+
+\begin{definition}{Coefficient de corrélation de Pearson}
+\begin{equation}
+    \rho_{XY} = \frac{\Cov(X, Y)}{\sigma_X \sigma_Y} \in [-1, 1]
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation :}
+\begin{itemize}
+    \item $\rho = 1$ : corrélation linéaire positive parfaite
+    \item $\rho = -1$ : corrélation linéaire négative parfaite
+    \item $\rho = 0$ : pas de corrélation linéaire
+\end{itemize}
+
+\textbf{Matrice de covariance :}
+Pour un vecteur aléatoire $\vect{X} = (X_1, \ldots, X_d)^T$ :
+\begin{equation}
+    \mat{\Sigma} = \E[(\vect{X} - \E[\vect{X}])(\vect{X} - \E[\vect{X}])^T]
+\end{equation}
+avec $\Sigma_{ij} = \Cov(X_i, X_j)$.
+
+\begin{astuce}
+En Python (NumPy/Pandas) :
+\begin{lstlisting}[language=Python]
+# Matrice de covariance
+cov_matrix = np.cov(X, rowvar=False)  # colonnes = variables
+
+# Matrice de corrélation
+corr_matrix = np.corrcoef(X, rowvar=False)
+# ou avec pandas:
+corr_matrix = df.corr()
+\end{lstlisting}
+\end{astuce}
+
+% ===== PARTIE III: CALCUL DIFFÉRENTIEL =====
+\part{Calcul Différentiel et Optimisation}
+
+\section{Dérivées}
+
+\subsection{Dérivée d'une Fonction Scalaire}
+
+\begin{definition}{Dérivée}
+La dérivée de $f: \R \to \R$ en $x$ est :
+\begin{equation}
+    f'(x) = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation :} Pente de la tangente à la courbe en $x$.
+
+\textbf{Règles de dérivation :}
+\begin{align}
+    (cf)' &= cf' \\
+    (f + g)' &= f' + g' \\
+    (fg)' &= f'g + fg' \quad \text{(règle du produit)} \\
+    \left(\frac{f}{g}\right)' &= \frac{f'g - fg'}{g^2} \quad \text{(règle du quotient)} \\
+    (f \circ g)' &= (f' \circ g) \cdot g' \quad \text{(règle de la chaîne)}
+\end{align}
+
+\textbf{Dérivées usuelles :}
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+$f(x)$ & $f'(x)$ \\
+\midrule
+$x^n$ & $nx^{n-1}$ \\
+$e^x$ & $e^x$ \\
+$\ln(x)$ & $1/x$ \\
+$\sin(x)$ & $\cos(x)$ \\
+$\cos(x)$ & $-\sin(x)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Gradient}
+
+\begin{definition}{Gradient}
+Pour une fonction $f: \R^n \to \R$, le gradient est le vecteur des dérivées partielles :
+\begin{equation}
+    \nabla f(\vect{x}) = \begin{pmatrix}
+        \frac{\partial f}{\partial x_1} \\
+        \frac{\partial f}{\partial x_2} \\
+        \vdots \\
+        \frac{\partial f}{\partial x_n}
+    \end{pmatrix}
+\end{equation}
+\end{definition}
+
+\textbf{Interprétation géométrique :}
+\begin{itemize}
+    \item Le gradient pointe dans la direction de \textbf{plus forte croissance}
+    \item Sa norme $\|\nabla f\|$ mesure le taux de croissance
+    \item $-\nabla f$ pointe vers la plus forte décroissance
+\end{itemize}
+
+\begin{exemple}{Gradient de fonctions courantes}
+\begin{align}
+    f(\vect{x}) &= \vect{a}^T \vect{x} = \sum_i a_i x_i \quad &\Rightarrow \quad \nabla f &= \vect{a} \\
+    f(\vect{x}) &= \vect{x}^T \mat{A} \vect{x} \quad &\Rightarrow \quad \nabla f &= (\mat{A} + \mat{A}^T)\vect{x} \\
+    f(\vect{x}) &= \|\vect{x}\|_2^2 = \vect{x}^T\vect{x} \quad &\Rightarrow \quad \nabla f &= 2\vect{x}
+\end{align}
+\end{exemple}
+
+\subsection{Matrice Hessienne}
+
+\begin{definition}{Hessienne}
+Pour $f: \R^n \to \R$ deux fois différentiable, la matrice hessienne est la matrice des dérivées secondes :
+\begin{equation}
+    \mat{H}_f(\vect{x}) = \begin{pmatrix}
+        \frac{\partial^2 f}{\partial x_1^2} & \frac{\partial^2 f}{\partial x_1 \partial x_2} & \cdots \\
+        \frac{\partial^2 f}{\partial x_2 \partial x_1} & \frac{\partial^2 f}{\partial x_2^2} & \cdots \\
+        \vdots & \vdots & \ddots
+    \end{pmatrix}
+\end{equation}
+\end{definition}
+
+\textbf{Propriétés :}
+\begin{itemize}
+    \item Si $f$ est $C^2$, alors $\mat{H}$ est symétrique (théorème de Schwarz)
+    \item La hessienne mesure la \textbf{courbure} de $f$
+    \item Utilisée dans les méthodes d'optimisation du second ordre (Newton)
+\end{itemize}
+
+\subsection{Jacobienne}
+
+\begin{definition}{Jacobienne}
+Pour une fonction vectorielle $\vect{f}: \R^n \to \R^m$, la jacobienne est la matrice des dérivées partielles :
+\begin{equation}
+    \mat{J}_{\vect{f}}(\vect{x}) = \begin{pmatrix}
+        \frac{\partial f_1}{\partial x_1} & \cdots & \frac{\partial f_1}{\partial x_n} \\
+        \vdots & \ddots & \vdots \\
+        \frac{\partial f_m}{\partial x_1} & \cdots & \frac{\partial f_m}{\partial x_n}
+    \end{pmatrix} \in \R^{m \times n}
+\end{equation}
+\end{definition}
+
+\textbf{Application en Deep Learning :} La backpropagation utilise la règle de la chaîne avec des jacobiennes pour calculer les gradients.
+
+\section{Optimisation}
+
+\subsection{Conditions d'Optimalité}
+
+\begin{theoreme}{Condition nécessaire du premier ordre}
+Si $\vect{x}^*$ est un minimum local de $f: \R^n \to \R$ différentiable, alors :
+\begin{equation}
+    \nabla f(\vect{x}^*) = \vect{0}
+\end{equation}
+\end{theoreme}
+
+\begin{theoreme}{Condition suffisante du second ordre}
+Si $\nabla f(\vect{x}^*) = \vect{0}$ et la hessienne $\mat{H}_f(\vect{x}^*)$ est \textbf{définie positive} (toutes les valeurs propres $> 0$), alors $\vect{x}^*$ est un minimum local strict.
+\end{theoreme}
+
+\textbf{Cas de la hessienne :}
+\begin{itemize}
+    \item Définie positive $\Rightarrow$ minimum local
+    \item Définie négative $\Rightarrow$ maximum local
+    \item Indéfinie $\Rightarrow$ point-selle
+\end{itemize}
+
+\subsection{Convexité}
+
+\begin{definition}{Fonction convexe}
+Une fonction $f: \R^n \to \R$ est convexe si pour tous $\vect{x}, \vect{y}$ et $\lambda \in [0, 1]$ :
+\begin{equation}
+    f(\lambda \vect{x} + (1-\lambda) \vect{y}) \leq \lambda f(\vect{x}) + (1-\lambda) f(\vect{y})
+\end{equation}
+\end{definition}
+
+\textbf{Critère différentiel :}
+\begin{itemize}
+    \item Si $\mat{H}_f(\vect{x})$ est semi-définie positive partout, alors $f$ est convexe
+    \item Si $\mat{H}_f(\vect{x})$ est définie positive partout, alors $f$ est strictement convexe
+\end{itemize}
+
+\textbf{Propriété fondamentale :}
+Pour une fonction convexe, \textbf{tout minimum local est global}.
+
+\begin{exemple}{Fonctions convexes courantes}
+\begin{itemize}
+    \item Fonctions linéaires/affines : $f(\vect{x}) = \vect{a}^T\vect{x} + b$
+    \item Norme $L^2$ au carré : $f(\vect{x}) = \|\vect{x}\|_2^2$
+    \item Exponentielle : $f(x) = e^x$
+    \item Logarithme négatif : $f(x) = -\ln(x)$ pour $x > 0$
+\end{itemize}
+\end{exemple}
+
+\subsection{Descente de Gradient}
+
+\begin{algorithm}[H]
+\caption{Descente de Gradient}
+\label{alg:gd}
+\begin{algorithmic}[1]
+\REQUIRE Fonction $f$, point initial $\vect{x}_0$, learning rate $\alpha > 0$, tolérance $\epsilon$
+\ENSURE Minimum approximatif $\vect{x}^*$
+\STATE $k \leftarrow 0$
+\REPEAT
+    \STATE Calculer le gradient : $\vect{g}_k = \nabla f(\vect{x}_k)$
+    \STATE Mettre à jour : $\vect{x}_{k+1} = \vect{x}_k - \alpha \vect{g}_k$
+    \STATE $k \leftarrow k + 1$
+\UNTIL{$\|\vect{g}_k\| < \epsilon$}
+\RETURN $\vect{x}_k$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Intuition :} On se déplace itérativement dans la direction opposée au gradient (plus forte descente).
+
+\textbf{Paramètres :}
+\begin{itemize}
+    \item \textbf{Learning rate $\alpha$} : Trop grand $\Rightarrow$ divergence ; trop petit $\Rightarrow$ convergence lente
+    \item \textbf{Critère d'arrêt} : $\|\nabla f\| < \epsilon$ ou nombre max d'itérations
+\end{itemize}
+
+\begin{astuce}
+\textbf{Variantes modernes (Deep Learning) :}
+\begin{itemize}
+    \item SGD (Stochastic Gradient Descent)
+    \item Momentum
+    \item Adam, RMSprop, AdaGrad
+\end{itemize}
+Voir Chapitre 06 pour les détails.
+\end{astuce}
+
+\subsection{Méthode de Newton}
+
+L'idée est d'utiliser l'information du second ordre (hessienne) :
+\begin{equation}
+    \vect{x}_{k+1} = \vect{x}_k - \mat{H}_f(\vect{x}_k)^{-1} \nabla f(\vect{x}_k)
+\end{equation}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Convergence quadratique (très rapide près du minimum)
+    \item Pas besoin de tuner le learning rate
+\end{itemize}
+
+\textbf{Inconvénients :}
+\begin{itemize}
+    \item Coût : calcul et inversion de la hessienne ($O(n^3)$)
+    \item Ne fonctionne que si $\mat{H}$ est définie positive
+    \item Rarement utilisé en Deep Learning (trop coûteux)
+\end{itemize}
+
+\textbf{Compromis :} Méthodes quasi-Newton (L-BFGS) qui approximent la hessienne.
+
+% ===== SECTION RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+
+\textbf{Algèbre Linéaire :}
+\begin{itemize}
+    \item Vecteurs et matrices sont omniprésents en ML (données, poids, transformations)
+    \item Produit scalaire $\Rightarrow$ similarité ; norme $\Rightarrow$ distance
+    \item SVD = décomposition universelle (PCA, compression, recommandation)
+    \item Systèmes linéaires $\Rightarrow$ régression linéaire (moindres carrés)
+\end{itemize}
+
+\textbf{Probabilités et Statistiques :}
+\begin{itemize}
+    \item Loi normale = fondamentale (TCL, modèles génératifs)
+    \item Théorème de Bayes = base de l'inférence bayésienne
+    \item Covariance/corrélation $\Rightarrow$ dépendance entre variables
+    \item Espérance, variance = résument une distribution
+\end{itemize}
+
+\textbf{Calcul Différentiel et Optimisation :}
+\begin{itemize}
+    \item Gradient = direction de plus forte croissance
+    \item Descente de gradient = algorithme d'optimisation de base en ML
+    \item Convexité $\Rightarrow$ minimum local = global
+    \item Hessienne = courbure (méthodes du second ordre)
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\textbf{Algèbre linéaire :}
+\begin{align}
+    \text{Produit scalaire : } & \vect{u} \cdot \vect{v} = \sum_i u_i v_i \\
+    \text{Norme $L^2$ : } & \|\vect{v}\|_2 = \sqrt{\sum_i v_i^2} \\
+    \text{Moindres carrés : } & \vect{w}^* = (\mat{X}^T\mat{X})^{-1}\mat{X}^T\vect{y} \\
+    \text{SVD : } & \mat{A} = \mat{U}\mat{\Sigma}\mat{V}^T
+\end{align}
+
+\textbf{Probabilités :}
+\begin{align}
+    \text{Bayes : } & P(A|B) = \frac{P(B|A)P(A)}{P(B)} \\
+    \text{Loi normale : } & \mathcal{N}(x; \mu, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}} e^{-(x-\mu)^2/(2\sigma^2)} \\
+    \text{Variance : } & \Var(X) = \E[X^2] - (\E[X])^2
+\end{align}
+
+\textbf{Optimisation :}
+\begin{align}
+    \text{Gradient : } & \nabla f = \left(\frac{\partial f}{\partial x_1}, \ldots, \frac{\partial f}{\partial x_n}\right)^T \\
+    \text{Descente de gradient : } & \vect{x}_{k+1} = \vect{x}_k - \alpha \nabla f(\vect{x}_k)
+\end{align}
+\end{tcolorbox}
+
+% ===== EXERCICES =====
+\section{Exercices}
+
+\subsection{Algèbre Linéaire}
+
+\begin{enumerate}
+    \item Calculer le produit scalaire de $\vect{u} = (1, 2, 3)$ et $\vect{v} = (4, -1, 2)$. Les vecteurs sont-ils orthogonaux ?
+
+    \item Pour la matrice $\mat{A} = \begin{pmatrix} 2 & 1 \\ 1 & 3 \end{pmatrix}$, calculer :
+    \begin{itemize}
+        \item Les valeurs propres et vecteurs propres
+        \item La décomposition spectrale
+    \end{itemize}
+
+    \item Appliquer la SVD à la matrice $\mat{A} = \begin{pmatrix} 3 & 1 \\ 1 & 3 \\ 1 & 1 \end{pmatrix}$ (en Python). Reconstruire $\mat{A}$ à partir de la SVD.
+
+    \item Résoudre le système linéaire au sens des moindres carrés :
+    \begin{equation}
+        \begin{pmatrix} 1 & 1 \\ 1 & 2 \\ 1 & 3 \end{pmatrix} \begin{pmatrix} a \\ b \end{pmatrix} \approx \begin{pmatrix} 2 \\ 3 \\ 5 \end{pmatrix}
+    \end{equation}
+\end{enumerate}
+
+\subsection{Probabilités et Statistiques}
+
+\begin{enumerate}
+    \item Un test médical détecte une maladie avec 99\% de précision (vrai positif). La prévalence de la maladie est 0.1\%. Si le test est positif, quelle est la probabilité d'être réellement malade ? (Bayes)
+
+    \item Pour $X \sim \mathcal{N}(10, 4)$, calculer $P(8 \leq X \leq 12)$.
+
+    \item Générer 1000 échantillons d'une loi normale $\mathcal{N}(5, 2)$ en Python. Calculer la moyenne et variance empiriques. Tracer l'histogramme.
+
+    \item Calculer la matrice de covariance pour les données :
+    \begin{equation}
+        \mat{X} = \begin{pmatrix} 1 & 2 \\ 2 & 4 \\ 3 & 5 \end{pmatrix}
+    \end{equation}
+    Interpréter la corrélation entre les deux variables.
+\end{enumerate}
+
+\subsection{Calcul Différentiel et Optimisation}
+
+\begin{enumerate}
+    \item Calculer le gradient de $f(\vect{x}) = x_1^2 + 2x_1x_2 + 3x_2^2$.
+
+    \item Montrer que $f(\vect{x}) = \|\mat{A}\vect{x} - \vect{b}\|_2^2$ est convexe. Calculer son gradient.
+
+    \item Implémenter la descente de gradient pour minimiser $f(x) = (x-3)^2 + 5$ en partant de $x_0 = 0$. Tester différents learning rates.
+
+    \item Minimiser $f(x_1, x_2) = x_1^2 + 4x_2^2$ par descente de gradient. Visualiser la trajectoire.
+\end{enumerate}
+
+\textit{Solutions détaillées dans} \texttt{01_exercices.ipynb} \textit{(solutions intégrées dans le notebook)}
+
+% ===== POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+
+\textbf{Livres :}
+\begin{itemize}
+    \item \textit{Linear Algebra and Its Applications} (4e éd., 2006) - Gilbert Strang
+    \item \textit{Probability and Statistics for Engineers} (9e éd., 2016) - Montgomery \& Runger
+    \item \textit{Convex Optimization} (2004) - Boyd \& Vandenberghe
+    \item \textit{Mathematics for Machine Learning} (2020) - Deisenroth, Faisal, Ong (gratuit en ligne)
+\end{itemize}
+
+\textbf{Ressources en ligne :}
+\begin{itemize}
+    \item MIT OCW : Linear Algebra (18.06) - Gilbert Strang
+    \item 3Blue1Brown : Essence of Linear Algebra (YouTube)
+    \item Khan Academy : Probabilités et statistiques
+\end{itemize}
+
+\subsection{Outils Pratiques}
+
+\textbf{NumPy (calcul numérique) :}
+\begin{lstlisting}[language=Python]
+import numpy as np
+
+# Algèbre linéaire
+A = np.array([[1, 2], [3, 4]])
+eigenvalues, eigenvectors = np.linalg.eig(A)
+U, Sigma, VT = np.linalg.svd(A)
+
+# Statistiques
+mean = np.mean(data)
+std = np.std(data)
+cov_matrix = np.cov(X, rowvar=False)
+\end{lstlisting}
+
+\textbf{SciPy (fonctions avancées) :}
+\begin{lstlisting}[language=Python]
+from scipy import stats, optimize
+
+# Distributions
+rv = stats.norm(loc=0, scale=1)  # N(0,1)
+pdf_values = rv.pdf(x)
+
+# Optimisation
+result = optimize.minimize(f, x0, method='BFGS')
+\end{lstlisting}
+
+\subsection{Prochaines Étapes}
+
+Chapitre suivant : \textbf{Chapitre 02 - Métriques d'Évaluation}
+
+Ces fondamentaux seront utilisés tout au long du cours :
+\begin{itemize}
+    \item Régression linéaire (Ch. 03) : moindres carrés, gradient
+    \item PCA (Ch. 05) : SVD, valeurs propres
+    \item Réseaux de neurones (Ch. 06) : backpropagation, descente de gradient
+    \item Probabilités : modèles génératifs, bayésiens
+\end{itemize}
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+
+\begin{enumerate}
+    \item Strang, G. (2006). \textit{Linear Algebra and Its Applications} (4e éd.). Cengage Learning.
+
+    \item Deisenroth, M. P., Faisal, A. A., \& Ong, C. S. (2020). \textit{Mathematics for Machine Learning}. Cambridge University Press.
+
+    \item Boyd, S., \& Vandenberghe, L. (2004). \textit{Convex Optimization}. Cambridge University Press.
+
+    \item Bishop, C. M. (2006). \textit{Pattern Recognition and Machine Learning}. Springer.
+
+    \item Murphy, K. P. (2022). \textit{Probabilistic Machine Learning: An Introduction}. MIT Press.
+
+    \item Goodfellow, I., Bengio, Y., \& Courville, A. (2016). \textit{Deep Learning}. MIT Press.
+\end{enumerate}
+
+\end{document}
