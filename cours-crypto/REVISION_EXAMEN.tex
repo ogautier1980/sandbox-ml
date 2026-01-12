@@ -1,0 +1,642 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{multicol}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+
+% Geometry
+\geometry{
+    a4paper,
+    left=2cm,
+    right=2cm,
+    top=2cm,
+    bottom=2cm
+}
+
+% Colors
+\definecolor{headerblue}{RGB}{52,73,94}
+\definecolor{warningred}{RGB}{231,76,60}
+\definecolor{successgreen}{RGB}{46,204,113}
+\definecolor{infobox}{RGB}{230,240,250}
+
+% Custom boxes
+\newtcolorbox{keybox}[1]{
+    colback=infobox,
+    colframe=headerblue,
+    fonttitle=\bfseries,
+    title=#1
+}
+
+\newtcolorbox{warnbox}{
+    colback=red!5,
+    colframe=warningred,
+    fonttitle=\bfseries,
+    title=⚠️ ATTENTION
+}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=headerblue,
+    urlcolor=headerblue,
+    pdftitle={Cours de Cryptographie - Révision Examen},
+    pdfauthor={Cours Cryptographie}
+}
+
+% Title
+\title{\textbf{\Huge Cours de Cryptographie}\\[0.5em]
+\Large Résumé de Révision pour l'Examen}
+\author{Basé sur \emph{The Joy of Cryptography} (Mike Rosulek)}
+\date{2026-01-12}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+%=============================================================================
+\section{Chapitre 1 : Introduction \& Sécurité Parfaite}
+%=============================================================================
+
+\subsection{Concepts Fondamentaux}
+
+\begin{keybox}{Définitions de Base}
+\begin{itemize}
+    \item \textbf{Plaintext} : Message original $m \in \mathcal{M}$
+    \item \textbf{Ciphertext} : Message chiffré $c \in \mathcal{C}$
+    \item \textbf{Key Space} : Ensemble des clés $\mathcal{K}$
+    \item \textbf{Encryption} : $\text{Enc} : \mathcal{K} \times \mathcal{M} \to \mathcal{C}$
+    \item \textbf{Decryption} : $\text{Dec} : \mathcal{K} \times \mathcal{C} \to \mathcal{M}$
+\end{itemize}
+\end{keybox}
+
+\subsubsection{Principes de Kerckhoffs}
+
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{\centering\itshape
+"La sécurité d'un système cryptographique ne doit reposer que sur le secret de la clé, et non sur celui de l'algorithme."
+}}
+\end{center}
+
+\textbf{Conséquences} :
+\begin{itemize}
+    \item Algorithmes publics (auditables)
+    \item Seule la clé doit rester secrète
+    \item Permet l'analyse académique
+\end{itemize}
+
+\subsection{Sécurité Parfaite (Perfect Security)}
+
+\begin{keybox}{Définition de Shannon (1949)}
+Un schéma a la \textbf{sécurité parfaite} si pour tout $m_0, m_1 \in \mathcal{M}$ et tout $c \in \mathcal{C}$ :
+\[
+\Pr[C = c \mid M = m_0] = \Pr[C = c \mid M = m_1]
+\]
+
+\textbf{Interprétation} : L'observation du ciphertext ne donne \textbf{AUCUNE} information sur le plaintext.
+\end{keybox}
+
+\subsubsection{One-Time Pad (OTP)}
+
+\textbf{Construction} :
+\begin{itemize}
+    \item $\text{Enc}(k, m) = m \oplus k$
+    \item $\text{Dec}(k, c) = c \oplus k$
+    \item Key space : $\mathcal{K} = \{0,1\}^n$
+\end{itemize}
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item[\textcolor{successgreen}{\checkmark}] Sécurité parfaite (prouvée)
+    \item[\textcolor{successgreen}{\checkmark}] Extrêmement rapide (opération XOR)
+    \item[\textcolor{warningred}{\texttimes}] Clé aussi longue que le message
+    \item[\textcolor{warningred}{\texttimes}] Clé à usage unique
+\end{itemize}
+
+\begin{keybox}{Théorème de Shannon}
+Si un schéma de chiffrement a la sécurité parfaite, alors $|\mathcal{K}| \geq |\mathcal{M}|$
+
+\textbf{Conséquence} : La sécurité parfaite nécessite des clés au moins aussi longues que les messages.
+\end{keybox}
+
+\begin{warnbox}
+\textbf{Attaque Two-Time Pad} : Réutiliser la même clé $k$ pour deux messages $m_1, m_2$ :
+\[
+c_1 \oplus c_2 = m_1 \oplus m_2
+\]
+L'adversaire obtient le XOR des deux messages !
+
+\textbf{Cas réel} : Projet VENONA (1940s) - déchiffrement de messages soviétiques.
+\end{warnbox}
+
+%=============================================================================
+\section{Chapitre 2 : Cryptographie Symétrique}
+%=============================================================================
+
+\subsection{Transition : Perfect $\to$ Computational Security}
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Perfect Security} & \textbf{Computational Security} \\
+\hline
+Inconditionnelle & Contre adversaires polynomiaux \\
+Clés $\geq$ message & Clés courtes (128-256 bits) \\
+Coût : gestion clés & Coût : hypothèses mathématiques \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Pseudorandom Generators (PRG)}
+
+\begin{keybox}{Définition}
+$\text{PRG} : \{0,1\}^\lambda \to \{0,1\}^{n}$ où $n \gg \lambda$ (expansion)
+
+\textbf{Propriété} : La sortie est \textbf{indistinguable} d'une chaîne vraiment aléatoire.
+\end{keybox}
+
+\textbf{Exemples} :
+\begin{itemize}
+    \item[\textcolor{warningred}{\texttimes}] \textbf{LCG} (Linear Congruential) - \textbf{DANGEREUX}
+    \item[\textcolor{successgreen}{\checkmark}] \textbf{ChaCha20} - Recommandé (TLS 1.3, WireGuard)
+    \item[\textcolor{successgreen}{\checkmark}] \textbf{AES-CTR} - Standard
+    \item[\textcolor{successgreen}{\checkmark}] \textbf{DRBG} (NIST) - Génération aléatoire
+\end{itemize}
+
+\subsection{Block Ciphers : AES}
+
+\textbf{Paramètres AES} :
+\begin{itemize}
+    \item Taille de bloc : \textbf{128 bits}
+    \item Tailles de clé : \textbf{128, 192, 256 bits}
+    \item Rounds : \textbf{10, 12, 14}
+\end{itemize}
+
+\textbf{Opérations par round} :
+\begin{enumerate}
+    \item \textbf{SubBytes} : S-box (inversion dans $\text{GF}(2^8)$ + affine)
+    \item \textbf{ShiftRows} : Permutation des lignes
+    \item \textbf{MixColumns} : Matrice MDS dans $\text{GF}(2^8)$
+    \item \textbf{AddRoundKey} : XOR avec sous-clé
+\end{enumerate}
+
+\subsection{Modes Opératoires}
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Mode} & \textbf{CPA-secure} & \textbf{Parallèle} & \textbf{Statut} \\
+\hline
+ECB & \textcolor{warningred}{\texttimes} & Oui & \textbf{JAMAIS} \\
+CBC & \textcolor{successgreen}{\checkmark} & Déchiffrement & OK \\
+CTR & \textcolor{successgreen}{\checkmark} & Oui & \textbf{Recommandé} \\
+OFB & \textcolor{successgreen}{\checkmark} & Non & Moins utilisé \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{CTR (Counter Mode)} :
+\[
+c_i = E_k(\text{nonce} \| \text{counter}_i) \oplus m_i
+\]
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item[\textcolor{successgreen}{\checkmark}] Parallélisable
+    \item[\textcolor{successgreen}{\checkmark}] Accès aléatoire
+    \item[\textcolor{successgreen}{\checkmark}] Pas de padding
+    \item[\textcolor{warningred}{⚠}] Nonce JAMAIS réutilisé
+\end{itemize}
+
+%=============================================================================
+\section{Chapitre 3 : Intégrité des Messages}
+%=============================================================================
+
+\subsection{Message Authentication Codes (MAC)}
+
+\begin{keybox}{Sécurité : UF-CMA}
+\textbf{Unforgeability under Chosen Message Attack}
+
+Adversaire peut demander tags pour messages de son choix, puis doit forger un tag pour un nouveau message.
+
+\textbf{Sécurité} : $\Pr[\text{Succès}] \leq \epsilon$ (négligeable)
+\end{keybox}
+
+\subsubsection{HMAC}
+
+\[
+\text{HMAC}_k(m) = H((k \oplus \text{opad}) \| H((k \oplus \text{ipad}) \| m))
+\]
+
+où $\text{opad} = \text{0x5c5c}\ldots\text{5c}$ et $\text{ipad} = \text{0x3636}\ldots\text{36}$
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item[\textcolor{successgreen}{\checkmark}] Standard (RFC 2104)
+    \item[\textcolor{successgreen}{\checkmark}] Sécurité prouvée
+    \item[\textcolor{successgreen}{\checkmark}] Utilisé partout (TLS, SSH, IPsec, JWT)
+\end{itemize}
+
+\subsection{Fonctions de Hachage}
+
+\subsubsection{Paradoxe des Anniversaires}
+
+\begin{keybox}{Théorème}
+Pour une fonction de hachage à $n$ bits, trouver une collision nécessite $\approx 2^{n/2}$ évaluations (pas $2^n$).
+
+\textbf{Exemple} : SHA-256 (256 bits) $\to$ sécurité $2^{128}$ contre collisions.
+\end{keybox}
+
+\subsubsection{Construction Merkle-Damgård}
+
+\textbf{Algorithme} :
+\begin{enumerate}
+    \item \textbf{Padding} : $m' = m \| 1 \| 0^k \| \langle |m| \rangle_{64}$
+    \item \textbf{Découpage} : $m' = m_1 \| m_2 \| \cdots \| m_t$
+    \item \textbf{Itération} : $H_i = h(H_{i-1}, m_i)$ avec $H_0 = \text{IV}$
+\end{enumerate}
+
+\textbf{Théorème} : Si $h$ résiste aux collisions, alors $H$ aussi.
+
+\begin{warnbox}
+\textbf{Length Extension Attack} : Si on connaît $H(m)$, on peut calculer $H(m \| \text{suffix})$ sans connaître $m$ !
+
+\textbf{Conséquence} : $H(k \| m)$ n'est PAS un MAC sécurisé.
+\end{warnbox}
+
+\subsection{Authenticated Encryption (AEAD)}
+
+\begin{center}
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Composition} & \textbf{Sécurité} & \textbf{Exemple} \\
+\hline
+Encrypt-and-MAC & \textcolor{warningred}{\texttimes} & SSH (ancien) \\
+MAC-then-Encrypt & \textcolor{warningred}{⚠} & TLS 1.0 (padding oracle) \\
+Encrypt-then-MAC & \textcolor{successgreen}{\checkmark} & IPsec \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Schémas AEAD modernes} :
+\begin{itemize}
+    \item \textbf{AES-GCM} : CTR + GHASH (standard, TLS 1.3)
+    \item \textbf{ChaCha20-Poly1305} : Stream cipher + MAC (mobile, WireGuard)
+    \item \textbf{AES-CCM} : CBC-MAC + CTR (WPA2, Bluetooth)
+    \item \textbf{ASCON} : Construction éponge (IoT, NIST 2023)
+\end{itemize}
+
+%=============================================================================
+\section{Chapitre 4 : Cryptographie à Clé Publique}
+%=============================================================================
+
+\subsection{Problèmes Difficiles}
+
+\begin{keybox}{Hypothèses de Difficulté}
+\[
+\text{DLP} \Rightarrow \text{CDH} \Rightarrow \text{DDH}
+\]
+
+\begin{itemize}
+    \item \textbf{DLP} : Logarithme Discret (trouver $a$ depuis $g^a$)
+    \item \textbf{CDH} : Calculer $g^{ab}$ depuis $g^a, g^b$
+    \item \textbf{DDH} : Distinguer $(g^a, g^b, g^{ab})$ de $(g^a, g^b, g^c)$
+\end{itemize}
+\end{keybox}
+
+\begin{warnbox}
+DDH est \textbf{facile} dans $\mathbb{Z}_p^*$ entier (symbole de Legendre) !
+
+\textbf{Solution} : Travailler dans sous-groupe d'ordre premier $q$ de $\mathbb{Z}_p^*$.
+\end{warnbox}
+
+\subsection{Diffie-Hellman Key Exchange}
+
+\textbf{Protocole} :
+\begin{enumerate}
+    \item Alice : Choisit $a$, envoie $g^a$
+    \item Bob : Choisit $b$, envoie $g^b$
+    \item Clé partagée : $k = g^{ab}$
+\end{enumerate}
+
+\textbf{Sécurité passive} : CDH suffit
+
+\begin{warnbox}
+\textbf{Vulnérable à Man-in-the-Middle !}
+
+\textbf{Solution} : Authenticated DH (certificats, signatures)
+\end{warnbox}
+
+\subsection{RSA}
+
+\subsubsection{Génération de Clés}
+
+\begin{enumerate}
+    \item Choisir deux grands premiers $p, q$ (1024 bits chacun pour RSA-2048)
+    \item $n = p \cdot q$
+    \item $\phi(n) = (p-1)(q-1)$
+    \item Choisir $e$ tel que $\gcd(e, \phi(n)) = 1$ (souvent $e = 65537$)
+    \item Calculer $d = e^{-1} \bmod \phi(n)$
+    \item $pk = (n, e)$, $sk = (n, d)$
+\end{enumerate}
+
+\subsubsection{RSA-OAEP (Sécurisé)}
+
+\textbf{OAEP-Encode}$(m)$ :
+\begin{enumerate}
+    \item Choisir $r \xleftarrow{\$} \{0,1\}^{k_0}$
+    \item $s = (m \| 0^{k_1}) \oplus G(r)$
+    \item $t = r \oplus H(s)$
+    \item Retourner $s \| t$
+\end{enumerate}
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item[\textcolor{successgreen}{\checkmark}] CPA-secure (modèle oracle aléatoire)
+    \item[\textcolor{successgreen}{\checkmark}] Standard PKCS\#1 v2.2
+    \item[\textcolor{warningred}{⚠}] Taille message limitée (~190 octets pour RSA-2048)
+\end{itemize}
+
+\subsection{Signatures Numériques}
+
+\subsubsection{DSA (Digital Signature Algorithm)}
+
+\textbf{Sign}$(sk, m)$ :
+\begin{enumerate}
+    \item Choisir $k \xleftarrow{\$} \mathbb{Z}_q^*$ (\textbf{unique et aléatoire !})
+    \item $r = (g^k \bmod p) \bmod q$
+    \item $s = k^{-1} \cdot (H(m) + x \cdot r) \bmod q$
+    \item Retourner $(r, s)$
+\end{enumerate}
+
+\begin{warnbox}
+\textbf{CRITIQUE : Nonce Reuse Attack !}
+
+Si deux signatures utilisent le même $k$ :
+\begin{itemize}
+    \item On retrouve $k$ depuis $s_1 - s_2$
+    \item On retrouve la clé secrète $x$ !
+\end{itemize}
+
+\textbf{Cas réels} : PlayStation 3 (2010), Bitcoin wallets (2013)
+\end{warnbox}
+
+\subsubsection{Comparaison Algorithmes}
+
+\begin{center}
+\begin{tabular}{|l|c|c|l|}
+\hline
+\textbf{Algorithme} & \textbf{Taille clé} & \textbf{Performance} & \textbf{Statut} \\
+\hline
+RSA-2048 & 2048 bits & Lent & OK \\
+ECDSA-P256 & 256 bits & Rapide & Standard \\
+Ed25519 & 256 bits & Très rapide & \textbf{Recommandé} \\
+\hline
+\end{tabular}
+\end{center}
+
+%=============================================================================
+\section{Chapitre 5 : Communication Anonyme}
+%=============================================================================
+
+\subsection{Mixnets (Chaum 1981)}
+
+\textbf{Principe} : Serveurs intermédiaires qui mélangent les messages.
+
+\textbf{Chaque Mix} :
+\begin{enumerate}
+    \item Déchiffre sa couche
+    \item Attend d'accumuler $N$ messages (batch)
+    \item Mélange aléatoirement
+    \item Envoie au prochain hop
+\end{enumerate}
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item[\textcolor{successgreen}{\checkmark}] Anonymat si \textbf{au moins 1 mix honnête}
+    \item[\textcolor{warningred}{\texttimes}] Haute latence (attente du batch)
+\end{itemize}
+
+\subsection{Tor (Onion Routing)}
+
+\textbf{Différence avec mixnets} :
+\begin{itemize}
+    \item Pas de batching (faible latence)
+    \item Circuit persistant
+    \item Chiffrement en couches (oignon)
+\end{itemize}
+
+\textbf{Architecture} :
+\begin{itemize}
+    \item \textbf{Guard nodes} : Premier relais (stable)
+    \item \textbf{Middle relays} : Relais intermédiaires
+    \item \textbf{Exit nodes} : Dernier relais (sortie vers Internet)
+    \item \textbf{Hidden services} : .onion (serveurs anonymes)
+\end{itemize}
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item[\textcolor{successgreen}{\checkmark}] Faible latence (~2-3× connexion directe)
+    \item[\textcolor{successgreen}{\checkmark}] ~7000 relais, ~2 millions d'utilisateurs
+    \item[\textcolor{warningred}{⚠}] Vulnérable si adversaire global (traffic correlation)
+\end{itemize}
+
+\subsection{Attaques}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Attaque} & \textbf{Cible} & \textbf{Mitigation} \\
+\hline
+Traffic correlation & Tor & Padding, cover traffic \\
+Website fingerprinting & Tor & Padding, multiplexing \\
+(n-1) attack & Mixnet & Batches grands \\
+Sybil attack & P2P, Tor & Sélection aléatoire \\
+\hline
+\end{tabular}
+\end{center}
+
+%=============================================================================
+\section{Formules Essentielles}
+%=============================================================================
+
+\subsection{Algèbre Modulaire}
+
+\begin{itemize}
+    \item $a \equiv b \pmod{n} \iff n \mid (a - b)$
+    \item \textbf{Inverse} : $a \cdot a^{-1} \equiv 1 \pmod{n}$
+    \item \textbf{Euler} : Si $\gcd(a,n) = 1$, alors $a^{\phi(n)} \equiv 1 \pmod{n}$
+    \item \textbf{Fermat} : Si $p$ premier, $a^{p-1} \equiv 1 \pmod{p}$
+\end{itemize}
+
+\subsection{Probabilités}
+
+\begin{itemize}
+    \item \textbf{Indépendance} : $\Pr[A \cap B] = \Pr[A] \cdot \Pr[B]$
+    \item \textbf{Conditionnelle} : $\Pr[A \mid B] = \frac{\Pr[A \cap B]}{\Pr[B]}$
+\end{itemize}
+
+\subsection{Sécurité}
+
+\begin{itemize}
+    \item \textbf{Avantage} : $\text{Adv}(\mathcal{A}) = \left| \Pr[\mathcal{A} \text{ gagne}] - \frac{1}{2} \right|$
+    \item \textbf{Négligeable} : $\epsilon(\lambda) = o(1/\lambda^c)$ pour tout $c > 0$
+\end{itemize}
+
+%=============================================================================
+\section{Bonnes Pratiques}
+%=============================================================================
+
+\subsection{À FAIRE}
+
+\begin{multicols}{2}
+\textbf{Primitives} :
+\begin{itemize}
+    \item[\textcolor{successgreen}{\checkmark}] AES-256-GCM
+    \item[\textcolor{successgreen}{\checkmark}] ChaCha20-Poly1305
+    \item[\textcolor{successgreen}{\checkmark}] SHA-256, SHA-3
+    \item[\textcolor{successgreen}{\checkmark}] HMAC-SHA256
+    \item[\textcolor{successgreen}{\checkmark}] Ed25519
+    \item[\textcolor{successgreen}{\checkmark}] ECDH-X25519
+\end{itemize}
+
+\textbf{Règles} :
+\begin{itemize}
+    \item[\textcolor{successgreen}{\checkmark}] AEAD obligatoire
+    \item[\textcolor{successgreen}{\checkmark}] Nonce unique
+    \item[\textcolor{successgreen}{\checkmark}] Clés $\geq$ 128 bits
+    \item[\textcolor{successgreen}{\checkmark}] Bibliothèques auditées
+    \item[\textcolor{successgreen}{\checkmark}] Encrypt-then-MAC
+\end{itemize}
+\end{multicols}
+
+\subsection{À ÉVITER ABSOLUMENT}
+
+\begin{multicols}{2}
+\textbf{Algorithmes cassés} :
+\begin{itemize}
+    \item[\textcolor{warningred}{\texttimes}] MD5, SHA-1
+    \item[\textcolor{warningred}{\texttimes}] DES, 3DES, RC4
+    \item[\textcolor{warningred}{\texttimes}] RSA < 2048 bits
+\end{itemize}
+
+\textbf{Erreurs courantes} :
+\begin{itemize}
+    \item[\textcolor{warningred}{\texttimes}] Mode ECB
+    \item[\textcolor{warningred}{\texttimes}] Réutiliser nonce
+    \item[\textcolor{warningred}{\texttimes}] Chiffrer sans authentifier
+    \item[\textcolor{warningred}{\texttimes}] RSA textbook
+    \item[\textcolor{warningred}{\texttimes}] Implémenter sa propre crypto
+\end{itemize}
+\end{multicols}
+
+%=============================================================================
+\section{Checklist Avant l'Examen}
+%=============================================================================
+
+\subsection{Concepts Théoriques}
+
+\begin{itemize}
+    \item[$\square$] Définir sécurité parfaite (Shannon)
+    \item[$\square$] Théorème de Shannon ($|\mathcal{K}| \geq |\mathcal{M}|$)
+    \item[$\square$] Distinguer PRG, PRF, PRP
+    \item[$\square$] Jeux de sécurité : IND-CPA, UF-CMA, CDH, DDH
+    \item[$\square$] Paradoxe des anniversaires ($2^{n/2}$)
+    \item[$\square$] Construction Merkle-Damgård + théorème
+\end{itemize}
+
+\subsection{Attaques}
+
+\begin{itemize}
+    \item[$\square$] Two-Time Pad (réutilisation nonce)
+    \item[$\square$] Birthday attack sur hash
+    \item[$\square$] Length extension (Merkle-Damgård)
+    \item[$\square$] Padding oracle (CBC + MAC-then-Encrypt)
+    \item[$\square$] Nonce reuse DSA/ECDSA $\to$ clé secrète !
+    \item[$\square$] Man-in-the-Middle (DH)
+    \item[$\square$] Traffic correlation (Tor)
+\end{itemize}
+
+\subsection{Protocoles}
+
+\begin{itemize}
+    \item[$\square$] One-Time Pad : Enc, Dec, propriétés
+    \item[$\square$] Modes AES : ECB {\texttimes}, CBC {\checkmark}, CTR {\checkmark}
+    \item[$\square$] HMAC : Construction, sécurité
+    \item[$\square$] AES-GCM : CTR + GHASH
+    \item[$\square$] Diffie-Hellman : Protocole, CDH, MITM
+    \item[$\square$] RSA : Gen, Enc/Dec, OAEP
+    \item[$\square$] DSA : Sign, Vrfy, nonce reuse
+    \item[$\square$] Tor : Circuit, onion layers
+\end{itemize}
+
+\subsection{Comparaisons}
+
+\begin{itemize}
+    \item[$\square$] Perfect vs Computational Security
+    \item[$\square$] Stream cipher vs Block cipher
+    \item[$\square$] MAC vs Hash vs Signature
+    \item[$\square$] Symétrique vs Asymétrique
+    \item[$\square$] Encrypt-and-MAC vs MAC-then-Encrypt vs Encrypt-then-MAC
+    \item[$\square$] Mixnets vs Tor
+    \item[$\square$] RSA vs ECC
+\end{itemize}
+
+%=============================================================================
+\section{Conseils pour l'Examen}
+%=============================================================================
+
+\subsection{Pièges Courants}
+
+\begin{warnbox}
+\textbf{Ne pas confondre} :
+\begin{itemize}
+    \item Hash $\neq$ MAC $\neq$ Signature
+    \item Perfect security $\neq$ Computational security
+    \item CDH $\neq$ DDH (DDH plus fort)
+    \item Encrypt-and-MAC $\neq$ Encrypt-then-MAC
+    \item RSA textbook $\neq$ RSA-OAEP
+\end{itemize}
+\end{warnbox}
+
+\subsection{Questions Fréquentes}
+
+\begin{enumerate}
+    \item \textbf{Pourquoi pas ECB ?} $\to$ Déterministe, révèle patterns, pas CPA-secure
+
+    \item \textbf{Pourquoi HMAC et pas $H(k \| m)$ ?} $\to$ Length extension attack
+
+    \item \textbf{Pourquoi Encrypt-then-MAC ?} $\to$ Seule composition toujours sécurisée
+
+    \item \textbf{Pourquoi RSA-OAEP ?} $\to$ Textbook déterministe et malleable
+
+    \item \textbf{Comment éviter nonce reuse DSA ?} $\to$ Nonce dérivé (RFC 6979) ou Ed25519
+
+    \item \textbf{Tor garantit l'anonymat ?} $\to$ Contre adversaire local oui, global non
+\end{enumerate}
+
+\vfill
+
+\begin{center}
+\large\textbf{Bonne chance pour l'examen !} \textbf{🎓}
+
+\vspace{1em}
+
+\textit{La sécurité repose sur le secret des clés, pas des algorithmes.}
+
+\textit{--- Principes de Kerckhoffs}
+\end{center}
+
+\end{document}
