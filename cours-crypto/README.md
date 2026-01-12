@@ -209,11 +209,16 @@ Tous les notebooks sont compatibles Google Colab (installation automatique des d
 
 ### Documentation du Cours
 
-- **[REVISION_EXAMEN.md](REVISION_EXAMEN.md)** : 📝 **Résumé complet pour réviser avant l'examen**
-  - 1000+ lignes couvrant les 5 chapitres
+- **[REVISION_EXAMEN.pdf](REVISION_EXAMEN.pdf)** : 📄 **Résumé PDF pour réviser avant l'examen** (10 pages, 86 KB)
+  - Version imprimable professionnelle (A4, 10 pages)
+  - Table des matières interactive avec liens hypertexte
+  - Boxes colorées, tableaux comparatifs, formules LaTeX
+  - Checklist avec cases à cocher pour suivre la révision
+
+- **[REVISION_EXAMEN.md](REVISION_EXAMEN.md)** : 📝 **Version Markdown du résumé** (1000+ lignes)
+  - Même contenu que le PDF en format texte
   - Concepts clés, formules essentielles, attaques à connaître
-  - Tableaux comparatifs, bonnes pratiques, checklist de révision
-  - Conseils pour l'examen et questions fréquentes
+  - Tableaux comparatifs, bonnes pratiques, conseils pour l'examen
 
 - **[COMPLETION_STATUS.md](COMPLETION_STATUS.md)** : État détaillé de complétion (100%)
 
