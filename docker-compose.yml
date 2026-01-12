@@ -15,6 +15,7 @@ services:
       - ./src:/workspace/src
       - ./docs:/workspace/docs
       - ./cours:/workspace/cours
+      - ./cours-crypto:/workspace/cours-crypto
       - ./scripts:/workspace/scripts
     environment:
       - JUPYTER_ENABLE_LAB=yes
