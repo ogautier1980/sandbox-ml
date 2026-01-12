@@ -1,0 +1,882 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry,amsmath,hyperref,enumitem}
+\usepackage[most]{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{defcolor}{RGB}{0,102,204}
+\definecolor{warncolor}{RGB}{204,0,0}
+
+\newtcolorbox{defbox}{breakable,colback=defcolor!5!white,colframe=defcolor!75!black,title=Définition}
+\newtcolorbox{warnbox}{breakable,colback=warncolor!5!white,colframe=warncolor!75!black,title=Avertissement}
+
+\title{\textbf{Chapitre 5 : Sécurité Réseau\\DoS/DDoS, Firewalls, IDS/IPS}}
+\author{Cours de Sécurité Informatique - Niveau Universitaire\\Partie 3 : Network Security}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Objectifs du chapitre}
+
+Ce chapitre couvre les aspects fondamentaux de la sécurité réseau au niveau défensif :
+
+\begin{itemize}
+    \item Comprendre les attaques par déni de service et les mécanismes de défense
+    \item Analyser le fonctionnement et les limites des firewalls
+    \item Étudier les systèmes de détection et prévention d'intrusions
+    \item Adopter une approche critique sur l'efficacité réelle de ces technologies
+\end{itemize}
+
+\section{Attaques par déni de service (DoS/DDoS)}
+
+\subsection{Définitions}
+
+\begin{defbox}
+\textbf{Déni de service (DoS)} : Attaque visant à rendre un service indisponible en saturant ses ressources (bande passante, CPU, mémoire, connexions).
+
+\textbf{DDoS (Distributed Denial of Service)} : DoS distribué depuis de multiples sources (botnet de milliers à millions de machines compromises).
+
+\textbf{Botnet} : Réseau de machines infectées contrôlées par un attaquant (zombies).
+\end{defbox}
+
+\textbf{Motivation des attaques} :
+\begin{itemize}
+    \item \textbf{Extortion} : Demande de rançon pour arrêter l'attaque
+    \item \textbf{Hacktivisme} : Protestation politique/sociale
+    \item \textbf{Concurrence déloyale} : Nuire à un concurrent
+    \item \textbf{Diversion} : Masquer une autre attaque (exfiltration de données)
+    \item \textbf{Démonstration de force} : Nation-state attacks
+\end{itemize}
+
+\subsection{Types d'attaques DoS}
+
+\begin{enumerate}
+    \item \textbf{Bandwidth exhaustion} : Saturer la bande passante
+    \begin{itemize}
+        \item UDP flood, ICMP flood
+        \item Amplification attacks (DNS, NTP, Memcached)
+    \end{itemize}
+
+    \item \textbf{Resource exhaustion} : Épuiser CPU/mémoire/connexions
+    \begin{itemize}
+        \item SYN flood (TCP half-open connections)
+        \item Slowloris (connexions HTTP lentes)
+        \item HTTP POST flood
+    \end{itemize}
+
+    \item \textbf{Application layer attacks} : Cibler des fonctions coûteuses
+    \begin{itemize}
+        \item Requêtes complexes sur BDD
+        \item Regex DoS (ReDoS)
+        \item Algorithmic complexity attacks
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Amplification attacks}
+
+\textbf{Principe} : Exploiter des protocoles permettant l'amplification du trafic.
+
+\textbf{Mécanisme général} :
+\begin{enumerate}
+    \item Attaquant envoie petite requête avec IP source spoofée (adresse de la victime)
+    \item Serveur réflecteur répond avec réponse volumineuse à la victime
+    \item Victime reçoit énorme quantité de trafic non sollicité
+\end{enumerate}
+
+\textbf{Exemple DNS amplification} :
+\begin{itemize}
+    \item Requête : 60 bytes (query ANY sur domaine)
+    \item Réponse : 3000 bytes (tous les enregistrements DNS)
+    \item Facteur d'amplification : 50x
+    \item Avec 1000 réflecteurs : 10 Mbps → 500 Gbps !
+\end{itemize}
+
+\textbf{Tableau des facteurs d'amplification} :
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Protocole} & \textbf{Requête} & \textbf{Réponse} & \textbf{Facteur} \\
+\hline
+DNS (ANY) & 60 B & 3000 B & 50x \\
+NTP (monlist) & 48 B & 468 B & 9.7x \\
+SNMP (GetBulk) & 150 B & 1500 B & 10x \\
+Memcached & 15 B & 750 KB & 51,000x \\
+SSDP & 120 B & 1500 B & 12.5x \\
+CharGen & 1 B & Infini & $\infty$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Memcached amplification} (2018) :
+\begin{itemize}
+    \item Attaque record : 1.7 Tbps contre GitHub
+    \item Exploite commande \texttt{stats} sur serveurs Memcached exposés
+    \item Facteur d'amplification : 51,000x
+    \item Mitigation : Bloquer UDP port 11211 publiquement
+\end{itemize}
+
+\subsection{SYN Flood en détail}
+
+\textbf{Rappel : TCP three-way handshake} :
+\begin{verbatim}
+Client → Server : SYN
+Server → Client : SYN-ACK (alloue ressources)
+Client → Server : ACK (connexion établie)
+\end{verbatim}
+
+\textbf{Attaque SYN Flood} :
+\begin{enumerate}
+    \item Attaquant envoie des milliers de paquets SYN avec IP source forgée
+    \item Serveur répond SYN-ACK et alloue ressources (buffer mémoire)
+    \item ACK final ne vient jamais (IP forgée n'existe pas)
+    \item Serveur garde connexions semi-ouvertes jusqu'au timeout (30-120s)
+    \item Table de connexions saturée → rejette connexions légitimes
+\end{enumerate}
+
+\textbf{SYN Cookies (défense)} :
+\begin{itemize}
+    \item Ne stocke PAS l'état des connexions semi-ouvertes
+    \item Encode informations dans le numéro de séquence du SYN-ACK :
+    \begin{verbatim}
+    seq_num = Hash(src_ip, src_port, dst_ip, dst_port, time, secret)
+    \end{verbatim}
+    \item À réception de l'ACK, serveur vérifie et reconstruit l'état
+    \item Résultat : Pas de mémoire consommée avant connexion complète
+    \item Implémenté dans Linux : \texttt{net.ipv4.tcp\_syncookies = 1}
+\end{itemize}
+
+\subsection{Défenses contre DoS/DDoS}
+
+\subsubsection{Prévention (avant l'attaque)}
+
+\textbf{Au niveau réseau} :
+\begin{itemize}
+    \item \textbf{BCP 38 filtering} : Bloquer IP source spoofing (ingress filtering)
+    \item \textbf{Rate limiting} : Limiter paquets/requêtes par IP
+    \item \textbf{SYN cookies} : Contre SYN flood (pas de stockage d'état)
+    \item \textbf{Désactiver services UDP} : Fermer DNS resolver ouvert, NTP, Memcached
+    \item \textbf{Over-provisioning} : Capacité réseau >> trafic normal
+\end{itemize}
+
+\textbf{Au niveau applicatif} :
+\begin{itemize}
+    \item Connection limits par IP
+    \item Request timeouts (éviter Slowloris)
+    \item CAPTCHA après plusieurs requêtes rapides
+    \item Caching agressif (CDN)
+\end{itemize}
+
+\subsubsection{Détection (pendant l'attaque)}
+
+\textbf{Métriques à surveiller} :
+\begin{itemize}
+    \item Bande passante utilisée (Mbps/Gbps)
+    \item Paquets par seconde (PPS)
+    \item Connexions semi-ouvertes (TCP half-open)
+    \item Requêtes HTTP par seconde
+    \item CPU/mémoire du serveur
+\end{itemize}
+
+\textbf{Analyse statistique} :
+\begin{itemize}
+    \item \textbf{Baseline} : Établir trafic normal (moyenne, écart-type)
+    \item \textbf{Anomaly detection} : Détecter déviations (ex: $>3\sigma$)
+    \item \textbf{Entropie} : Mesurer diversité des IP sources (faible entropie = botnet)
+    \item \textbf{Patterns} : Pic soudain, même user-agent, mêmes TTL
+\end{itemize}
+
+\textbf{Outils} :
+\begin{itemize}
+    \item \textbf{NetFlow/sFlow} : Analyse de flux réseau
+    \item \textbf{Wireshark/tcpdump} : Capture de paquets
+    \item \textbf{SIEM} : Agrégation de logs et corrélation (Splunk, ELK)
+\end{itemize}
+
+\subsubsection{Mitigation (réponse à l'attaque)}
+
+\textbf{CDN (Content Delivery Network)} :
+\begin{itemize}
+    \item Distribution géographique du contenu
+    \item Absorbe le trafic sur réseau global (Tbps de capacité)
+    \item Exemples : Cloudflare (Free tier avec DDoS protection), Akamai, Fastly
+    \item Limitation : Protège seulement le contenu web (HTTP/HTTPS)
+\end{itemize}
+
+\textbf{Scrubbing Centers} :
+\begin{itemize}
+    \item Redirige tout le trafic vers centre de nettoyage
+    \item Filtre trafic malveillant et retourne trafic légitime
+    \item Latence ajoutée : 50-100ms
+    \item Coût élevé (facturation au Gbps)
+\end{itemize}
+
+\textbf{BGP Blackholing} :
+\begin{itemize}
+    \item Annoncer route BGP vers null (blackhole)
+    \item Effet : Tout le trafic vers IP cible est droppé chez l'ISP
+    \item Avantage : Protège l'infrastructure en amont
+    \item Inconvénient : Service complètement indisponible
+\end{itemize}
+
+\textbf{Anycast} :
+\begin{itemize}
+    \item Même IP annoncée depuis multiples locations
+    \item Trafic routé vers serveur le plus proche (BGP)
+    \item Distribue l'attaque sur plusieurs serveurs
+\end{itemize}
+
+\subsection{Cas réels d'attaques DDoS}
+
+\textbf{Dyn DNS (2016)} :
+\begin{itemize}
+    \item Botnet Mirai (caméras IoT, DVR compromis)
+    \item 1.2 Tbps, $>$100,000 endpoints
+    \item Cibles : Twitter, Netflix, Reddit, GitHub (via Dyn DNS)
+    \item Impact : Indisponibilité pendant plusieurs heures
+\end{itemize}
+
+\textbf{GitHub (2018)} :
+\begin{itemize}
+    \item Memcached amplification
+    \item 1.35 Tbps peak
+    \item Durée : 10 minutes (mitigation rapide)
+    \item Record à l'époque
+\end{itemize}
+
+\textbf{Google (2020, non publié)} :
+\begin{itemize}
+    \item 2.54 Tbps (record actuel connu)
+    \item 6 mois d'attaques continues
+    \item Source : Google Cloud Armor report
+\end{itemize}
+
+\section{Firewalls (pare-feu)}
+
+\subsection{Définition et rôle}
+
+\begin{defbox}
+\textbf{Firewall} : Dispositif de sécurité qui filtre le trafic réseau selon des règles prédéfinies.
+
+\textbf{Objectif} : Séparer réseaux de confiance (interne) et non-confiance (Internet).
+\end{defbox}
+
+\subsection{Types de firewalls}
+
+\begin{enumerate}
+    \item \textbf{Packet filtering firewall} (couche 3-4)
+    \begin{itemize}
+        \item Filtre basé sur IP source/dest, ports, protocole
+        \item Rapide mais peu intelligent
+        \item Exemple : iptables, pf
+    \end{itemize}
+
+    \item \textbf{Stateful firewall}
+    \begin{itemize}
+        \item Suit l'état des connexions TCP
+        \item Comprend les sessions (connexions établies vs nouvelles)
+        \item Plus sécurisé que packet filtering simple
+    \end{itemize}
+
+    \item \textbf{Application layer firewall / WAF} (couche 7)
+    \begin{itemize}
+        \item Inspecte contenu des requêtes HTTP/HTTPS
+        \item Détecte SQLi, XSS, CSRF
+        \item Exemple : ModSecurity, CloudFlare WAF
+    \end{itemize}
+
+    \item \textbf{Next-Generation Firewall (NGFW)}
+    \begin{itemize}
+        \item Combine firewall + IPS + inspection SSL + threat intelligence
+        \item Deep packet inspection (DPI)
+        \item Exemple : Palo Alto, Fortinet
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Règles firewall : bonnes pratiques}
+
+\textbf{Principe du moindre privilège} : Tout bloquer par défaut, autoriser explicitement.
+
+\textbf{Exemple iptables complet} :
+\begin{verbatim}
+# 1. Effacer toutes les règles existantes
+iptables -F
+iptables -X
+iptables -t nat -F
+iptables -t nat -X
+
+# 2. Politique par défaut : DROP tout
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT
+
+# 3. Autoriser loopback (localhost)
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# 4. Autoriser connexions établies et reliées
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# 5. Protection contre SYN flood
+iptables -N syn_flood
+iptables -A INPUT -p tcp --syn -j syn_flood
+iptables -A syn_flood -m limit --limit 1/s --limit-burst 3 -j RETURN
+iptables -A syn_flood -j DROP
+
+# 6. Autoriser SSH avec rate limiting (anti brute-force)
+iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW \
+         -m recent --set
+iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW \
+         -m recent --update --seconds 60 --hitcount 4 -j DROP
+iptables -A INPUT -p tcp -s 192.168.1.0/24 --dport 22 -j ACCEPT
+
+# 7. Autoriser HTTP/HTTPS
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# 8. Bloquer IP blacklistée
+iptables -A INPUT -s 10.0.0.100 -j DROP
+
+# 9. Bloquer ping (optionnel)
+iptables -A INPUT -p icmp --icmp-type echo-request -j DROP
+
+# 10. Logger les paquets droppés (rate limited)
+iptables -A INPUT -m limit --limit 5/min -j LOG \
+         --log-prefix "iptables DROP: " --log-level 7
+\end{verbatim}
+
+\textbf{Commandes utiles} :
+\begin{verbatim}
+# Lister les règles
+iptables -L -v -n --line-numbers
+
+# Sauvegarder les règles
+iptables-save > /etc/iptables/rules.v4
+
+# Restaurer les règles
+iptables-restore < /etc/iptables/rules.v4
+\end{verbatim}
+
+\textbf{Ordre d'évaluation} : Les règles sont évaluées dans l'ordre, première règle matchée gagne. Donc :
+\begin{enumerate}
+    \item Règles spécifiques en premier (ex: bloquer IP)
+    \item Règles générales ensuite (ex: autoriser HTTP)
+    \item Politique par défaut en dernier
+\end{enumerate}
+
+\subsection{Limitations des firewalls}
+
+\begin{warnbox}
+\textbf{Ce que les firewalls NE protègent PAS contre} :
+\begin{itemize}
+    \item Attaques sur trafic autorisé (ex: exploitation web sur port 443)
+    \item Malware téléchargé par utilisateur légitime
+    \item Menaces internes (insider threats)
+    \item Zero-day exploits
+    \item Chiffrement malveillant (exfiltration sur HTTPS)
+\end{itemize}
+
+\textbf{Discussion critique} : Les firewalls ne sont qu'une couche de défense parmi d'autres (defense in depth).
+\end{warnbox}
+
+\section{Systèmes de détection/prévention d'intrusion (IDS/IPS)}
+
+\subsection{IDS vs IPS}
+
+\begin{defbox}
+\textbf{IDS (Intrusion Detection System)} : Surveille le trafic et alerte sur activités suspectes.
+
+\textbf{IPS (Intrusion Prevention System)} : IDS + capacité de bloquer automatiquement les attaques.
+\end{defbox}
+
+\textbf{Différence} :
+\begin{itemize}
+    \item IDS : Mode passif (alerte)
+    \item IPS : Mode actif (bloque)
+\end{itemize}
+
+\subsection{Types de détection}
+
+\begin{enumerate}
+    \item \textbf{Signature-based detection}
+    \begin{itemize}
+        \item Compare trafic à base de signatures d'attaques connues
+        \item Rapide et précis pour attaques connues
+        \item Vulnérable aux zero-days et évasion
+        \item Exemple : Snort, Suricata
+    \end{itemize}
+
+    \item \textbf{Anomaly-based detection}
+    \begin{itemize}
+        \item Détecte déviations par rapport au comportement normal
+        \item Peut détecter attaques inconnues (zero-days)
+        \item Taux élevé de faux positifs
+        \item Nécessite apprentissage (baseline)
+    \end{itemize}
+
+    \item \textbf{Hybrid approach}
+    \begin{itemize}
+        \item Combine signatures + anomaly detection
+        \item Machine Learning pour améliorer détection
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Network-based vs Host-based}
+
+\textbf{NIDS/NIPS (Network)} :
+\begin{itemize}
+    \item Surveille tout le trafic réseau
+    \item Positionné stratégiquement (DMZ, backbone)
+    \item Peut être contourné par chiffrement (HTTPS)
+\end{itemize}
+
+\textbf{HIDS/HIPS (Host)} :
+\begin{itemize}
+    \item Installé sur chaque machine
+    \item Surveille logs, fichiers, processus
+    \item Détecte rootkits, malware
+    \item Exemple : OSSEC, Wazuh
+\end{itemize}
+
+\subsection{Limitations et discussion critique}
+
+\begin{warnbox}
+\textbf{Problèmes des IDS/IPS} :
+\begin{itemize}
+    \item \textbf{Faux positifs} : Alertes légitimes classées comme attaques
+    \item \textbf{Faux négatifs} : Attaques non détectées
+    \item \textbf{Performance} : Deep packet inspection coûteuse
+    \item \textbf{Évasion} : Techniques pour contourner (fragmentation, polymorphisme)
+    \item \textbf{Chiffrement} : HTTPS/TLS rend inspection difficile
+\end{itemize}
+
+\textbf{Discussion} : L'efficacité dépend de la qualité des signatures et du tuning. Nécessite expertise et maintenance continue.
+\end{warnbox}
+
+\subsection{Base-Rate Fallacy et IDS}
+
+\subsubsection{Le problème des faux positifs}
+
+Un IDS avec 99\% de précision semble excellent. Mais est-ce vraiment le cas ?
+
+\textbf{Métriques de classification} :
+
+\begin{itemize}
+    \item \textbf{True Positive Rate (TPR)} : Pr[Alerte | Attaque] (sensibilité, recall)
+    \item \textbf{False Positive Rate (FPR)} : Pr[Alerte | Normal]
+    \item \textbf{True Negative Rate (TNR)} : Pr[Pas d'alerte | Normal] (spécificité)
+    \item \textbf{False Negative Rate (FNR)} : Pr[Pas d'alerte | Attaque]
+\end{itemize}
+
+Relations : $TPR + FNR = 1$ et $TNR + FPR = 1$
+
+\textbf{Précision positive (Positive Predictive Value, PPV)} :
+$$\text{PPV} = \text{Pr}[\text{Attaque} | \text{Alerte}] = \frac{\text{TP}}{\text{TP} + \text{FP}}$$
+
+C'est la métrique qui intéresse vraiment l'analyste : \textit{"Si une alerte se déclenche, quelle est la probabilité que ce soit une vraie attaque ?"}
+
+\subsubsection{Théorème de Bayes appliqué aux IDS}
+
+\textbf{Théorème de Bayes} :
+$$\text{Pr}[A | B] = \frac{\text{Pr}[B | A] \times \text{Pr}[A]}{\text{Pr}[B]}$$
+
+\textbf{Application} : Calculer Pr[Attaque | Alerte]
+
+$$\text{Pr}[\text{Attaque} | \text{Alerte}] = \frac{\text{Pr}[\text{Alerte} | \text{Attaque}] \times \text{Pr}[\text{Attaque}]}{\text{Pr}[\text{Alerte}]}$$
+
+où Pr[Alerte] se calcule par :
+
+$$\text{Pr}[\text{Alerte}] = \text{Pr}[\text{Alerte} | \text{Attaque}] \times \text{Pr}[\text{Attaque}] + \text{Pr}[\text{Alerte} | \text{Normal}] \times \text{Pr}[\text{Normal}]$$
+
+\subsubsection{Exemple concret : IDS avec 99\% de précision}
+
+\textbf{Paramètres} :
+\begin{itemize}
+    \item TPR = 99\% (l'IDS détecte 99\% des attaques)
+    \item FPR = 1\% (1\% du trafic légitime déclenche des alertes)
+    \item \textbf{Base rate} : Pr[Attaque] = 0.1\% (0.1\% du trafic est malveillant)
+\end{itemize}
+
+\textbf{Question} : Si une alerte se déclenche, quelle est la probabilité que ce soit une vraie attaque ?
+
+\textbf{Calcul} :
+
+\begin{align*}
+\text{Pr}[\text{Alerte}] &= 0.99 \times 0.001 + 0.01 \times 0.999 \\
+&= 0.00099 + 0.00999 \\
+&= 0.01098
+\end{align*}
+
+\begin{align*}
+\text{Pr}[\text{Attaque} | \text{Alerte}] &= \frac{0.99 \times 0.001}{0.01098} \\
+&= \frac{0.00099}{0.01098} \\
+&\approx 0.090 = 9\%
+\end{align*}
+
+\begin{warnbox}
+\textbf{Résultat choquant} : Avec un IDS "99\% précis", seulement \textbf{9\% des alertes sont de vraies attaques} !
+
+Autrement dit : \textbf{91\% des alertes sont des faux positifs}.
+\end{warnbox}
+
+\subsubsection{Table de confusion (100,000 connexions)}
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{} & \textbf{Attaque réelle} & \textbf{Trafic normal} & \textbf{Total} \\
+\hline
+\textbf{Alerte} & 99 (TP) & 999 (FP) & 1,098 \\
+\textbf{Pas d'alerte} & 1 (FN) & 98,901 (TN) & 98,902 \\
+\hline
+\textbf{Total} & 100 & 99,900 & 100,000 \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Calcul des valeurs} :
+\begin{itemize}
+    \item Attaques réelles : $100{,}000 \times 0.001 = 100$
+    \item Trafic normal : $100{,}000 \times 0.999 = 99{,}900$
+    \item True Positives : $100 \times 0.99 = 99$
+    \item False Positives : $99{,}900 \times 0.01 = 999$
+\end{itemize}
+
+\textbf{PPV (Précision positive)} :
+$$\text{PPV} = \frac{99}{99 + 999} = \frac{99}{1{,}098} \approx 0.09 = 9\%$$
+
+\subsubsection{Le phénomène de Base-Rate Fallacy}
+
+\textbf{Définition} : Erreur cognitive consistant à ignorer le taux de base (prévalence) d'un événement.
+
+\textbf{Intuition erronée} :
+\begin{quote}
+"Mon IDS a 99\% de précision, donc si une alerte se déclenche, il y a 99\% de chances que ce soit une attaque."
+\end{quote}
+
+\textbf{FAUX !} Cette intuition ignore le fait que :
+\begin{itemize}
+    \item Le taux de base des attaques est très faible (0.1\%)
+    \item Il y a \textbf{beaucoup plus} de trafic légitime que de trafic malveillant
+    \item Même avec 1\% de FPR, on génère beaucoup de fausses alertes
+\end{itemize}
+
+\textbf{Calcul mental rapide} :
+\begin{itemize}
+    \item Sur 100,000 connexions : 100 attaques, 99,900 normales
+    \item FP générés : $99{,}900 \times 1\% = 999$ fausses alertes
+    \item TP générés : $100 \times 99\% = 99$ vraies alertes
+    \item Ratio FP:TP = 999:99 $\approx$ 10:1
+\end{itemize}
+
+\subsubsection{Impact opérationnel}
+
+\textbf{Conséquences pratiques} :
+
+\begin{enumerate}
+    \item \textbf{Alert fatigue} : Analystes submergés par les fausses alertes
+    \begin{itemize}
+        \item "Cry-wolf effect" : Les alertes sont ignorées
+        \item Burnout des analystes SOC
+    \end{itemize}
+
+    \item \textbf{Attaques manquées} : Les vraies attaques noyées dans le bruit
+    \begin{itemize}
+        \item Coût de triage : $1{,}098$ alertes à analyser pour trouver 99 attaques
+        \item Si chaque alerte prend 5 minutes : $91$ heures de travail
+    \end{itemize}
+
+    \item \textbf{Faux sentiment de sécurité} :
+    \begin{itemize}
+        \item "Nous avons un IDS à 99\%, nous sommes protégés"
+        \item Négligence des autres mesures de sécurité
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Solutions pour améliorer le PPV}
+
+\textbf{1. Réduire le FPR}
+
+Même une petite réduction a un impact énorme :
+
+\textbf{Exemple : FPR = 0.1\% (au lieu de 1\%)}
+
+\begin{align*}
+\text{Pr}[\text{Alerte}] &= 0.99 \times 0.001 + 0.001 \times 0.999 = 0.00198 \\
+\text{PPV} &= \frac{0.99 \times 0.001}{0.00198} \approx 0.5 = 50\%
+\end{align*}
+
+Résultat : PPV passe de 9\% à 50\% en divisant FPR par 10 !
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{FPR} & \textbf{Alertes totales} & \textbf{PPV} \\
+\hline
+1\% & 1,098 & 9\% \\
+0.5\% & 599 & 16\% \\
+0.1\% & 199 & 50\% \\
+0.01\% & 109 & 91\% \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{2. Corrélation d'événements}
+
+Combiner plusieurs signaux indépendants :
+
+\textbf{Exemple} : Deux IDS indépendants avec FPR = 1\% chacun
+\begin{itemize}
+    \item Probabilité que les deux alertent sur trafic normal : $0.01 \times 0.01 = 0.0001 = 0.01\%$
+    \item PPV de la corrélation : $\approx 91\%$
+\end{itemize}
+
+\textbf{3. Machine Learning et tuning}
+
+\begin{itemize}
+    \item \textbf{Feature engineering} : Enrichir les signaux (géolocalisation, réputation IP, etc.)
+    \item \textbf{Ensemble methods} : Combiner plusieurs détecteurs
+    \item \textbf{Active Learning} : Feedback humain pour réentraîner
+    \item \textbf{Anomaly scoring} : Prioriser les alertes par score de confiance
+\end{itemize}
+
+\textbf{4. Priorisation et scoring}
+
+Au lieu de binaire (alerte/pas alerte), assigner un score de risque :
+\begin{itemize}
+    \item Score 0-10 : Faible priorité (peut être automatisé)
+    \item Score 10-50 : Priorité moyenne (triage automatique puis humain)
+    \item Score 50-100 : Haute priorité (analyse humaine immédiate)
+\end{itemize}
+
+\textbf{5. Context-aware detection}
+
+Enrichir avec contexte :
+\begin{itemize}
+    \item Historique de l'utilisateur/IP
+    \item Géolocalisation (connexion depuis pays inhabituel)
+    \item Reputation scoring (IP dans blacklists)
+    \item Behavioral analytics (déviation du comportement habituel)
+\end{itemize}
+
+\subsubsection{Leçons pour l'évaluation des IDS}
+
+\begin{warnbox}
+\textbf{Métriques importantes} :
+
+\begin{enumerate}
+    \item \textbf{PPV (Précision positive)} : Métrique la plus importante opérationnellement
+    \item \textbf{FPR absolu} : Nombre de fausses alertes par jour/heure
+    \item \textbf{Alert-to-incident ratio} : Combien d'alertes pour une vraie attaque ?
+\end{enumerate}
+
+\textbf{Métriques trompeuses} :
+\begin{itemize}
+    \item Accuracy globale : Dominée par les vrais négatifs (trafic normal)
+    \item TPR seul : Ignore complètement les faux positifs
+\end{itemize}
+\end{warnbox}
+
+\textbf{Calcul Accuracy (trompeur)} :
+
+$$\text{Accuracy} = \frac{\text{TP} + \text{TN}}{\text{Total}} = \frac{99 + 98{,}901}{100{,}000} = 99\%$$
+
+Cette métrique ne révèle PAS le problème des 91\% de faux positifs parmi les alertes !
+
+\subsubsection{Conclusion : Base-Rate Fallacy}
+
+\begin{important}
+\textbf{Points clés} :
+
+\begin{enumerate}
+    \item Le taux de base (base rate) est \textbf{crucial} pour interpréter les alertes
+    \item Un IDS "précis" peut générer majoritairement des faux positifs si le base rate est faible
+    \item Toujours calculer le PPV (Pr[Attaque | Alerte]), pas seulement le TPR
+    \item Réduire le FPR est plus important qu'augmenter le TPR dans de nombreux cas
+    \item La corrélation de signaux indépendants améliore drastiquement le PPV
+\end{enumerate}
+
+\textbf{Citation} :
+\begin{quote}
+\textit{"A test that is 99\% accurate sounds impressive, but when applied to a population where only 0.1\% are positive, the majority of positive results will be false positives."} \\
+— Principe de Base-Rate Fallacy
+\end{quote}
+\end{important}
+
+\section{Architectures de sécurité réseau}
+
+\subsection{DMZ (Demilitarized Zone)}
+
+\textbf{Principe} : Zone tampon entre Internet et réseau interne.
+
+\textbf{Architecture typique} :
+\begin{verbatim}
+Internet <--> Firewall externe <--> DMZ (serveurs web, mail)
+              <--> Firewall interne <--> LAN interne
+\end{verbatim}
+
+\textbf{Avantages} :
+\begin{itemize}
+    \item Isoler services publics du réseau interne
+    \item Double protection (deux firewalls)
+    \item Limiter surface d'attaque
+\end{itemize}
+
+\subsection{Defense in Depth}
+
+\textbf{Principe} : Multiples couches de sécurité.
+
+\textbf{Couches} :
+\begin{enumerate}
+    \item Périmètre : Firewall, IPS
+    \item Réseau : Segmentation VLAN, micro-segmentation
+    \item Endpoints : Antivirus, HIPS, EDR
+    \item Application : WAF, input validation
+    \item Données : Chiffrement, contrôle d'accès
+    \item Utilisateurs : MFA, formation
+\end{enumerate}
+
+\section{Travaux pratiques}
+
+\subsection{Exercices théoriques}
+
+\begin{enumerate}
+    \item \textbf{Calcul d'amplification} : Calculer la bande passante générée vers une victime si un attaquant contrôle 10 Mbps et utilise 5000 réflecteurs DNS (facteur 50x).
+
+    \item \textbf{SYN Flood} : Expliquer pourquoi les SYN cookies permettent de se défendre contre le SYN flood sans affecter les connexions légitimes.
+
+    \item \textbf{Analyse iptables} : Identifier les erreurs dans cette configuration :
+    \begin{verbatim}
+    iptables -P INPUT ACCEPT
+    iptables -A INPUT -p tcp --dport 22 -j DROP
+    iptables -A INPUT -p tcp --dport 22 -s 192.168.1.0/24 -j ACCEPT
+    \end{verbatim}
+
+    \item \textbf{IDS signature} : Écrire une règle Snort pour détecter une tentative de connexion SSH sur un port non standard (port 2222).
+
+    \item \textbf{False positives} : Donner 3 exemples de faux positifs courants en IDS/IPS et expliquer leur impact.
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+
+Les notebooks suivants implémentent et explorent les concepts de ce chapitre :
+
+\begin{itemize}
+    \item \texttt{05\_demo\_dos\_attacks.ipynb} : Simulation SYN flood, amplification, rate limiting, détection
+    \item \texttt{05\_demo\_firewalls.ipynb} : Firewall stateless/stateful, iptables, WAF
+\end{itemize}
+
+\textbf{Exercices proposés} :
+\begin{enumerate}
+    \item Implémenter un rate limiter avec sliding window
+    \item Simuler une attaque SYN flood et tester la défense par SYN cookies
+    \item Créer un firewall stateful avec suivi de connexions TCP
+    \item Développer un WAF détectant SQL injection et XSS
+    \item Analyser un dump pcap pour détecter une attaque DoS
+\end{enumerate}
+
+\section{Ressources complémentaires}
+
+\subsection{Standards et RFCs}
+
+\begin{itemize}
+    \item RFC 4987 : TCP SYN Flooding Attacks and Common Mitigations
+    \item RFC 2827 : BCP 38 - Network Ingress Filtering
+    \item RFC 6020 : YANG Data Modeling Language (firewall rules)
+    \item NIST SP 800-41 : Guidelines on Firewalls and Firewall Policy
+    \item NIST SP 800-94 : Guide to Intrusion Detection and Prevention Systems
+\end{itemize}
+
+\subsection{Outils pratiques}
+
+\textbf{Firewalls} :
+\begin{itemize}
+    \item \textbf{iptables} : Firewall Linux standard (remplacé par nftables)
+    \item \textbf{nftables} : Nouveau framework firewall Linux
+    \item \textbf{pf} : Packet Filter (OpenBSD/FreeBSD)
+    \item \textbf{pfSense} : Distribution firewall open-source
+    \item \textbf{OPNsense} : Fork de pfSense
+\end{itemize}
+
+\textbf{IDS/IPS} :
+\begin{itemize}
+    \item \textbf{Snort} : IDS/IPS historique (signature-based)
+    \item \textbf{Suricata} : IDS/IPS moderne, multi-threaded
+    \item \textbf{Zeek (Bro)} : Network analysis framework
+    \item \textbf{OSSEC/Wazuh} : HIDS open-source
+\end{itemize}
+
+\textbf{WAF} :
+\begin{itemize}
+    \item \textbf{ModSecurity} : WAF open-source (Apache/Nginx)
+    \item \textbf{OWASP CRS} : Core Rule Set pour ModSecurity
+    \item \textbf{Cloudflare WAF} : WAF as a Service
+\end{itemize}
+
+\textbf{Analyse réseau} :
+\begin{itemize}
+    \item \textbf{Wireshark} : Capture et analyse de paquets
+    \item \textbf{tcpdump} : Capture en ligne de commande
+    \item \textbf{nmap} : Scanner de ports et réseau
+    \item \textbf{hping3} : Générateur de paquets customisés (tests DoS)
+\end{itemize}
+
+\subsection{Lectures recommandées}
+
+\begin{itemize}
+    \item Cheswick, Bellovin \& Rubin (2003). \textit{Firewalls and Internet Security}
+    \item Bejtlich (2013). \textit{The Practice of Network Security Monitoring}
+    \item Cloudflare DDoS Threat Reports : \url{https://blog.cloudflare.com/tag/ddos/}
+    \item OWASP : Denial of Service Cheat Sheet
+    \item Arbor Networks ATLAS : Statistiques DDoS globales
+\end{itemize}
+
+\section{Conclusion}
+
+\textbf{Points clés} :
+\begin{itemize}
+    \item DoS/DDoS : Menace majeure et croissante (records à 2+ Tbps)
+    \item SYN cookies et rate limiting : Défenses efficaces contre flood attacks
+    \item Amplification attacks : Nécessitent mitigation au niveau ISP (BCP 38)
+    \item Firewalls : Couche essentielle mais insuffisante seule
+    \item Stateful firewall > stateless pour la plupart des usages
+    \item IDS détecte, IPS bloque : Trade-off précision vs latence
+    \item Signature-based rapide, anomaly-based détecte l'inconnu
+    \item Defense in depth : Approche recommandée (multiples couches)
+\end{itemize}
+
+\textbf{Tendances actuelles} :
+\begin{itemize}
+    \item \textbf{Zero Trust Architecture} : "Never trust, always verify"
+    \item \textbf{SASE} (Secure Access Service Edge) : Convergence réseau + sécurité cloud
+    \item \textbf{Machine Learning} : Détection d'anomalies améliorée, réduction faux positifs
+    \item \textbf{eBPF} : Firewall et monitoring au niveau kernel (XDP, Cilium)
+    \item \textbf{Cloud-native security} : Firewalls et WAF as a Service
+\end{itemize}
+
+\textbf{Limitations importantes} :
+\begin{itemize}
+    \item Aucune défense n'est parfaite contre DDoS volumétrique massif
+    \item Chiffrement (TLS) rend l'inspection plus difficile
+    \item Faux positifs/négatifs inévitables en IDS/IPS
+    \item Nécessite expertise et maintenance continue
+    \item Coût élevé pour protection de niveau entreprise
+\end{itemize}
+
+\vspace{1cm}
+\begin{center}
+\textit{"The best defense is a good offense... and multiple layers of defense."} \\
+— Principe de Defense in Depth
+\end{center}
+
+\end{document}

