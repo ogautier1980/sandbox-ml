@@ -160,14 +160,69 @@ $G$ est un PRG sécurisé si $\Adv_G^{\text{PRG}}(\A) \leq \epsilon$ négligeabl
 
 \subsection{Exemples de PRG}
 
-\textbf{À COMPLÉTER} :
+\subsubsection{Linear Congruential Generators (LCG) - INSÉCURISÉS !}
+
+\textbf{Construction} :
+\[
+x_{n+1} = (a \cdot x_n + c) \bmod m
+\]
+
+\begin{warnbox}
+\textbf{DANGEREUX : Ne JAMAIS utiliser pour la cryptographie !}
+
+LCG est prédictible : connaissant quelques sorties successives, on peut retrouver tous les paramètres et prédire les sorties futures. Attaque connue depuis les années 1980.
+
+\textbf{Usage acceptable} : Simulations Monte-Carlo, jeux vidéo (non-crypto)
+\end{warnbox}
+
+\subsubsection{Blum-Blum-Shub (BBS)}
+
+\textbf{Construction} :
 \begin{itemize}
-    \item Linear Congruential Generators (LCG) - INSÉCURISÉS !
-    \item Blum-Blum-Shub (théoriquement sûr mais lent)
-    \item ChaCha20 (moderne, très rapide)
-    \item AES-CTR mode (standard)
-    \item Hash functions (SHA-256, SHA-3) en mode DRBG
+    \item Choisir deux grands premiers $p, q \equiv 3 \pmod{4}$
+    \item $n = pq$
+    \item Seed : $x_0 \in \mathbb{Z}_n^*$
+    \item Itération : $x_{i+1} = x_i^2 \bmod n$
+    \item Output : bit de poids faible de $x_i$
 \end{itemize}
+
+\textbf{Sécurité} : Prouvé sécurisé sous l'hypothèse de difficulté de la factorisation (problème de résidus quadratiques).
+
+\textbf{Limitation} : Très lent (une exponentiation modulaire par bit généré).
+
+\subsubsection{ChaCha20 (Recommandé)}
+
+\textbf{Construction} : Stream cipher basé sur la fonction de permutation ChaCha (variante de Salsa20).
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item \textbf{Très rapide} : $\sim$3-4 cycles/byte sur processeurs modernes
+    \item Résistant aux timing attacks (pas de lookups dépendant des données)
+    \item Utilisé dans TLS 1.3, WireGuard VPN, Google (HTTPS)
+    \item Paramètres : clé 256 bits, nonce 96 bits, compteur 32 bits
+\end{itemize}
+
+\subsubsection{AES-CTR mode}
+
+\textbf{Construction} : Utiliser AES comme PRG en mode compteur (voir section \ref{sec:ctr}).
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item Très rapide avec accélération matérielle (AES-NI)
+    \item Standard industriel
+    \item Parallélisable
+\end{itemize}
+
+\subsubsection{DRBG (Deterministic Random Bit Generator)}
+
+\textbf{Standards NIST} :
+\begin{itemize}
+    \item \textbf{Hash\_DRBG} : Basé sur SHA-256, SHA-512
+    \item \textbf{HMAC\_DRBG} : Basé sur HMAC
+    \item \textbf{CTR\_DRBG} : Basé sur AES-CTR
+\end{itemize}
+
+Utilisés pour génération de clés, nonces, IVs dans standards cryptographiques (TLS, SSH, etc.).
 
 %=============================================================================
 \section{Stream Ciphers}
@@ -241,7 +296,38 @@ Un block cipher sur $\bits^n$ est une famille de permutations $\{E_k : \bits^n \
 
 \subsection{Jeu PRP-IND}
 
-\textbf{À COMPLÉTER} : Formalisation du jeu d'indistinguabilité pour PRP (similaire à PRG mais avec oracle)
+\begin{thmbox}
+\textbf{Jeu PRP-IND (Indistinguabilité PRP vs Permutation Aléatoire)}
+
+\begin{algorithmic}
+\STATE Challenger choisit $b \xleftarrow{\$} \{0,1\}$
+\IF{$b = 0$}
+    \STATE $k \xleftarrow{\$} \K$, donne accès à l'oracle $E_k(\cdot)$ à $\A$
+\ELSE
+    \STATE $\pi \xleftarrow{\$} \text{Perm}(\bits^n)$ (permutation aléatoire), donne accès à $\pi(\cdot)$ à $\A$
+\ENDIF
+\STATE $\A$ fait jusqu'à $q$ requêtes à l'oracle
+\STATE $\A$ retourne $b' \in \{0,1\}$
+\STATE $\A$ gagne si $b' = b$
+\end{algorithmic}
+
+\textbf{Avantage de l'adversaire} :
+\[
+\Adv_E^{\text{PRP}}(\A) = \left| \Pr[\A \text{ gagne}] - \frac{1}{2} \right|
+\]
+
+$E$ est une PRP sécurisée si $\Adv_E^{\text{PRP}}(\A) \leq \epsilon$ négligeable pour tout $\A$ efficace.
+\end{thmbox}
+
+\begin{remark}
+\textbf{PRP vs PRF}
+
+Une \textbf{PRF} (Pseudorandom Function) n'exige pas que $F_k$ soit une permutation (peut être une fonction quelconque).
+
+\textbf{PRP Switching Lemma} : Si $E$ est utilisé pour chiffrer au plus $q$ blocs avec $q \ll 2^{n/2}$, alors PRP $\approx$ PRF (différence négligeable).
+
+\textbf{Conséquence} : Pour AES ($n=128$), tant que $q < 2^{64}$ blocs chiffrés avec la même clé, on peut traiter AES comme une PRF.
+\end{remark}
 
 %=============================================================================
 \section{Modes opératoires}
@@ -287,7 +373,7 @@ m_i = D_k(c_i) \xor c_{i-1}
 
 \textbf{Propriété} : CBC est CPA-sécurisé si IV est aléatoire et unique.
 
-\subsection{Mode CTR (Counter)}
+\subsection{Mode CTR (Counter)}\label{sec:ctr}
 
 \textbf{Principe} : Transformer un block cipher en stream cipher.
 
@@ -305,23 +391,66 @@ c_i = m_i \xor E_k(\text{nonce} \| i)
 
 \subsection{Mode OFB (Output Feedback)}
 
-\textbf{À COMPLÉTER} : Description OFB
+\textbf{Principe} : Générer un keystream en chaînant les sorties du block cipher.
+
+\begin{algorithm}
+\caption{OFB Encryption}
+\begin{algorithmic}
+\REQUIRE Message $m = m_1 \| m_2 \| \cdots \| m_t$, clé $k$, IV aléatoire
+\STATE $I_0 \gets \text{IV}$
+\FOR{$i = 1$ to $t$}
+    \STATE $I_i \gets E_k(I_{i-1})$ \hfill // Générer keystream indépendamment du message
+    \STATE $c_i \gets m_i \xor I_i$
+\ENDFOR
+\RETURN $c = \text{IV} \| c_1 \| \cdots \| c_t$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Déchiffrement OFB} : Identique (régénérer le même keystream, XOR avec ciphertext)
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item Le keystream est généré \textbf{indépendamment} du message (contrairement à CBC)
+    \item Peut pré-calculer le keystream avant de recevoir le message
+    \item Pas besoin de padding (comme CTR)
+    \item \textbf{Non parallélisable} (contrairement à CTR)
+    \item Erreur de transmission : affecte seulement le bit correspondant (self-synchronizing)
+\end{itemize}
+
+\textbf{Sécurité} : CPA-sécurisé si IV est unique et aléatoire.
+
+\begin{warnbox}
+\textbf{Attention : Cycle du keystream}
+
+Si $I_i = I_j$ pour $i \neq j$, le keystream se répète ! Avec taille de bloc $n$ bits, cycle attendu : $\approx 2^{n/2}$ blocs (paradoxe des anniversaires).
+
+\textbf{Conséquence} : Pour AES-128 ($n=128$), ne pas chiffrer plus de $2^{64}$ blocs avec la même clé.
+\end{warnbox}
+
+\textbf{Usage moderne} : Rare (CTR préféré car parallélisable)
 
 \subsection{Comparaison des modes}
 
-\textbf{Tableau à compléter} :
 \begin{center}
-\begin{tabular}{|l|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|c|}
 \hline
-Mode & CPA-sécurisé & Parallélisable & Padding & Usage \\
+Mode & CPA-sécurisé & Parallélisable & Padding & Erreur propagation & Usage \\
 \hline
-ECB & ❌ NON & ✅ Oui & Non & ❌ JAMAIS \\
-CBC & ✅ Oui (IV aléatoire) & ❌ Non (déchiffrement oui) & Oui & Legacy \\
-CTR & ✅ Oui (nonce unique) & ✅ Oui & Non & ✅ Recommandé \\
-OFB & ✅ Oui & ❌ Non & Non & Rare \\
+ECB & ❌ NON & ✅ Oui & Non & Limitée (1 bloc) & ❌ JAMAIS \\
+CBC & ✅ Oui (IV aléat.) & ⚠️ Déchiff. seul. & Oui & Propagée (1 bloc) & Legacy \\
+CTR & ✅ Oui (nonce uniq.) & ✅ Oui & Non & Limitée (1 bit) & ✅ Recommandé \\
+OFB & ✅ Oui (IV uniq.) & ❌ Non & Non & Limitée (1 bit) & Rare \\
 \hline
 \end{tabular}
 \end{center}
+
+\textbf{Recommandations pratiques} :
+\begin{itemize}
+    \item \textbf{Chiffrement moderne} : Utiliser CTR ou modes AEAD (AES-GCM, ChaCha20-Poly1305)
+    \item \textbf{Legacy systems} : CBC acceptable si IV vraiment aléatoire + MAC séparé
+    \item \textbf{ECB} : Ne JAMAIS utiliser (sauf cas très spécifiques comme wrapping de clés courtes)
+    \item \textbf{OFB} : Remplacé par CTR dans pratiquement tous les usages
+\end{itemize}
 
 %=============================================================================
 \section{Advanced Encryption Standard (AES)}
@@ -355,7 +484,97 @@ AES est un \textbf{Substitution-Permutation Network (SPN)} avec 4 opérations pa
     \item \textbf{AddRoundKey} : XOR avec la sous-clé du round
 \end{enumerate}
 
-\textbf{Détails mathématiques} : À COMPLÉTER (corps de Galois $\text{GF}(2^8)$, S-box, key schedule)
+\subsection{Détails mathématiques}
+
+\subsubsection{Corps de Galois $\text{GF}(2^8)$}
+
+AES opère dans le corps fini $\text{GF}(2^8)$ : 256 éléments représentés par des octets.
+
+\textbf{Représentation} : Un octet $b_7 b_6 \cdots b_1 b_0$ représente le polynôme :
+\[
+b_7 x^7 + b_6 x^6 + \cdots + b_1 x + b_0 \in \mathbb{F}_2[x]
+\]
+
+\textbf{Opérations} :
+\begin{itemize}
+    \item \textbf{Addition} : XOR bit-à-bit
+    \item \textbf{Multiplication} : Multiplication de polynômes modulo le polynôme irréductible \\
+    $m(x) = x^8 + x^4 + x^3 + x + 1$ (0x11B en hexadécimal)
+\end{itemize}
+
+\textbf{Exemple} : $\{53\} \cdot \{CA\}$ en hexadécimal
+\begin{align*}
+\{53\} &= x^6 + x^4 + x + 1 \\
+\{CA\} &= x^7 + x^6 + x^3 + x \\
+\{53\} \cdot \{CA\} &= \ldots \bmod m(x) = \{01\}
+\end{align*}
+
+\subsubsection{S-Box (Substitution Box)}
+
+\textbf{Construction en 2 étapes} :
+
+\textbf{1. Inversion dans $\text{GF}(2^8)$} :
+\[
+b \mapsto b^{-1} \quad \text{(avec convention } 0^{-1} = 0\text{)}
+\]
+
+\textbf{2. Transformation affine} :
+\[
+b_i' = b_i \xor b_{(i+4) \bmod 8} \xor b_{(i+5) \bmod 8} \xor b_{(i+6) \bmod 8} \xor b_{(i+7) \bmod 8} \xor c_i
+\]
+où $c = (01100011)_2 = 0x63$.
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item Non-linéarité forte (résistance aux attaques linéaires et différentielles)
+    \item Pas de points fixes : $S(a) \neq a$ pour $a \neq 0x52$
+    \item Inversible : $S^{-1}$ existe (pour déchiffrement)
+\end{itemize}
+
+\subsubsection{MixColumns}
+
+\textbf{Opération} : Multiplication matricielle dans $\text{GF}(2^8)$ pour chaque colonne de l'état.
+
+Pour une colonne $[s_0, s_1, s_2, s_3]^T$, calculer :
+\[
+\begin{bmatrix}
+s_0' \\ s_1' \\ s_2' \\ s_3'
+\end{bmatrix}
+=
+\begin{bmatrix}
+02 & 03 & 01 & 01 \\
+01 & 02 & 03 & 01 \\
+01 & 01 & 02 & 03 \\
+03 & 01 & 01 & 02
+\end{bmatrix}
+\begin{bmatrix}
+s_0 \\ s_1 \\ s_2 \\ s_3
+\end{bmatrix}
+\]
+
+où les coefficients sont dans $\text{GF}(2^8)$.
+
+\textbf{Propriété} : Cette matrice est MDS (Maximum Distance Separable) : garantit diffusion optimale.
+
+\subsubsection{Key Schedule}
+
+\textbf{Objectif} : Dériver les round keys $k_0, k_1, \ldots, k_{N_r}$ depuis la clé maître.
+
+\textbf{Algorithme} (pour AES-128, clé de 128 bits = 4 mots de 32 bits) :
+\begin{itemize}
+    \item $k_0 = $ clé maître
+    \item Pour chaque round $i$ :
+    \begin{itemize}
+        \item Prendre dernier mot de $k_{i-1}$
+        \item \textbf{RotWord} : rotation circulaire d'un octet
+        \item \textbf{SubWord} : appliquer S-box à chaque octet
+        \item XOR avec constante de round $\text{Rcon}[i] = (x^{i-1}, 0, 0, 0)$ dans $\text{GF}(2^8)$
+        \item XOR avec premier mot de $k_{i-1}$ pour obtenir premier mot de $k_i$
+        \item Générer autres mots de $k_i$ par XOR successifs
+    \end{itemize}
+\end{itemize}
+
+\textbf{Résultat} : 11 round keys pour AES-128 (176 octets total)
 
 \subsection{Sécurité d'AES}
 
@@ -417,7 +636,46 @@ CBC avec IV aléatoire est CPA-sécurisé si le block cipher sous-jacent est une
 CTR avec nonce unique est CPA-sécurisé si le block cipher sous-jacent est une PRF sécurisée.
 \end{theorem}
 
-\textbf{Preuves} : À COMPLÉTER (voir Katz-Lindell chapitre 3)
+\begin{proof}[Idée de la preuve pour CTR]
+Réduction par l'absurde. Supposons qu'un adversaire $\A$ distingue les chiffrements CTR. On construit un adversaire $\mathcal{B}$ qui distingue le block cipher $E_k$ d'une fonction aléatoire.
+
+\textbf{Étapes} :
+\begin{enumerate}
+    \item $\mathcal{B}$ reçoit accès à un oracle $\mathcal{O}$ qui est soit $E_k(\cdot)$ (clé $k$ aléatoire), soit $f(\cdot)$ (fonction aléatoire)
+    \item $\mathcal{B}$ simule le jeu IND-CPA pour $\A$ :
+    \begin{itemize}
+        \item Pour chiffrer $m$, $\mathcal{B}$ choisit nonce aléatoire, interroge $\mathcal{O}(\text{nonce} \| i)$ pour chaque bloc, fait $c_i = m_i \xor \mathcal{O}(\text{nonce} \| i)$
+    \end{itemize}
+    \item $\mathcal{B}$ retourne la même guess que $\A$
+\end{enumerate}
+
+\textbf{Analyse} :
+\begin{itemize}
+    \item Si $\mathcal{O} = E_k$, alors $\mathcal{B}$ simule parfaitement CTR avec $E_k$
+    \item Si $\mathcal{O} = f$ aléatoire, alors le chiffrement est un OTP parfait (car $f(\text{nonce} \| i)$ est vraiment aléatoire pour chaque $i$)
+    \item Donc $\Adv_{\text{CTR}}^{\text{CPA}}(\A) \leq \Adv_E^{\text{PRF}}(\mathcal{B})$
+\end{itemize}
+
+Si $E$ est une PRF sécurisée, alors $\Adv_E^{\text{PRF}}(\mathcal{B})$ est négligeable, donc CTR est CPA-sécurisé. \qed
+\end{proof}
+
+\begin{proof}[Idée de la preuve pour CBC]
+Similaire à CTR mais plus technique car CBC n'est pas parallélisable.
+
+\textbf{Point clé} : L'IV doit être \textbf{imprévisible} (aléatoire), pas seulement unique !
+
+\textbf{Contre-exemple} : Si IV est prévisible (ex: compteur), CBC n'est PAS CPA-sécurisé.
+
+\textbf{Attaque} : Adversaire demande chiffrement de $m_1 = 0^n$, obtient $(IV_1, c_1)$. Ensuite, prédit $IV_2$ (car compteur), demande challenge sur $m_0^* = 0^n$ et $m_1^* = IV_1 \xor IV_2$. Peut distinguer facilement !
+
+\textbf{Preuve complète} : Voir Bellare-Rogaway "Introduction to Modern Cryptography" ou Katz-Lindell Chapitre 3. \qed
+\end{proof}
+
+\begin{remark}
+\textbf{Importance de la randomisation}
+
+Tous les schémas CPA-sécurisés nécessitent de la randomisation (IV, nonce) pour chaque message. Sinon le chiffrement est \textbf{déterministe} et donc pas CPA-sécurisé (adversaire chiffre lui-même les messages challenges et compare).
+\end{remark}
 
 %=============================================================================
 \section{Notebooks pratiques}

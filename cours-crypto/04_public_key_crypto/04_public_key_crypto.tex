@@ -76,7 +76,82 @@ G = \{g^0, g^1, g^2, \ldots, g^{q-1}\}
 
 \subsection{Problème Diffie-Hellman (CDH, DDH)}
 
-\textbf{À COMPLÉTER} : Définitions CDH (Computational DH) et DDH (Decisional DH)
+Le protocole Diffie-Hellman repose sur deux hypothèses de difficulté distinctes.
+
+\subsubsection{Computational Diffie-Hellman (CDH)}
+
+\begin{defbox}
+\textbf{CDH Problem}
+
+\textbf{Entrée} : $G, g, g^a, g^b$ où $a, b \xleftarrow{\$} \mathbb{Z}_q$
+
+\textbf{Problème} : Calculer $g^{ab}$
+
+\textbf{Hypothèse CDH} : Aucun algorithme efficace ne peut résoudre CDH avec probabilité non-négligeable.
+\end{defbox}
+
+\textbf{Relation avec DLP} : Si on peut résoudre DLP (trouver $a$ depuis $g^a$), on peut résoudre CDH. Donc : $\text{DLP} \leq \text{CDH}$ (DLP au moins aussi difficile).
+
+\textbf{Usage} : CDH suffit pour la sécurité passive (eavesdropping) de DH.
+
+\subsubsection{Decisional Diffie-Hellman (DDH)}
+
+\begin{defbox}
+\textbf{DDH Problem}
+
+\textbf{Jeu} : Distinguer les deux distributions suivantes :
+\begin{itemize}
+    \item \textbf{Distribution réelle} : $(g, g^a, g^b, g^{ab})$ où $a, b \xleftarrow{\$} \mathbb{Z}_q$
+    \item \textbf{Distribution aléatoire} : $(g, g^a, g^b, g^c)$ où $a, b, c \xleftarrow{\$} \mathbb{Z}_q$ (indépendants)
+\end{itemize}
+
+\textbf{Hypothèse DDH} : Aucun algorithme efficace ne peut distinguer ces deux distributions avec avantage non-négligeable.
+\end{defbox}
+
+\textbf{Formellement} : Pour tout adversaire $\mathcal{A}$ efficace,
+\[
+\left| \Pr[\mathcal{A}(g, g^a, g^b, g^{ab}) = 1] - \Pr[\mathcal{A}(g, g^a, g^b, g^c) = 1] \right| \leq \epsilon
+\]
+où $\epsilon$ est négligeable.
+
+\textbf{Relation entre hypothèses} :
+\[
+\text{DLP} \Rightarrow \text{CDH} \Rightarrow \text{DDH}
+\]
+
+\begin{itemize}
+    \item Si on résout DLP, on résout CDH
+    \item Si on résout CDH, on résout DDH (tester si $Z = g^{ab}$ en calculant $g^{ab}$)
+    \item \textbf{Réciproques inconnues} : On ne sait pas si CDH $\Rightarrow$ DLP ou DDH $\Rightarrow$ CDH
+\end{itemize}
+
+\textbf{Importance de DDH} : Nécessaire pour prouver la sécurité CPA de ElGamal et de Diffie-Hellman key exchange.
+
+\subsubsection{Groupes où DDH est facile}
+
+\begin{warnbox}
+\textbf{Attention : DDH ne tient PAS dans tous les groupes !}
+
+\textbf{Exemple} : $\mathbb{Z}_p^*$ avec $p$ premier
+
+DDH est facile via le \textbf{symbole de Legendre} : Pour $p$ premier impair, on peut tester si un élément est un carré modulo $p$ en temps polynomial.
+
+\textbf{Attaque} : Si $g$ est un générateur de $\mathbb{Z}_p^*$, alors :
+\begin{itemize}
+    \item $g^{ab}$ est un carré si et seulement si $ab$ est pair
+    \item $g^c$ est un carré avec probabilité 1/2 (si $c$ aléatoire)
+\end{itemize}
+
+Donc on peut distinguer $(g^a, g^b, g^{ab})$ de $(g^a, g^b, g^c)$ avec probabilité $\approx$ 3/4.
+
+\textbf{Solution} : Travailler dans un sous-groupe d'ordre premier $q$ de $\mathbb{Z}_p^*$ (avec $p = 2q+1$, nombre premier de Sophie Germain).
+\end{warnbox}
+
+\textbf{Groupes sûrs pour DDH} :
+\begin{itemize}
+    \item Sous-groupes premiers de $\mathbb{Z}_p^*$ (avec $p$ choisi correctement)
+    \item Courbes elliptiques sur corps finis (Curve25519, NIST P-256, etc.)
+\end{itemize}
 
 %=============================================================================
 \section{Diffie-Hellman Key Exchange}
@@ -210,13 +285,85 @@ G = \{g^0, g^1, g^2, \ldots, g^{q-1}\}
 
 \subsection{RSA-OAEP (sécurisé)}
 
-\textbf{Optimal Asymmetric Encryption Padding}
+\textbf{Optimal Asymmetric Encryption Padding} (Bellare-Rogaway 1994)
 
-\textbf{Principe} : Ajouter du padding randomisé avant chiffrement RSA.
+\textbf{Principe} : Ajouter du padding randomisé avant chiffrement RSA pour obtenir la sécurité CPA.
 
-\textbf{À COMPLÉTER} : Schéma OAEP, preuves dans le modèle de l'oracle aléatoire
+\subsubsection{Construction OAEP}
 
-\textbf{Standard} : RSA-OAEP avec SHA-256
+\textbf{Paramètres} :
+\begin{itemize}
+    \item $k$ : taille du modulus RSA (en bits, ex: 2048)
+    \item $k_0$ : taille du paramètre aléatoire (ex: 256 bits)
+    \item $k_1$ : taille de la redondance (ex: 128 bits)
+    \item $G : \{0,1\}^{k_0} \to \{0,1\}^{n-k_0}$ : fonction de hachage (oracle aléatoire)
+    \item $H : \{0,1\}^{n-k_0} \to \{0,1\}^{k_0}$ : fonction de hachage (oracle aléatoire)
+    \item $n = k - k_1$ : longueur du bloc OAEP
+\end{itemize}
+
+\textbf{Algorithme OAEP-Encode}$(m)$ :
+\begin{enumerate}
+    \item Choisir $r \xleftarrow{\$} \{0,1\}^{k_0}$ (randomness)
+    \item Calculer $s = (m \| 0^{k_1}) \oplus G(r)$ (masquer le message)
+    \item Calculer $t = r \oplus H(s)$ (masquer la randomness)
+    \item Retourner $s \| t$
+\end{enumerate}
+
+\textbf{Chiffrement RSA-OAEP}$(pk, m)$ :
+\begin{enumerate}
+    \item $\hat{m} \gets \text{OAEP-Encode}(m)$
+    \item $c \gets (\hat{m})^e \bmod n$ (RSA textbook sur le bloc paddé)
+    \item Retourner $c$
+\end{enumerate}
+
+\textbf{Déchiffrement RSA-OAEP}$(sk, c)$ :
+\begin{enumerate}
+    \item $\hat{m} \gets c^d \bmod n$ (RSA textbook)
+    \item Parser $\hat{m} = s \| t$ (découper en deux parties)
+    \item $r \gets t \oplus H(s)$ (retrouver randomness)
+    \item $m \| \text{pad} \gets s \oplus G(r)$ (retrouver message)
+    \item Vérifier que $\text{pad} = 0^{k_1}$ (sinon retourner $\perp$)
+    \item Retourner $m$
+\end{enumerate}
+
+\subsubsection{Propriétés de sécurité}
+
+\begin{theorem}[Bellare-Rogaway 1994]
+Si RSA est une permutation à sens unique (OWF) et $G, H$ sont des oracles aléatoires, alors RSA-OAEP est IND-CPA sécurisé.
+\end{theorem}
+
+\textbf{Modèle de l'oracle aléatoire} : Hypothèse forte qui modélise les fonctions de hachage comme des fonctions vraiment aléatoires. Preuve ne tient pas dans le modèle standard, mais pratique acceptable.
+
+\textbf{Intuition de la sécurité} :
+\begin{itemize}
+    \item La randomness $r$ assure que le chiffrement est \textbf{probabiliste} (même message $\Rightarrow$ ciphertexts différents)
+    \item Le double masquage (Feistel network) assure que même si on connaît $m$, on ne peut pas prédire $\hat{m}$ sans connaître $r$
+    \item La redondance $0^{k_1}$ empêche les manipulations du ciphertext (non-malléabilité partielle)
+\end{itemize}
+
+\subsubsection{Standards et implémentation}
+
+\textbf{PKCS\#1 v2.2} (RFC 8017) spécifie RSA-OAEP avec :
+\begin{itemize}
+    \item $G$ et $H$ basés sur MGF1 (Mask Generation Function) avec SHA-256 ou SHA-512
+    \item Label optionnel $L$ (souvent vide) pour lier le chiffrement à un contexte
+    \item Tailles recommandées : $k_0 = 256$ bits (taille de SHA-256), $k_1 = 256$ bits
+\end{itemize}
+
+\textbf{Taille maximale du message} : Pour RSA-2048 avec SHA-256,
+\[
+|m|_{\max} = k - 2k_0 - k_1 - 8 = 2048 - 2 \cdot 256 - 256 - 8 = 1272 \text{ bits} = 159 \text{ octets}
+\]
+
+\textbf{Usage pratique} : Pour chiffrer des messages longs, utiliser \textbf{chiffrement hybride} :
+\begin{enumerate}
+    \item Générer clé symétrique aléatoire $k_{\text{AES}}$
+    \item Chiffrer message avec AES-GCM : $c_{\text{sym}} = \text{AES-GCM}_{k_{\text{AES}}}(m)$
+    \item Chiffrer clé avec RSA-OAEP : $c_{\text{key}} = \text{RSA-OAEP}(pk, k_{\text{AES}})$
+    \item Transmettre $(c_{\text{key}}, c_{\text{sym}})$
+\end{enumerate}
+
+\textbf{Alternatives modernes} : ECIES (Elliptic Curve Integrated Encryption Scheme) plus efficace que RSA-OAEP
 
 %=============================================================================
 \section{Signatures numériques}
@@ -243,9 +390,96 @@ G = \{g^0, g^1, g^2, \ldots, g^{q-1}\}
 
 \textbf{Vrfy}$(pk, m, \sigma)$ : Vérifier $\sigma^e \stackrel{?}{=} H(m) \pmod{n}$
 
-\subsection{DSA / ECDSA}
+\subsection{DSA (Digital Signature Algorithm)}
 
-\textbf{À COMPLÉTER} : Digital Signature Algorithm, variante sur courbes elliptiques
+\textbf{Standard NIST} (FIPS 186) basé sur le logarithme discret.
+
+\subsubsection{Construction DSA}
+
+\textbf{Paramètres globaux} :
+\begin{itemize}
+    \item $p$ : grand nombre premier (2048 ou 3072 bits)
+    \item $q$ : nombre premier divisant $p-1$ (256 bits typiquement)
+    \item $g$ : générateur d'un sous-groupe d'ordre $q$ dans $\mathbb{Z}_p^*$
+    \item $H$ : fonction de hachage (SHA-256)
+\end{itemize}
+
+\textbf{Gen}$(1^\lambda)$ :
+\begin{itemize}
+    \item Choisir $x \xleftarrow{\$} \mathbb{Z}_q$
+    \item Calculer $y = g^x \bmod p$
+    \item $pk = y$, $sk = x$
+\end{itemize}
+
+\textbf{Sign}$(sk, m)$ :
+\begin{enumerate}
+    \item Choisir $k \xleftarrow{\$} \mathbb{Z}_q^*$ (nonce, DOIT être aléatoire et unique !)
+    \item Calculer $r = (g^k \bmod p) \bmod q$
+    \item Calculer $s = k^{-1} \cdot (H(m) + x \cdot r) \bmod q$
+    \item Retourner $\sigma = (r, s)$
+\end{enumerate}
+
+\textbf{Vrfy}$(pk, m, \sigma)$ :
+\begin{enumerate}
+    \item Parser $\sigma = (r, s)$
+    \item Vérifier $0 < r < q$ et $0 < s < q$ (sinon rejeter)
+    \item Calculer $w = s^{-1} \bmod q$
+    \item Calculer $u_1 = H(m) \cdot w \bmod q$ et $u_2 = r \cdot w \bmod q$
+    \item Calculer $v = (g^{u_1} \cdot y^{u_2} \bmod p) \bmod q$
+    \item Accepter si et seulement si $v = r$
+\end{enumerate}
+
+\textbf{Correction} : Vérifier que
+\[
+v = (g^{H(m) \cdot w} \cdot g^{xr \cdot w} \bmod p) \bmod q = (g^{k} \bmod p) \bmod q = r
+\]
+car $w = s^{-1} = k \cdot (H(m) + xr)^{-1}$.
+
+\begin{warnbox}
+\textbf{CRITIQUE : Gestion du nonce $k$}
+
+Le nonce $k$ doit être :
+\begin{itemize}
+    \item \textbf{Vraiment aléatoire} (pas pseudo-aléatoire prévisible)
+    \item \textbf{Unique} pour chaque signature
+    \item \textbf{Secret} (jamais révélé)
+\end{itemize}
+
+\textbf{Attaque si nonce réutilisé} : Si deux signatures $(r_1, s_1)$ et $(r_2, s_2)$ utilisent le même $k$ :
+\begin{itemize}
+    \item $r_1 = r_2$ (même $g^k$)
+    \item De $s_1 - s_2 = k^{-1}(H(m_1) - H(m_2))$, on retrouve $k$
+    \item De $s_1 = k^{-1}(H(m_1) + xr_1)$, on retrouve la clé secrète $x$ !
+\end{itemize}
+
+\textbf{Cas réels} : PlayStation 3 (2010), Android Bitcoin wallets (2013).
+\end{warnbox}
+
+\subsubsection{ECDSA (Elliptic Curve DSA)}
+
+\textbf{Variante de DSA} sur courbes elliptiques. Même algorithme mais :
+\begin{itemize}
+    \item Groupe : Points d'une courbe elliptique $E(\mathbb{F}_p)$ d'ordre premier $q$
+    \item Générateur : Point de base $G$ sur la courbe
+    \item Clé publique : $Y = x \cdot G$ (multiplication scalaire)
+    \item Signature : Même formule $(r, s)$ mais avec opérations sur courbe
+\end{itemize}
+
+\textbf{Avantages} :
+\begin{itemize}
+    \item Clés plus courtes : 256 bits (ECDSA) $\approx$ 3072 bits (DSA)
+    \item Plus rapide (génération et vérification)
+    \item Même niveau de sécurité avec moins de ressources
+\end{itemize}
+
+\textbf{Courbes standard} :
+\begin{itemize}
+    \item \textbf{NIST P-256, P-384, P-521} : Standards FIPS, utilisés dans TLS
+    \item \textbf{secp256k1} : Utilisée dans Bitcoin, Ethereum
+    \item \textbf{Curve25519} : Moderne, résistante aux side-channels (mais pour ECDH, pas signatures)
+\end{itemize}
+
+\textbf{Usage} : TLS (certificats), Bitcoin (transactions), SSH, Git (commits signés)
 
 \subsection{EdDSA (moderne)}
 

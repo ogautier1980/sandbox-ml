@@ -99,9 +99,64 @@ Un MAC est un tuple d'algorithmes $(\Gen, \Tag, \Vrfy)$ :
 
 \subsubsection{CBC-MAC}
 
-\textbf{Principe} : Utiliser un block cipher en mode CBC, ne garder que le dernier bloc.
+\textbf{Principe} : Utiliser un block cipher en mode CBC, ne garder que le dernier bloc comme tag.
 
-\textbf{À COMPLÉTER} : Détails de CBC-MAC, limitations (longueur fixe), variantes (CMAC, OMAC)
+\begin{algorithm}
+\caption{CBC-MAC}
+\begin{algorithmic}
+\REQUIRE Message $m = m_1 \| m_2 \| \cdots \| m_\ell$ (chaque $m_i$ de $n$ bits), clé $k$
+\STATE $t_0 \gets 0^n$ \hfill // IV = vecteur nul
+\FOR{$i = 1$ to $\ell$}
+    \STATE $t_i \gets E_k(t_{i-1} \xor m_i)$
+\ENDFOR
+\RETURN $t_\ell$ (dernier bloc)
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item Déterministe (pas d'IV aléatoire comme en chiffrement)
+    \item Sécurisé (UF-CMA) pour messages de \textbf{longueur fixe}
+    \item Ne nécessite qu'une seule clé $k$
+\end{itemize}
+
+\begin{warnbox}
+\textbf{DANGER : CBC-MAC basique est INSÉCURISÉ pour messages de longueur variable !}
+
+\textbf{Attaque} : Si on connaît $t = \text{CBC-MAC}_k(m)$ pour un message $m$ de 1 bloc, alors pour un message $m' = m \| (m \xor t)$ de 2 blocs :
+\[
+\text{CBC-MAC}_k(m') = E_k(E_k(m) \xor (m \xor t)) = E_k(t \xor m \xor t) = E_k(m) = t
+\]
+
+L'attaquant peut forger un tag pour $m'$ sans connaître la clé !
+\end{warnbox}
+
+\textbf{Solutions} :
+
+\begin{enumerate}
+    \item \textbf{CBC-MAC longueur fixe} : Spécifier $\ell$ dans la définition du schéma. Sécurisé mais inflexible.
+
+    \item \textbf{Encoder la longueur} : Préfixer le message par sa longueur $\ell$. Sécurisé mais nécessite de connaître $\ell$ à l'avance.
+
+    \item \textbf{CMAC (Cipher-based MAC, NIST SP 800-38B)} : Utiliser deux clés dérivées $k_1, k_2$ et traiter le dernier bloc différemment.
+
+    \item \textbf{OMAC (One-Key MAC)} : Variante de CMAC avec une seule clé et dérivation via multiplication dans $\text{GF}(2^n)$.
+\end{enumerate}
+
+\textbf{CMAC Construction (standard actuel)} :
+\begin{itemize}
+    \item Dériver deux sous-clés : $k_1 = E_k(0^n) \cdot x$ et $k_2 = k_1 \cdot x$ dans $\text{GF}(2^n)$
+    \item CBC-MAC classique pour les $\ell-1$ premiers blocs
+    \item Dernier bloc :
+    \begin{itemize}
+        \item Si bloc complet : $m_\ell \xor k_1$
+        \item Si bloc incomplet : $\text{pad}(m_\ell) \xor k_2$
+    \end{itemize}
+\end{itemize}
+
+\textbf{Sécurité de CMAC} : UF-CMA sécurisé pour messages de longueur variable (prouvé)
+
+\textbf{Usage} : Standard NIST, utilisé dans AES-CCM
 
 \subsubsection{HMAC (Hash-based MAC)}
 
@@ -156,7 +211,88 @@ $H : \bits^* \to \bits^n$ doit satisfaire :
 
 \textbf{Principe} : Construire une fonction de hachage à longueur variable à partir d'une fonction de compression à longueur fixe.
 
-\textbf{À COMPLÉTER} : Schéma Merkle-Damgård, padding, IV, itération
+\subsubsection{Fonction de compression}
+
+\begin{defbox}
+\textbf{Fonction de compression}
+
+$h : \bits^n \times \bits^b \to \bits^n$ prend un \textbf{chaining value} de $n$ bits et un \textbf{bloc de message} de $b$ bits, produit un nouveau chaining value de $n$ bits.
+
+\textbf{Exemple} : Pour SHA-256, $n = 256$ bits, $b = 512$ bits.
+\end{defbox}
+
+\subsubsection{Construction Merkle-Damgård}
+
+\begin{algorithm}
+\caption{Merkle-Damgård Hash}
+\begin{algorithmic}
+\REQUIRE Message $m$ de longueur arbitraire
+\STATE // Étape 1 : Padding
+\STATE $m' \gets m \| 1 \| 0^k \| \langle |m| \rangle_{64}$ \hfill // $k$ tel que longueur totale $\equiv 0 \pmod{b}$
+\STATE // Étape 2 : Découpage en blocs
+\STATE Découper $m'$ en blocs $m_1, m_2, \ldots, m_t$ de $b$ bits chacun
+\STATE // Étape 3 : Itération
+\STATE $H_0 \gets \text{IV}$ \hfill // Valeur d'initialisation fixée (ex: constantes pour SHA-256)
+\FOR{$i = 1$ to $t$}
+    \STATE $H_i \gets h(H_{i-1}, m_i)$ \hfill // Fonction de compression
+\ENDFOR
+\RETURN $H_t$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Composants clés} :
+
+\begin{enumerate}
+    \item \textbf{IV (Initialization Vector)} : Constante publique fixée dans le standard (ex: SHA-256 utilise les 32 premiers bits des racines carrées des 8 premiers nombres premiers)
+
+    \item \textbf{Padding} :
+    \begin{itemize}
+        \item Toujours ajouter au moins 1 bit (le bit '1')
+        \item Encoder la longueur du message original en fin (MD-strengthening)
+        \item Assure que $\text{pad}(m_1) \neq \text{pad}(m_2)$ si $m_1 \neq m_2$
+    \end{itemize}
+
+    \item \textbf{Fonction de compression $h$} : Construction spécifique à chaque algorithme (Davies-Meyer pour SHA-2, éponge pour SHA-3)
+\end{enumerate}
+
+\begin{theorem}[Merkle-Damgård]
+Si la fonction de compression $h$ est résistante aux collisions, alors la fonction de hachage $H$ construite par Merkle-Damgård est résistante aux collisions.
+\end{theorem}
+
+\begin{proof}[Idée de la preuve]
+Par contraposée. Supposons qu'on trouve une collision pour $H$ : $H(m) = H(m')$ avec $m \neq m'$.
+
+Soient $m_1, \ldots, m_t$ et $m_1', \ldots, m_{t'}$ les blocs après padding.
+
+Si $t = t'$ et $m_t \neq m_t'$ : alors $h(H_{t-1}, m_t) = h(H_{t-1}', m_{t'}')$ est une collision pour $h$.
+
+Si $t \neq t'$ ou les derniers blocs sont égaux mais les chaining values diffèrent : on remonte itérativement pour trouver une collision pour $h$.
+
+Donc collision sur $H$ $\Rightarrow$ collision sur $h$. Par contraposée : $h$ résistant aux collisions $\Rightarrow$ $H$ résistant aux collisions. \qed
+\end{proof}
+
+\subsubsection{Davies-Meyer (utilisé dans SHA-256)}
+
+Une construction populaire de fonction de compression :
+\[
+h(H_{i-1}, m_i) = E_{m_i}(H_{i-1}) \xor H_{i-1}
+\]
+
+où $E_k$ est un block cipher (clé = bloc de message, plaintext = chaining value).
+
+\subsubsection{Limitations de Merkle-Damgård}
+
+\begin{itemize}
+    \item \textbf{Length extension attack} : Si on connaît $H(m)$ (mais pas $m$), on peut calculer $H(m \| \text{suffix})$ pour n'importe quel suffix !
+
+    \textbf{Conséquence} : $H(k \| m)$ n'est PAS un MAC sécurisé (où $k$ est une clé secrète)
+
+    \item \textbf{Séquentiel} : Impossible de paralléliser le calcul
+
+    \item \textbf{Pas de résistance aux collisions pour états internes} : Collision sur $H_i$ ne correspond pas nécessairement à collision sur $H(m)$
+\end{itemize}
+
+\textbf{Évolution} : SHA-3 utilise la construction \textbf{éponge} (sponge), différente de Merkle-Damgård, qui n'est pas vulnérable aux length extension attacks.
 
 \subsection{Fonctions de hachage modernes}
 
@@ -238,14 +374,83 @@ Trois approches possibles :
     \item Utilisé dans TLS 1.3, WireGuard VPN
 \end{itemize}
 
-\subsubsection{Autres}
+\subsubsection{AES-CCM (Counter with CBC-MAC)}
 
-\textbf{À COMPLÉTER} :
+\textbf{Construction} :
 \begin{itemize}
-    \item AES-CCM (Counter with CBC-MAC)
-    \item AES-OCB (Offset Codebook Mode)
-    \item ASCON (vainqueur compétition CAESAR, lightweight)
+    \item Authentification : CBC-MAC (CMAC)
+    \item Chiffrement : AES en mode CTR
+    \item Composition : MAC-then-Encrypt (calcule MAC du plaintext, puis chiffre tout)
 \end{itemize}
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item Prouvé sécurisé (CCA-secure)
+    \item Nécessite deux passes sur les données (MAC puis chiffrement) $\Rightarrow$ plus lent que GCM
+    \item Taille de tag configurable (4-16 octets)
+\end{itemize}
+
+\textbf{Usage} : WPA2 (Wi-Fi), Bluetooth LE, IEEE 802.15.4 (Zigbee), IPsec
+
+\subsubsection{AES-OCB (Offset Codebook Mode)}
+
+\textbf{Construction} : Mode AEAD avec une seule passe (chiffrement et authentification simultanés).
+
+\textbf{Principe} :
+\begin{itemize}
+    \item Utilise des offsets pseudo-aléatoires dérivés du nonce
+    \item Chaque bloc : $c_i = E_k(m_i \xor \text{Offset}_i) \xor \text{Offset}_i$
+    \item Tag : XOR de tous les états internes
+\end{itemize}
+
+\textbf{Avantages} :
+\begin{itemize}
+    \item \textbf{Très rapide} : Une seule passe, parallélisable
+    \item Optimal en nombre d'appels à $E_k$ (approche le minimum théorique)
+    \item Sécurité prouvée
+\end{itemize}
+
+\textbf{Inconvénient} :
+\begin{itemize}
+    \item \textbf{Brevets} (jusqu'en 2021) $\Rightarrow$ adoption limitée
+    \item Licence gratuite pour logiciels open-source depuis 2013
+\end{itemize}
+
+\textbf{Usage} : Rare en pratique (à cause de l'historique de brevets), mais techniquement supérieur
+
+\subsubsection{ASCON}
+
+\textbf{Contexte} : Vainqueur de la compétition CAESAR (2014-2019) pour AEAD lightweight.
+
+\textbf{Construction} :
+\begin{itemize}
+    \item Basé sur la construction \textbf{éponge} (comme SHA-3)
+    \item Permutation cryptographique : 320 bits d'état, 12 rounds
+    \item Très efficace en hardware (petite surface de silicium)
+\end{itemize}
+
+\textbf{Variantes} :
+\begin{itemize}
+    \item \textbf{ASCON-128} : Clé 128 bits, nonce 128 bits, tag 128 bits
+    \item \textbf{ASCON-128a} : Optimisé pour vitesse (8 rounds au lieu de 12)
+    \item \textbf{ASCON-80pq} : Clé 160 bits (résistance quantique accrue)
+\end{itemize}
+
+\textbf{Propriétés} :
+\begin{itemize}
+    \item Conçu pour IoT, RFID, systèmes embarqués
+    \item Sécurité prouvée dans le modèle standard
+    \item Résistant aux side-channel attacks (design simple, sans lookups)
+    \item Standardisé par NIST (2023) pour lightweight cryptography
+\end{itemize}
+
+\textbf{Performance} :
+\begin{itemize}
+    \item Hardware : $\sim$3000 GE (gate equivalents) - très compact
+    \item Software : Compétitif avec ChaCha20-Poly1305 sur microcontrôleurs
+\end{itemize}
+
+\textbf{Usage} : Futur standard pour IoT et systèmes embarqués contraints
 
 %=============================================================================
 \section{Attaques pratiques}
