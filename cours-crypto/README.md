@@ -207,6 +207,18 @@ Tous les notebooks sont compatibles Google Colab (installation automatique des d
 
 ## 📚 Ressources
 
+### Documentation du Cours
+
+- **[REVISION_EXAMEN.md](REVISION_EXAMEN.md)** : 📝 **Résumé complet pour réviser avant l'examen**
+  - 1000+ lignes couvrant les 5 chapitres
+  - Concepts clés, formules essentielles, attaques à connaître
+  - Tableaux comparatifs, bonnes pratiques, checklist de révision
+  - Conseils pour l'examen et questions fréquentes
+
+- **[COMPLETION_STATUS.md](COMPLETION_STATUS.md)** : État détaillé de complétion (100%)
+
+### Références Académiques
+
 - **Livre principal** : [The Joy of Cryptography](https://toc.cryptobook.us/) - Mike Rosulek (2021)
 - **Références complémentaires** :
   - *Introduction to Modern Cryptography* - Katz & Lindell
