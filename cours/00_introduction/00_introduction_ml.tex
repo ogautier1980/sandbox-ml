@@ -624,7 +624,7 @@ Un projet ML suit généralement les étapes suivantes :
 \end{tikzpicture}
 \end{center}
 
-\subsection{1. Définition du Problème}
+\subsection{Définition du Problème}
 
 \textbf{Questions à se poser :}
 \begin{itemize}
@@ -634,7 +634,7 @@ Un projet ML suit généralement les étapes suivantes :
     \item Quelles sont les contraintes (temps, ressources, explicabilité) ?
 \end{itemize}
 
-\subsection{2. Collecte et Exploration des Données}
+\subsection{Collecte et Exploration des Données}
 
 \textbf{Analyse exploratoire des données (EDA) :}
 \begin{itemize}
@@ -647,7 +647,7 @@ Un projet ML suit généralement les étapes suivantes :
     \item Déséquilibre des classes (pour la classification)
 \end{itemize}
 
-\subsection{3. Préparation des Données}
+\subsection{Préparation des Données}
 
 \textbf{Nettoyage des données :}
 \begin{itemize}
@@ -677,7 +677,7 @@ Un projet ML suit généralement les étapes suivantes :
     \end{itemize}
 \end{itemize}
 
-\subsection{4. Feature Engineering}
+\subsection{Feature Engineering}
 
 Création de nouvelles features pertinentes à partir des données brutes :
 
@@ -689,7 +689,7 @@ Création de nouvelles features pertinentes à partir des données brutes :
     \item Sélection de features (élimination des redondantes)
 \end{itemize}
 
-\subsection{5. Entraînement du Modèle}
+\subsection{Entraînement du Modèle}
 
 \begin{lstlisting}[language=Python, caption=Schéma général d'entraînement]
 # 1. Split train/validation/test
@@ -715,7 +715,7 @@ y_pred = model.predict(X_test)
 y_proba = model.predict_proba(X_test)
 \end{lstlisting}
 
-\subsection{6. Évaluation}
+\subsection{Évaluation}
 
 \textbf{Métriques pour la classification :}
 \begin{itemize}
@@ -740,7 +740,7 @@ scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
 print(f"Accuracy: {scores.mean():.3f} (+/- {scores.std():.3f})")
 \end{lstlisting}
 
-\subsection{7. Déploiement et Monitoring}
+\subsection{Déploiement et Monitoring}
 
 \begin{itemize}
     \item Sauvegarde du modèle (pickle, joblib, ONNX)
