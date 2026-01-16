@@ -22,7 +22,15 @@
       "Bash(grep:*)",
       "Bash(cat:*)",
       "Bash(docker-compose restart:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(timeout 60 git push:*)",
+      "Bash(pdflatex:*)",
+      "Bash(pdfinfo:*)",
+      "Bash(winpty docker exec ml-sandbox bash -c \"ls -la /workspace/ | grep cours\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec:*)",
+      "Bash(tree:*)",
+      "Bash(where:*)",
+      "Bash(powershell -Command \"Remove-Item -Path ''cours-crypto'' -Recurse -Force; Remove-Item -Path ''cours-securite'' -Recurse -Force; Write-Host ''Dossiers supprimés''\")"
     ]
   }
 }

@@ -5,19 +5,17 @@
 | Info | Valeur |
 |------|--------|
 | Repository | [github.com/ogautier1980/sandbox-ml](https://github.com/ogautier1980/sandbox-ml) |
-| Version | 1.1 |
-| Mise à jour | 2026-01-12 |
+| Version | 1.2 |
+| Mise à jour | 2026-01-14 |
 
 ---
 
 ## Vue d'Ensemble
 
-Environnement Docker complet pour Machine Learning et Cryptographie avec cours universitaires intégrés.
+Environnement Docker complet pour Machine Learning avec cours universitaire intégré.
 
 **Cours** :
 - **Machine Learning** : 14 chapitres + annexes (100% complété) - 78-96h de formation
-- **Cryptographie** : 5 chapitres (structure complète avec Perfect Security, Symmetric/Public Key, Message Integrity)
-- **Sécurité Informatique** : 6 chapitres (Authentication, Network Security, Rainbow Tables, IDS)
 
 ---
 
@@ -31,8 +29,6 @@ sandbox-ml/
 ├── docker-compose.yml, Dockerfile, requirements.txt
 ├── docs/                    # config.md, tools.md, guide PDF
 ├── cours/                   # 14 chapitres ML + annexes
-├── cours-crypto/            # 5 chapitres Cryptographie
-├── cours-securite/          # 6 chapitres Sécurité (Jan 2024/2025 exams)
 ├── scripts/                 # compile_all_pdfs.sh, verify_notebook_refs.sh
 └── notebooks/data/models/src/
 ```
@@ -80,30 +76,6 @@ sandbox-ml/
 
 ---
 
-## Cours Cryptographie & Sécurité
-
-**cours-crypto/** : 5 chapitres basés sur "The Joy of Cryptography" (Rosulek)
-1. Perfect Security, OTP
-2. Stream & Block Ciphers
-3. MAC, Hash, AEAD
-4. DH, RSA, ElGamal
-5. Tor, Mixnets
-
-**cours-securite/** : 6 chapitres (examens Jan 2024/2025)
-1. Perfect Security (OTP)
-2. Symmetric Crypto (AES, modes)
-3. Message Integrity (MAC, Hash)
-4. Authentication Protocols (Rainbow Tables détaillés : Hellman vs Rainbow, défense par salting)
-5. Network Security (IDS, Base-rate fallacy avec Bayes, PPV vs TPR/FPR)
-6. Anonymous Communication (Tor, Mixnets)
-
-**Ressources** :
-- `RESUME_REVISION.pdf` : 12 pages, révision complète pour examens
-- `CORRIGES_EXAMENS.pdf` : 22 pages, solutions détaillées Jan 2024/2025
-- Notebooks exemples OTP, exercices pratiques
-
----
-
 ## Commandes Essentielles
 
 ### Docker
@@ -129,7 +101,7 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 ### Docker
 - Image : `python:3.11-slim` (Debian Trixie)
 - Correction : `libgl1` (pas `libgl1-mesa-glx` obsolète)
-- Volumes : docs/, cours/, cours-crypto/, cours-securite/, scripts/, notebooks/, data/, models/, src/
+- Volumes : docs/, cours/, scripts/, notebooks/, data/, models/, src/
 - LaTeX : packages `lmodern`, `texlive-latex-extra`, `texlive-science`
 
 ### Génération PDF
@@ -152,7 +124,7 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 
 **Organisation** :
 - Documentation → `docs/`
-- Cours → `cours/`, `cours-crypto/`, `cours-securite/`
+- Cours ML → `cours/`
 - Scripts → `scripts/`
 - Fichiers obsolètes → `archive/` (archiver, ne pas supprimer)
 - Pas de fichiers temporaires à la racine → `/tmp/`
@@ -187,29 +159,19 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 | `docs/config.md` | Installation technique |
 | `docs/tools.md` | Documentation exhaustive outils |
 | `cours/README.md` | Guide cours ML |
-| `cours-crypto/README.md` | Guide cours Crypto |
-| `cours-securite/README.md` | Guide cours Sécurité |
 
 ---
 
 ## Historique
 
+**2026-01-14** - Simplification projet
+- Suppression cours-crypto/ et cours-securite/
+- Focus exclusif sur Machine Learning
+- Mise à jour documentation
+
 **2026-01-12** - Clean-up & Optimisation
-- Suppression fichiers LaTeX auxiliaires (.aux, .log, .out, .toc) - 60 fichiers
+- Suppression fichiers LaTeX auxiliaires - 60 fichiers
 - Optimisation CLAUDE.md (305→215 lignes, -30%)
-- Cours Sécurité finalisé avec examens
-
-**2026-01-11** - Cours Sécurité
-- 6 chapitres cours-securite/ créés
-- Rainbow Tables détaillés (Hellman vs Rainbow, TMTO, défense salting)
-- Base-rate fallacy IDS (Bayes, PPV, exemple 99% accuracy → 9% PPV)
-- RESUME_REVISION.pdf (12 pages) + CORRIGES_EXAMENS.pdf (22 pages)
-- Fix encoding : Suppression `\usepackage[T1]{fontenc}` pour accents UTF-8
-
-**2026-01-11** - Cours Crypto & Clean-up
-- cours-crypto/ avec 5 chapitres (Perfect Security, Symmetric/Public Key, Integrity, Anonymous)
-- Consolidation markdown (9 fichiers → structure claire)
-- Archivage scripts one-time, standards `.editorconfig`
 
 **2026-01-11** - Pack Prioritaire ML
 - Formation Python intégrée (`00_prerequis_python.ipynb`)
@@ -227,4 +189,4 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 
 ---
 
-*Dernière mise à jour : 2026-01-12*
+*Dernière mise à jour : 2026-01-14*
