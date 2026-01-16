@@ -219,30 +219,39 @@ Cette définition classique de Tom Mitchell (1997) met en évidence trois compos
 Le Machine Learning inverse le paradigme de la programmation traditionnelle :
 
 \begin{center}
+\textbf{Programmation Traditionnelle}
+
+\vspace{0.3cm}
 \begin{tikzpicture}[
-    node distance=2cm,
-    box/.style={rectangle, draw, minimum width=2.5cm, minimum height=1cm, align=center},
+    box/.style={rectangle, draw, minimum width=2cm, minimum height=0.8cm, align=center},
+    process/.style={rectangle, draw, fill=blue!10, minimum width=2cm, minimum height=0.8cm, align=center},
     arrow/.style={->, thick}
 ]
-    % Programmation traditionnelle
-    \node[box] (prog_data) {Données};
-    \node[box, right of=prog_data] (prog_rules) {Règles\\(code)};
-    \node[box, right of=prog_rules] (prog_output) {Résultats};
+    \node[box] (data1) {Données};
+    \node[process, right=1.5cm of data1] (rules1) {Règles\\(code)};
+    \node[box, right=1.5cm of rules1] (output1) {Résultats};
 
-    \draw[arrow] (prog_data) -- (prog_output);
-    \draw[arrow] (prog_rules) -- (prog_output);
+    \draw[arrow] (data1) -- (rules1);
+    \draw[arrow] (rules1) -- (output1);
+\end{tikzpicture}
 
-    \node[above=0.5cm of prog_rules] {\textbf{Programmation Traditionnelle}};
+\vspace{0.8cm}
+\textbf{Machine Learning}
 
-    % Machine Learning
-    \node[box, below=2cm of prog_data] (ml_data) {Données};
-    \node[box, right of=ml_data] (ml_output) {Résultats\\(labels)};
-    \node[box, right of=ml_output] (ml_rules) {Règles\\(modèle)};
+\vspace{0.3cm}
+\begin{tikzpicture}[
+    box/.style={rectangle, draw, minimum width=2cm, minimum height=0.8cm, align=center},
+    process/.style={rectangle, draw, fill=green!10, minimum width=2cm, minimum height=0.8cm, align=center},
+    arrow/.style={->, thick}
+]
+    \node[box] (data2) {Données};
+    \node[box, below=0.5cm of data2] (labels) {Labels};
+    \node[process, right=1.5cm of data2, yshift=-0.4cm] (model) {Algorithme\\ML};
+    \node[box, right=1.5cm of model] (output2) {Modèle\\(règles)};
 
-    \draw[arrow] (ml_data) -- (ml_rules);
-    \draw[arrow] (ml_output) -- (ml_rules);
-
-    \node[above=0.5cm of ml_output] {\textbf{Machine Learning}};
+    \draw[arrow] (data2.east) -- ([yshift=0.2cm]model.west);
+    \draw[arrow] (labels.east) -- ([yshift=-0.2cm]model.west);
+    \draw[arrow] (model) -- (output2);
 \end{tikzpicture}
 \end{center}
 
