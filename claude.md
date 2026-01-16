@@ -5,8 +5,8 @@
 | Info | Valeur |
 |------|--------|
 | Repository | [github.com/ogautier1980/sandbox-ml](https://github.com/ogautier1980/sandbox-ml) |
-| Version | 1.2 |
-| Mise à jour | 2026-01-14 |
+| Version | 1.3 |
+| Mise à jour | 2026-01-17 |
 
 ---
 
@@ -105,9 +105,14 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 - LaTeX : packages `lmodern`, `texlive-latex-extra`, `texlive-science`
 
 ### Génération PDF
-- Commande : `xelatex -interaction=nonstopmode file.tex` (2 passes pour TOC)
+- **TOUJOURS 2 PASSES XeLaTeX** : La première génère le .toc, la seconde l'intègre au PDF
+  ```bash
+  xelatex -interaction=nonstopmode file.tex && xelatex -interaction=nonstopmode file.tex
+  ```
+- **VÉRIFIER** : Le PDF doit avoir la table des matières visible (sinon refaire 2 passes)
 - **IMPORTANT** : XeLaTeX + UTF-8 nativement → NE PAS utiliser `\usepackage[T1]{fontenc}` (cause accents manquants)
 - Utiliser : `\usepackage[utf8]{inputenc}` + `\usepackage[french]{babel}` uniquement
+- Pour tcolorbox : ajouter `breakable` aux boîtes pour éviter pages blanches
 
 ### Scripts
 - Path detection automatique
@@ -164,6 +169,11 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 
 ## Historique
 
+**2026-01-17** - Corrections PDFs cours
+- Fix liens Colab dans 45 notebooks (XX_CHAPTER → vrais chemins)
+- Fix diagrammes TikZ, tableaux trop étroits, numérotation redondante
+- Ajout règle : TOUJOURS 2 passes XeLaTeX pour table des matières
+
 **2026-01-14** - Simplification projet
 - Suppression cours-crypto/ et cours-securite/
 - Focus exclusif sur Machine Learning
@@ -189,4 +199,4 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 
 ---
 
-*Dernière mise à jour : 2026-01-14*
+*Dernière mise à jour : 2026-01-17*
