@@ -387,23 +387,25 @@ où $\theta$ est l'angle entre $\vect{u}$ et $\vect{v}$.
     \draw[->] (0,-0.5) -- (0,4) node[above] {$y$};
 
     % Vecteur u
-    \draw[->, very thick, blue] (0,0) -- (4,1) node[midway, below right] {$\vect{u}$};
-    \draw[blue] (4.2,1) node[right] {$(4, 1)$};
+    \draw[->, very thick, blue] (0,0) -- (4,1);
+    \node[blue, font=\small, below right] at (2,0.5) {$\vect{u}$};
+    \node[blue, font=\small, right] at (4.2,1) {$(4, 1)$};
 
     % Vecteur v
-    \draw[->, very thick, red] (0,0) -- (2,3) node[midway, left] {$\vect{v}$};
-    \draw[red] (2,3.2) node[above] {$(2, 3)$};
+    \draw[->, very thick, red] (0,0) -- (2,3);
+    \node[red, font=\small, left] at (1,1.5) {$\vect{v}$};
+    \node[red, font=\small, above] at (2,3.2) {$(2, 3)$};
 
     % Angle theta
     \draw[green!60!black, thick] (0.8,0) arc (0:56:0.8);
-    \draw[green!60!black] (1.3,0.4) node {$\theta$};
+    \node[green!60!black, font=\small] at (1.3,0.4) {$\theta$};
 
     % Projection
     \draw[dashed, purple] (2,3) -- (2.8,0.7);
     \filldraw[purple] (2.8,0.7) circle (1.5pt);
 
     % Annotations
-    \draw[purple] (2.4,1.85) node[right, align=left] {\small Projection\\[-2pt]\small de $\vect{v}$ sur $\vect{u}$};
+    \node[purple, font=\small, right, align=left] at (3.0,1.85) {Projection\\[-2pt]de $\vect{v}$ sur $\vect{u}$};
 
     % Calculs
     \node[align=left, draw, fill=yellow!10, rounded corners] at (7,2) {
