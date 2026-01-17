@@ -1,0 +1,452 @@
+% Template pour les chapitres du cours ML
+% À copier et adapter pour chaque chapitre
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+
+% Mathématiques
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+
+% Mise en page
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Graphiques et couleurs
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% Code et algorithmes
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Hyperliens
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre XX - Titre},
+    pdfauthor={Cours ML},
+}
+
+% Boxes colorées
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre XX - Titre du Chapitre}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS (code Python) =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== CONFIGURATION TCOLORBOX =====
+% Box pour définitions
+\newtcolorbox{definition}[1]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition: #1,
+    breakable
+}
+
+% Box pour théorèmes
+\newtcolorbox{theoreme}[1]{
+    colback=green!5!white,
+    colframe=green!75!black,
+    fonttitle=\bfseries,
+    title=Théorème: #1,
+    breakable
+}
+
+% Box pour exemples
+\newtcolorbox{exemple}[1]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=Exemple: #1,
+    breakable
+}
+
+% Box pour attention/warning
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=⚠️ Attention,
+    breakable
+}
+
+% Box pour astuce/tips
+\newtcolorbox{astuce}{
+    colback=yellow!10!white,
+    colframe=yellow!75!black,
+    fonttitle=\bfseries,
+    title=💡 Astuce,
+    breakable
+}
+
+% ===== COMMANDES PERSONNALISÉES =====
+\newcommand{\vect}[1]{\mathbf{#1}}  % Vecteur
+\newcommand{\mat}[1]{\mathbf{#1}}   % Matrice
+\newcommand{\R}{\mathbb{R}}         % Réels
+\newcommand{\N}{\mathbb{N}}         % Naturels
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+% ===== DÉBUT DU DOCUMENT =====
+\begin{document}
+
+% ===== PAGE DE TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+
+    \vspace{1cm}
+
+    {\LARGE Chapitre XX}\\[0.3cm]
+    {\LARGE\bfseries Titre du Chapitre}\\[2cm]
+
+    \vfill
+
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Objectif 1
+        \item Objectif 2
+        \item Objectif 3
+    \end{itemize}
+    }
+
+    \vfill
+
+    {\large
+    \textbf{Prérequis :} Chapitres XX, YY\\[0.3cm]
+    \textbf{Durée estimée :} X-Y heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{XX\_demo\_*.ipynb}
+    }
+
+    \vfill
+
+    {\large Cours ML - Sandbox-ML\\
+    Version 1.0 - 2026}
+\end{titlepage}
+
+% ===== TABLE DES MATIÈRES =====
+\tableofcontents
+\newpage
+
+% ===== SECTION 1: MOTIVATION =====
+\section{Motivation}
+
+% Commencer par un problème concret qui illustre pourquoi ce chapitre est important
+% Exemple : Pour un chapitre sur la régression, présenter un problème de prédiction de prix
+
+\begin{exemple}{Problème illustratif}
+Description d'un problème concret qui va motiver l'étude du contenu du chapitre.
+\end{exemple}
+
+% ===== SECTION 2: FONDEMENTS THÉORIQUES =====
+\section{Fondements Théoriques}
+
+\subsection{Concept Principal 1}
+
+\begin{definition}{Nom du concept}
+Définition formelle et rigoureuse du concept principal.
+\end{definition}
+
+Explication en langage naturel, intuition géométrique ou visuelle.
+
+\subsubsection{Formulation mathématique}
+
+Équations et développements mathématiques :
+
+\begin{equation}
+    f(\vect{x}) = \vect{w}^T \vect{x} + b
+\end{equation}
+
+où :
+\begin{itemize}
+    \item $\vect{x} \in \R^d$ : vecteur de features
+    \item $\vect{w} \in \R^d$ : vecteur de poids
+    \item $b \in \R$ : biais (intercept)
+\end{itemize}
+
+\subsection{Concept Principal 2}
+
+% Répéter la structure ci-dessus pour chaque concept important
+
+% ===== SECTION 3: ALGORITHMES =====
+\section{Algorithmes}
+
+\subsection{Algorithme Principal}
+
+\begin{algorithm}[H]
+\caption{Nom de l'Algorithme}
+\label{alg:principal}
+\begin{algorithmic}[1]
+\REQUIRE Données d'entrée $X$, labels $y$
+\ENSURE Modèle entraîné $\theta$
+\STATE Initialiser $\theta$ aléatoirement
+\FOR{$epoch = 1$ \TO $n_{epochs}$}
+    \FOR{chaque batch $(X_{batch}, y_{batch})$}
+        \STATE Calculer prédictions : $\hat{y} = f(X_{batch}; \theta)$
+        \STATE Calculer loss : $L = \text{loss}(\hat{y}, y_{batch})$
+        \STATE Calculer gradient : $\nabla_\theta L$
+        \STATE Mettre à jour : $\theta \leftarrow \theta - \alpha \nabla_\theta L$
+    \ENDFOR
+\ENDFOR
+\RETURN $\theta$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Complexité}
+
+\begin{itemize}
+    \item \textbf{Temps :} $O(...)$
+    \item \textbf{Espace :} $O(...)$
+\end{itemize}
+
+% ===== SECTION 4: IMPLÉMENTATION =====
+\section{Implémentation}
+
+\subsection{Implémentation NumPy/scikit-learn}
+
+Exemple de code Python :
+
+\begin{lstlisting}[language=Python, caption=Implémentation de l'algorithme]
+import numpy as np
+from sklearn.base import BaseEstimator
+
+class MonAlgorithme(BaseEstimator):
+    def __init__(self, param1=1.0, param2=10):
+        self.param1 = param1
+        self.param2 = param2
+
+    def fit(self, X, y):
+        # Implémentation de l'entraînement
+        n_samples, n_features = X.shape
+        self.coef_ = np.zeros(n_features)
+
+        for epoch in range(self.param2):
+            # ... logique d'entraînement
+            pass
+
+        return self
+
+    def predict(self, X):
+        # Prédictions
+        return X @ self.coef_
+\end{lstlisting}
+
+% ===== SECTION 5: VISUALISATIONS =====
+\section{Visualisations et Interprétation}
+
+% Inclure des figures si disponibles
+% \begin{figure}[h]
+%     \centering
+%     \includegraphics[width=0.7\textwidth]{chemin/vers/image.png}
+%     \caption{Description de la figure}
+%     \label{fig:exemple}
+% \end{figure}
+
+Description des visualisations typiques pour ce type de modèle.
+
+% ===== SECTION 6: AVANTAGES ET LIMITES =====
+\section{Avantages et Limites}
+
+\subsection{Avantages}
+\begin{itemize}
+    \item ✅ Avantage 1
+    \item ✅ Avantage 2
+    \item ✅ Avantage 3
+\end{itemize}
+
+\subsection{Limites}
+\begin{itemize}
+    \item ❌ Limite 1
+    \item ❌ Limite 2
+    \item ❌ Limite 3
+\end{itemize}
+
+\subsection{Quand utiliser cet algorithme ?}
+
+\begin{astuce}
+Cet algorithme est particulièrement adapté quand :
+\begin{itemize}
+    \item Condition 1
+    \item Condition 2
+    \item Condition 3
+\end{itemize}
+\end{astuce}
+
+\begin{attention}
+Éviter cet algorithme dans les cas suivants :
+\begin{itemize}
+    \item Cas problématique 1
+    \item Cas problématique 2
+\end{itemize}
+\end{attention}
+
+% ===== SECTION 7: HYPERPARAMÈTRES =====
+\section{Hyperparamètres et Tuning}
+
+\begin{table}[h]
+\centering
+\caption{Hyperparamètres principaux}
+\label{tab:hyperparams}
+\begin{tabular}{lll}
+\toprule
+\textbf{Paramètre} & \textbf{Valeurs typiques} & \textbf{Impact} \\
+\midrule
+learning\_rate & $10^{-4}$ à $10^{-1}$ & Vitesse convergence \\
+n\_iterations & $10$ à $1000$ & Qualité ajustement \\
+regularization & $10^{-3}$ à $10$ & Compromis biais-variance \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 8: VARIANTES =====
+\section{Variantes et Extensions}
+
+\subsection{Variante 1}
+Description de la première variante de l'algorithme.
+
+\subsection{Variante 2}
+Description de la deuxième variante.
+
+% ===== SECTION 9: APPLICATIONS =====
+\section{Applications Pratiques}
+
+\begin{enumerate}
+    \item \textbf{Application 1} : Description et domaine d'usage
+    \item \textbf{Application 2} : Description et domaine d'usage
+    \item \textbf{Application 3} : Description et domaine d'usage
+\end{enumerate}
+
+% ===== SECTION 10: RÉSUMÉ =====
+\section{Résumé du Chapitre}
+
+\subsection{Points Clés}
+\begin{itemize}
+    \item \textbf{Point 1} : Résumé concis
+    \item \textbf{Point 2} : Résumé concis
+    \item \textbf{Point 3} : Résumé concis
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\begin{align}
+    \text{Formule 1:} & \quad y = f(x) \\
+    \text{Formule 2:} & \quad L = \text{loss}(y, \hat{y})
+\end{align}
+\end{tcolorbox}
+
+% ===== SECTION 11: EXERCICES =====
+\section{Exercices}
+
+\subsection{Questions de compréhension}
+\begin{enumerate}
+    \item Question théorique 1 ?
+    \item Question théorique 2 ?
+    \item Question théorique 3 ?
+\end{enumerate}
+
+\subsection{Exercices pratiques}
+\begin{enumerate}
+    \item \textbf{Exercice 1} : Implémentation from scratch
+    \begin{itemize}
+        \item Implémenter l'algorithme en NumPy pur
+        \item Comparer avec scikit-learn
+    \end{itemize}
+
+    \item \textbf{Exercice 2} : Application sur dataset réel
+    \begin{itemize}
+        \item Charger le dataset XYZ
+        \item Appliquer l'algorithme
+        \item Analyser les résultats
+    \end{itemize}
+\end{enumerate}
+
+\textit{Solutions disponibles dans} \texttt{XX\_exercices\_solutions.ipynb}
+
+% ===== SECTION 12: POUR ALLER PLUS LOIN =====
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures Recommandées}
+\begin{itemize}
+    \item Article/Papier 1 (lien)
+    \item Livre chapitre XX
+    \item Blog post
+\end{itemize}
+
+\subsection{Ressources en Ligne}
+\begin{itemize}
+    \item Documentation scikit-learn: \url{https://scikit-learn.org/}
+    \item Tutoriel PyTorch: \url{https://pytorch.org/tutorials/}
+\end{itemize}
+
+\subsection{Prochaines Étapes}
+Chapitre suivant recommandé : \textbf{Chapitre XX+1 - Titre}
+
+% ===== BIBLIOGRAPHIE =====
+\section*{Références}
+\begin{enumerate}
+    \item Auteur A. (Année). \textit{Titre du Livre}. Éditeur.
+    \item Auteur B. et al. (Année). "Titre de l'Article". \textit{Journal}, vol(issue), pages.
+\end{enumerate}
+
+\end{document}

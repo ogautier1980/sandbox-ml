@@ -1,0 +1,39 @@
+# Fichiers LaTeX temporaires
+*.aux
+*.log
+*.toc
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Données et modèles (trop gros)
+*.h5
+*.pkl
+*.joblib
+data/raw/
+data/processed/
+models/*.pth
+models/*.pt

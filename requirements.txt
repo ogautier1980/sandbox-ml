@@ -1,0 +1,167 @@
+# ===========================================
+# Machine Learning & Deep Learning
+# ===========================================
+scikit-learn>=1.4.0
+torch>=2.2.0
+torchvision>=0.17.0
+torchaudio>=2.2.0
+tensorflow>=2.15.0
+keras>=3.0.0
+xgboost>=2.0.0
+lightgbm>=4.3.0
+catboost>=1.2.0
+
+# ===========================================
+# Data Processing & Analysis
+# ===========================================
+numpy>=1.26.0
+pandas>=2.2.0
+polars>=0.20.0
+scipy>=1.12.0
+pyarrow>=15.0.0
+fastparquet>=2024.2.0
+
+# ===========================================
+# Visualization
+# ===========================================
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.18.0
+bokeh>=3.3.0
+altair>=5.2.0
+graphviz>=0.20.0
+pydot>=2.0.0
+
+# ===========================================
+# Jupyter Environment
+# ===========================================
+jupyterlab>=4.1.0
+notebook>=7.0.0
+ipywidgets>=8.1.0
+jupyterlab-git>=0.50.0
+jupyterlab-lsp>=5.0.0
+jupyter-lsp>=2.2.0
+nbconvert>=7.14.0
+nbformat>=5.9.0
+voila>=0.5.0
+
+# ===========================================
+# ML Utilities
+# ===========================================
+optuna>=3.5.0
+mlflow>=2.10.0
+tensorboard>=2.15.0
+wandb>=0.16.0
+hyperopt>=0.2.7
+shap>=0.44.0
+lime>=0.2.0
+
+# ===========================================
+# Image Processing
+# ===========================================
+opencv-python-headless>=4.9.0
+pillow>=10.2.0
+albumentations>=1.3.0
+scikit-image>=0.22.0
+imageio>=2.34.0
+
+# ===========================================
+# NLP
+# ===========================================
+transformers>=4.37.0
+tokenizers>=0.15.0
+datasets>=2.17.0
+nltk>=3.8.0
+spacy>=3.7.0
+sentencepiece>=0.2.0
+langchain>=0.1.0
+openai>=1.10.0
+
+# ===========================================
+# PDF & Documents
+# ===========================================
+pypdf>=4.0.0
+PyPDF2>=3.0.0
+pdfplumber>=0.10.0
+pdf2image>=1.17.0
+python-docx>=1.1.0
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+python-pptx>=0.6.0
+reportlab>=4.0.0
+weasyprint>=60.0
+
+# ===========================================
+# OCR & Document Processing
+# ===========================================
+pytesseract>=0.3.10
+easyocr>=1.7.0
+pdf2docx>=0.5.0
+
+# ===========================================
+# LaTeX
+# ===========================================
+pylatex>=1.4.0
+latexcodec>=2.0.0
+
+# ===========================================
+# Data Serialization & Formats
+# ===========================================
+h5py>=3.10.0
+tables>=3.9.0
+zarr>=2.16.0
+lxml>=5.1.0
+beautifulsoup4>=4.12.0
+xmltodict>=0.13.0
+
+# ===========================================
+# Web & API
+# ===========================================
+requests>=2.31.0
+httpx>=0.26.0
+aiohttp>=3.9.0
+fastapi>=0.109.0
+uvicorn>=0.27.0
+flask>=3.0.0
+streamlit>=1.31.0
+gradio>=4.15.0
+
+# ===========================================
+# Database
+# ===========================================
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+pymongo>=4.6.0
+redis>=5.0.0
+
+# ===========================================
+# Utilities
+# ===========================================
+tqdm>=4.66.0
+pyyaml>=6.0.0
+python-dotenv>=1.0.0
+click>=8.1.0
+rich>=13.7.0
+typer>=0.9.0
+loguru>=0.7.0
+joblib>=1.3.0
+cloudpickle>=3.0.0
+dill>=0.3.0
+
+# ===========================================
+# Testing & Code Quality
+# ===========================================
+pytest>=8.0.0
+pytest-cov>=4.1.0
+black>=24.1.0
+ruff>=0.2.0
+mypy>=1.8.0
+pre-commit>=3.6.0
+
+# ===========================================
+# Profiling & Debugging
+# ===========================================
+memory-profiler>=0.61.0
+line-profiler>=4.1.0
+py-spy>=0.3.0
+snakeviz>=2.2.0

@@ -1,0 +1,978 @@
+% Chapitre 04 - Classification Supervisée
+
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% ===== UNICODE CHARACTERS SUPPORT =====
+\usepackage{newunicodechar}
+
+% Emojis et symboles
+\newunicodechar{✅}{\textcolor{green!60!black}{$\checkmark$}}
+\newunicodechar{❌}{\textcolor{red!60!black}{$\times$}}
+\newunicodechar{✓}{\textcolor{green!60!black}{$\checkmark$}}
+\newunicodechar{✗}{\textcolor{red!60!black}{$\times$}}
+\newunicodechar{⚠}{\textcolor{orange!80!black}{\textbf{/!\textbackslash}}}
+\newunicodechar{💡}{\textcolor{blue!70!black}{\textbf{(i)}}}
+\newunicodechar{🎯}{\textcolor{purple!70!black}{\textbf{$\star$}}}
+\newunicodechar{📊}{\textcolor{blue!70!black}{\textbf{[=]}}}
+
+% Étoiles (pour tableaux)
+\newunicodechar{★}{\textcolor{orange!80!black}{$\star$}}
+\newunicodechar{☆}{\textcolor{gray!50}{$\star$}}
+
+% Flèches
+\newunicodechar{→}{$\rightarrow$}
+\newunicodechar{←}{$\leftarrow$}
+\newunicodechar{↑}{$\uparrow$}
+\newunicodechar{↓}{$\downarrow$}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=green,
+    pdftitle={Chapitre 04 - Classification Supervisée},
+    pdfauthor={Cours ML},
+}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% ===== TCOLORBOX AVEC EMOJIS =====
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=⚠ Attention,
+    breakable
+}
+
+\newtcolorbox{definition}{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition,
+    breakable
+}
+
+\newtcolorbox{astuce}{
+    colback=green!5!white,
+    colframe=green!60!black,
+    fonttitle=\bfseries,
+    title=💡 Astuce,
+    breakable
+}
+
+\newtcolorbox{remarque}{
+    colback=yellow!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=💡 Remarque,
+    breakable
+}
+
+\newtcolorbox{important}{
+    colback=purple!5!white,
+    colframe=purple!75!black,
+    fonttitle=\bfseries,
+    title=⚠ Important,
+    breakable
+}
+
+\newtcolorbox{exemple}{
+    colback=gray!5!white,
+    colframe=gray!75!black,
+    fonttitle=\bfseries,
+    title=Exemple,
+    breakable
+}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 04 - Classification Supervisée}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+% ===== CONFIGURATION LISTINGS =====
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{black}
+}
+\lstset{style=pythonstyle}
+
+% ===== TCOLORBOX =====
+
+\newtcolorbox{theoreme}[1]{colback=green!5!white, colframe=green!75!black, fonttitle=\bfseries, title=Théorème: #1, breakable}
+
+
+
+
+% ===== COMMANDES =====
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\argmin}{\operatorname{argmin}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+\begin{document}
+
+% ===== TITRE =====
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+    \vspace{1cm}
+    {\LARGE Chapitre 04}\\[0.3cm]
+    {\LARGE\bfseries Classification Supervisée}\\[2cm]
+    \vfill
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Maîtriser les algorithmes de classification (KNN, arbres, SVM)
+        \item Comprendre les méthodes d'ensemble (bagging, boosting)
+        \item Implémenter et optimiser des classifieurs
+        \item Évaluer et comparer différents modèles
+    \end{itemize}}
+    \vfill
+    {\large
+    \textbf{Prérequis :} Chapitres 00, 01, 02, 03\\[0.3cm]
+    \textbf{Durée estimée :} 6-8 heures\\[0.3cm]
+    \textbf{Notebooks :} \texttt{04\_*.ipynb}}
+    \vfill
+    {\large Cours ML - Sandbox-ML\\ Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===== INTRODUCTION =====
+\section{Introduction à la Classification}
+
+\begin{definition}{Classification}
+La classification est une tâche d'apprentissage supervisé où l'objectif est de prédire une variable cible \textbf{catégorielle} $y \in \{1, 2, \ldots, K\}$ à partir de features $\vect{x} \in \R^d$.
+\end{definition}
+
+\textbf{Types de classification :}
+\begin{itemize}
+    \item \textbf{Binaire :} $K = 2$ (ex: spam/non-spam, malade/sain)
+    \item \textbf{Multi-classe :} $K > 2$ (ex: classification de chiffres 0-9, types d'animaux)
+    \item \textbf{Multi-label :} Une instance peut appartenir à plusieurs classes simultanément
+\end{itemize}
+
+\begin{exemple}{Applications}
+\begin{itemize}
+    \item \textbf{Médical :} Diagnostic de maladies (sain, malade A, malade B)
+    \item \textbf{Finance :} Détection de fraude (frauduleux/légitime), scoring crédit (bon/mauvais)
+    \item \textbf{Vision :} Classification d'images (chat, chien, oiseau, etc.)
+    \item \textbf{NLP :} Analyse de sentiment (positif/négatif/neutre), classification de documents
+\end{itemize}
+\end{exemple}
+
+\subsection{Frontière de Décision}
+
+Un classifieur apprend une \textbf{frontière de décision} qui sépare les différentes classes dans l'espace des features.
+
+\textbf{Exemples :}
+\begin{itemize}
+    \item \textbf{Linéaire :} Droite (2D), hyperplan ($d$-dimensions) - régression logistique, SVM linéaire
+    \item \textbf{Non-linéaire :} Courbes, surfaces complexes - arbres, SVM kernel, réseaux de neurones
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9]
+    % Frontière linéaire
+    \begin{scope}[xshift=0cm]
+        \node at (3, 4.5) {\textbf{Frontière Linéaire}};
+
+        % Axes
+        \draw[->] (0,0) -- (6,0) node[right] {\small $x_1$};
+        \draw[->] (0,0) -- (0,4) node[above] {\small $x_2$};
+
+        % Points classe 0 (rouge)
+        \foreach \x/\y in {0.5/0.5, 0.8/1.2, 1.2/0.8, 1.5/1.5, 0.7/2.0, 1.0/2.5, 1.8/1.2, 1.3/3.0}
+            \filldraw[red] (\x,\y) circle (3pt);
+
+        % Points classe 1 (blue)
+        \foreach \x/\y in {3.0/0.5, 3.5/1.2, 4.0/0.8, 4.5/1.8, 5.0/2.5, 3.8/2.8, 4.8/3.2, 5.2/1.5}
+            \filldraw[blue] (\x,\y) circle (3pt);
+
+        % Frontière linéaire (droite)
+        \draw[green!60!black, very thick] (2.2,0) -- (2.8,4);
+        \node[green!60!black, above right, rotate=70] at (2.5,2) {Frontière};
+
+        % Régions
+        \node[red, font=\small] at (0.8, 3.5) {Classe 0};
+        \node[blue, font=\small] at (4.5, 3.5) {Classe 1};
+
+        \node[font=\small, align=center] at (3, -0.7) {Régression logistique\\SVM linéaire};
+    \end{scope}
+
+    % Frontière non-linéaire
+    \begin{scope}[xshift=8cm]
+        \node at (3, 4.5) {\textbf{Frontière Non-Linéaire}};
+
+        % Axes
+        \draw[->] (0,0) -- (6,0) node[right] {\small $x_1$};
+        \draw[->] (0,0) -- (0,4) node[above] {\small $x_2$};
+
+        % Points classe 0 (rouge) - dispersés autour
+        \foreach \x/\y in {0.5/0.5, 5.2/0.8, 0.8/3.5, 5.0/3.2, 1.2/1.0, 4.8/2.0, 0.5/2.2, 5.3/1.5}
+            \filldraw[red] (\x,\y) circle (3pt);
+
+        % Points classe 1 (blue) - regroupés au centre
+        \foreach \x/\y in {2.5/1.5, 3.0/2.0, 2.8/2.5, 3.5/1.8, 3.2/2.8, 2.2/2.2, 3.8/2.2, 3.0/1.2}
+            \filldraw[blue] (\x,\y) circle (3pt);
+
+        % Frontière non-linéaire (ellipse approximative)
+        \draw[green!60!black, very thick, smooth] plot[domain=0:360, samples=60] ({3.0 + 1.5*cos(\x)}, {2.0 + 1.2*sin(\x)});
+
+        % Régions
+        \node[red, font=\small] at (0.8, 3.5) {Classe 0};
+        \node[blue, font=\small] at (3.0, 2.0) {Classe 1};
+
+        \node[font=\small, align=center] at (3, -0.7) {KNN, Arbres\\SVM kernel, R\'{e}seaux};
+    \end{scope}
+
+\end{tikzpicture}
+\caption{Frontières de décision: linéaire (gauche) séparant par une droite/hyperplan, et non-linéaire (droite) capturant des patterns complexes. Le choix dépend de la distribution des données.}
+\label{fig:decision_boundaries}
+\end{figure}
+
+% ===== KNN =====
+\section{K-Nearest Neighbors (KNN)}
+
+\subsection{Principe}
+
+\begin{definition}{K-Nearest Neighbors}
+KNN est un algorithme \textbf{basé sur l'instance} : pour prédire la classe d'un nouveau point $\vect{x}$, on cherche les $k$ voisins les plus proches dans le train set et on vote à la majorité.
+\end{definition}
+
+\begin{algorithm}[H]
+\caption{KNN Classification}
+\begin{algorithmic}[1]
+\REQUIRE Dataset $\{(\vect{x}_i, y_i)\}_{i=1}^n$, point de test $\vect{x}_{\text{test}}$, $k$
+\ENSURE Classe prédite $\hat{y}$
+\STATE Calculer distances : $d_i = \|\vect{x}_{\text{test}} - \vect{x}_i\|$ pour tout $i$
+\STATE Trouver les $k$ plus petites distances (k voisins)
+\STATE $\hat{y} = $ classe majoritaire parmi ces $k$ voisins
+\RETURN $\hat{y}$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Distance utilisée :} Typiquement euclidienne $L^2$, mais peut être Manhattan $L^1$, Minkowski, etc.
+
+\subsection{Hyperparamètres}
+
+\begin{itemize}
+    \item \textbf{$k$ (nombre de voisins)} :
+    \begin{itemize}
+        \item $k$ petit : Modèle complexe, sensible au bruit, overfitting
+        \item $k$ grand : Modèle simple, lisse, underfitting
+        \item Règle empirique : $k = \sqrt{n}$ ou validation croisée
+    \end{itemize}
+    \item \textbf{Métrique de distance} : Euclidienne, Manhattan, etc.
+    \item \textbf{Pondération} : Uniforme ou par distance (voisins proches pèsent plus)
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.75]
+    % k=1
+    \begin{scope}[xshift=0cm]
+        \node at (3, 5.2) {\textbf{$k=1$ (Overfitting)}};
+
+        % Axes
+        \draw[->] (0,0) -- (6,0) node[right] {\small $x_1$};
+        \draw[->] (0,0) -- (0,5) node[above] {\small $x_2$};
+
+        % Points rouges
+        \foreach \x/\y in {1/1, 1.5/2, 2/3.5, 0.8/4, 1.2/2.8, 0.5/1.5}
+            \filldraw[red] (\x,\y) circle (2.5pt);
+
+        % Points bleus
+        \foreach \x/\y in {4/1.5, 4.5/2.8, 5/1, 4.2/3.5, 5.2/4, 4.8/2.2}
+            \filldraw[blue] (\x,\y) circle (2.5pt);
+
+        % Point de test
+        \filldraw[green!60!black] (2.8,2.2) circle (4pt);
+        \node[green!60!black, above] at (2.8,2.2) {\small Test};
+
+        % Plus proche voisin (k=1)
+        \draw[green!60!black, very thick] (2.8,2.2) circle (1.05);
+        \draw[green!60!black, dashed] (2.8,2.2) -- (2,3.5);
+
+        % Frontière très irrégulière
+        \draw[orange, very thick, smooth] plot coordinates {
+            (0,0.5) (0.5,0.8) (1,1.5) (1.5,2.2) (2.2,3.0) (2.5,3.8) (2.8,4.5) (3.2,3.5) (3.8,2.8) (4.2,2.0) (5,1.5) (6,1.0)
+        };
+
+        \node[font=\small, align=center] at (3, -0.8) {Frontière complexe\\Sensible au bruit};
+    \end{scope}
+
+    % k=5
+    \begin{scope}[xshift=8cm]
+        \node at (3, 5.2) {\textbf{$k=5$ (Bon Équilibre)}};
+
+        % Axes
+        \draw[->] (0,0) -- (6,0) node[right] {\small $x_1$};
+        \draw[->] (0,0) -- (0,5) node[above] {\small $x_2$};
+
+        % Points rouges
+        \foreach \x/\y in {1/1, 1.5/2, 2/3.5, 0.8/4, 1.2/2.8, 0.5/1.5}
+            \filldraw[red] (\x,\y) circle (2.5pt);
+
+        % Points bleus
+        \foreach \x/\y in {4/1.5, 4.5/2.8, 5/1, 4.2/3.5, 5.2/4, 4.8/2.2}
+            \filldraw[blue] (\x,\y) circle (2.5pt);
+
+        % Point de test
+        \filldraw[green!60!black] (2.8,2.2) circle (4pt);
+        \node[green!60!black, above] at (2.8,2.2) {\small Test};
+
+        % 5 plus proches voisins
+        \draw[green!60!black, very thick] (2.8,2.2) circle (2.0);
+        \node[green!60!black, font=\tiny, right] at (4.5,2.8) {5 voisins};
+
+        % Frontière lissée
+        \draw[orange, very thick, smooth] plot coordinates {
+            (0,0.5) (1,1.2) (2,2.0) (2.5,2.5) (3,2.8) (3.5,2.5) (4.5,2.0) (5.5,1.2) (6,0.8)
+        };
+
+        \node[font=\small, align=center] at (3, -0.8) {Frontière liss\'{e}e\\Bon compromis};
+    \end{scope}
+
+    % k=50
+    \begin{scope}[xshift=16cm]
+        \node at (3, 5.2) {\textbf{$k=50$ (Underfitting)}};
+
+        % Axes
+        \draw[->] (0,0) -- (6,0) node[right] {\small $x_1$};
+        \draw[->] (0,0) -- (0,5) node[above] {\small $x_2$};
+
+        % Points rouges
+        \foreach \x/\y in {1/1, 1.5/2, 2/3.5, 0.8/4, 1.2/2.8, 0.5/1.5}
+            \filldraw[red] (\x,\y) circle (2.5pt);
+
+        % Points bleus
+        \foreach \x/\y in {4/1.5, 4.5/2.8, 5/1, 4.2/3.5, 5.2/4, 4.8/2.2}
+            \filldraw[blue] (\x,\y) circle (2.5pt);
+
+        % Point de test
+        \filldraw[green!60!black] (2.8,2.2) circle (4pt);
+        \node[green!60!black, above] at (2.8,2.2) {\small Test};
+
+        % Grand cercle (k=50, englobe presque tout)
+        \draw[green!60!black, very thick] (2.8,2.2) circle (3.5);
+        \node[green!60!black, font=\tiny, below right] at (5.8,3.5) {50 voisins};
+
+        % Frontière très simple (presque droite)
+        \draw[orange, very thick] (2.5,0) -- (3.2,5);
+
+        \node[font=\small, align=center] at (3, -0.8) {Frontière trop simple\\Perd les d\'{e}tails};
+    \end{scope}
+
+\end{tikzpicture}
+\caption{Impact du paramètre $k$ dans KNN: $k=1$ crée une frontière complexe qui s'adapte au bruit (overfitting), $k=5$ donne un bon équilibre, $k=50$ sur-lisse et perd les détails (underfitting).}
+\label{fig:knn_k_parameter}
+\end{figure}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Simple à comprendre et implémenter
+    \item Pas de phase d'entraînement (lazy learning)
+    \item Fonctionne bien pour frontières complexes
+    \item Naturellement multi-classe
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Coût de prédiction élevé : $O(nd)$ par prédiction
+    \item Sensible à l'échelle des features (nécessite normalisation)
+    \item Curse of dimensionality : performance dégradée en haute dimension
+    \item Nécessite beaucoup de mémoire (stocke tout le train set)
+\end{itemize}
+
+\begin{lstlisting}[caption=KNN avec scikit-learn]
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+
+# Normalisation (important pour KNN!)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# KNN
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train_scaled, y_train)
+y_pred = knn.predict(X_test_scaled)
+\end{lstlisting}
+
+% ===== ARBRES DE DÉCISION =====
+\section{Arbres de Décision}
+
+\subsection{Principe}
+
+\begin{definition}{Arbre de décision}
+Un arbre de décision partitionne récursivement l'espace des features en régions homogènes via des tests binaires sur les features.
+\end{definition}
+
+\textbf{Structure :}
+\begin{itemize}
+    \item \textbf{Nœud interne :} Test sur une feature ($x_j \leq \text{seuil}$)
+    \item \textbf{Branche :} Résultat du test (gauche: vrai, droite: faux)
+    \item \textbf{Feuille :} Prédiction finale (classe majoritaire)
+\end{itemize}
+
+\subsection{Construction de l'Arbre (CART)}
+
+L'algorithme CART (Classification and Regression Trees) construit l'arbre de manière gloutonne (greedy) :
+
+\begin{algorithm}[H]
+\caption{Construction Arbre (CART)}
+\begin{algorithmic}[1]
+\REQUIRE Dataset $D = \{(\vect{x}_i, y_i)\}$
+\STATE Si critère d'arrêt atteint : créer feuille avec classe majoritaire
+\STATE Sinon :
+\STATE \quad Trouver meilleure feature $j$ et seuil $\theta$ qui minimise impureté
+\STATE \quad Séparer $D$ en $D_{\text{left}}$ et $D_{\text{right}}$
+\STATE \quad Construire récursivement sous-arbres gauche et droit
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Mesures d'Impureté}
+
+Pour choisir le meilleur split, on minimise l'impureté.
+
+\textbf{1. Entropie (Shannon) :}
+\begin{equation}
+    H(D) = -\sum_{k=1}^K p_k \log_2(p_k)
+\end{equation}
+où $p_k$ est la proportion de la classe $k$ dans $D$.
+
+\textbf{2. Indice de Gini :}
+\begin{equation}
+    \text{Gini}(D) = 1 - \sum_{k=1}^K p_k^2
+\end{equation}
+
+\textbf{3. Misclassification Error :}
+\begin{equation}
+    \text{Error}(D) = 1 - \max_k p_k
+\end{equation}
+
+\textbf{Gain d'information :}
+\begin{equation}
+    \text{IG} = H(D) - \frac{|D_{\text{left}}|}{|D|} H(D_{\text{left}}) - \frac{|D_{\text{right}}|}{|D|} H(D_{\text{right}})
+\end{equation}
+
+On choisit le split qui maximise le gain d'information (ou minimise l'impureté).
+
+\subsection{Hyperparamètres et Régularisation}
+
+\textbf{Critères d'arrêt :}
+\begin{itemize}
+    \item \texttt{max\_depth} : Profondeur maximale de l'arbre
+    \item \texttt{min\_samples\_split} : Nombre min d'échantillons pour split
+    \item \texttt{min\_samples\_leaf} : Nombre min d'échantillons par feuille
+    \item \texttt{max\_features} : Nombre max de features considérées pour split
+\end{itemize}
+
+\textbf{Pruning (élagage) :}
+\begin{itemize}
+    \item \textbf{Pre-pruning :} Arrêter tôt la construction (via critères ci-dessus)
+    \item \textbf{Post-pruning :} Construire arbre complet puis élaguer (cost-complexity pruning)
+\end{itemize}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Très interprétables (visualisation facile)
+    \item Gèrent features numériques et catégorielles
+    \item Pas besoin de normalisation
+    \item Capturent des interactions non-linéaires
+    \item Rapides en prédiction
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Instables : petits changements dans les données $\Rightarrow$ arbre très différent
+    \item Tendance à l'overfitting
+    \item Frontières de décision orthogonales (alignées sur axes)
+    \item Biais vers features avec beaucoup de valeurs
+\end{itemize}
+
+\begin{lstlisting}[caption=Arbre de décision]
+from sklearn.tree import DecisionTreeClassifier
+
+tree = DecisionTreeClassifier(
+    max_depth=5,
+    min_samples_split=20,
+    criterion='gini'
+)
+tree.fit(X_train, y_train)
+y_pred = tree.predict(X_test)
+
+# Visualisation
+from sklearn.tree import plot_tree
+import matplotlib.pyplot as plt
+plt.figure(figsize=(20, 10))
+plot_tree(tree, filled=True, feature_names=feature_names)
+plt.show()
+\end{lstlisting}
+
+% ===== RANDOM FOREST =====
+\section{Random Forest}
+
+\subsection{Principe : Ensemble Learning}
+
+\begin{definition}{Ensemble Learning}
+Combiner plusieurs modèles faibles pour créer un modèle fort. L'idée : agréger les prédictions de multiples arbres pour réduire variance et overfitting.
+\end{definition}
+
+\subsection{Bagging (Bootstrap Aggregating)}
+
+\textbf{Algorithme :}
+\begin{enumerate}
+    \item Pour $b = 1, \ldots, B$ :
+    \begin{itemize}
+        \item Créer un échantillon bootstrap (tirage avec remise) de taille $n$
+        \item Entraîner un arbre de décision $T_b$ sur cet échantillon
+    \end{itemize}
+    \item Prédiction finale : vote majoritaire des $B$ arbres
+\end{enumerate}
+
+\textbf{Pourquoi ça marche ?}
+\begin{itemize}
+    \item Arbres individuels : haute variance (overfitting)
+    \item Moyenner $B$ arbres : réduit la variance
+    \item Les arbres sont \textbf{décorrélés} grâce au bootstrap
+\end{itemize}
+
+\subsection{Random Forest = Bagging + Randomisation}
+
+\begin{definition}{Random Forest}
+Extension du bagging avec randomisation supplémentaire :
+\begin{itemize}
+    \item \textbf{Bootstrap des instances} (comme bagging)
+    \item \textbf{Sélection aléatoire de features} : À chaque split, on considère seulement $m$ features aléatoires (typiquement $m = \sqrt{d}$)
+\end{itemize}
+\end{definition}
+
+\textbf{Bénéfice :} Décorrèle encore plus les arbres $\Rightarrow$ variance réduite.
+
+\subsection{Hyperparamètres}
+
+\begin{itemize}
+    \item \texttt{n\_estimators} : Nombre d'arbres $B$ (plus = mieux, mais diminishing returns)
+    \item \texttt{max\_features} : Nombre de features considérées par split
+    \item \texttt{max\_depth}, \texttt{min\_samples\_split}, etc. : Paramètres des arbres
+    \item \texttt{bootstrap} : Utiliser bootstrap ou non
+\end{itemize}
+
+\subsection{Out-of-Bag (OOB) Error}
+
+Chaque arbre est entraîné sur ~63\% des données (bootstrap). Les ~37\% restants (out-of-bag) servent à estimer l'erreur de généralisation sans validation set séparé.
+
+\subsection{Feature Importance}
+
+Random Forest peut calculer l'importance de chaque feature :
+\begin{itemize}
+    \item \textbf{Mean Decrease Impurity (MDI)} : Moyenne de la réduction d'impureté apportée par chaque feature
+    \item \textbf{Mean Decrease Accuracy (MDA)} : Dégradation de l'accuracy quand on permute la feature
+\end{itemize}
+
+\begin{lstlisting}[caption=Random Forest]
+from sklearn.ensemble import RandomForestClassifier
+
+rf = RandomForestClassifier(
+    n_estimators=100,
+    max_depth=10,
+    max_features='sqrt',
+    random_state=42
+)
+rf.fit(X_train, y_train)
+y_pred = rf.predict(X_test)
+
+# Feature importance
+importances = rf.feature_importances_
+indices = np.argsort(importances)[::-1]
+print("Top features:")
+for i in range(5):
+    print(f"{i+1}. {feature_names[indices[i]]}: {importances[indices[i]]:.4f}")
+\end{lstlisting}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Performances excellentes (souvent meilleures que arbre seul)
+    \item Réduction overfitting
+    \item Robuste au bruit et outliers
+    \item Feature importance automatique
+    \item Parallélisable (arbres indépendants)
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Moins interprétable qu'un arbre seul
+    \item Plus lent en prédiction (doit consulter $B$ arbres)
+    \item Nécessite plus de mémoire
+\end{itemize}
+
+% ===== GRADIENT BOOSTING =====
+\section{Gradient Boosting}
+
+\subsection{Principe : Boosting}
+
+\begin{definition}{Boosting}
+Entraîner des modèles séquentiellement, où chaque nouveau modèle se concentre sur les erreurs des modèles précédents.
+\end{definition}
+
+\textbf{Différence avec Bagging :}
+\begin{itemize}
+    \item \textbf{Bagging :} Modèles indépendants en parallèle
+    \item \textbf{Boosting :} Modèles séquentiels, chaque modèle corrige les erreurs du précédent
+\end{itemize}
+
+\subsection{Gradient Boosting (GBDT)}
+
+\textbf{Idée :} Construire un ensemble additif de modèles (arbres faibles) en minimisant une fonction de perte via descente de gradient.
+
+\begin{algorithm}[H]
+\caption{Gradient Boosting}
+\begin{algorithmic}[1]
+\REQUIRE Dataset $\{(\vect{x}_i, y_i)\}$, fonction de perte $L$, learning rate $\eta$, $M$ iterations
+\STATE Initialiser $F_0(\vect{x}) = \argmin_c \sum_{i=1}^n L(y_i, c)$
+\FOR{$m = 1$ to $M$}
+    \STATE Calculer pseudo-résidus : $r_{im} = -\frac{\partial L(y_i, F_{m-1}(\vect{x}_i))}{\partial F_{m-1}(\vect{x}_i)}$
+    \STATE Entraîner arbre $h_m$ sur $\{(\vect{x}_i, r_{im})\}$
+    \STATE Mettre à jour : $F_m(\vect{x}) = F_{m-1}(\vect{x}) + \eta h_m(\vect{x})$
+\ENDFOR
+\RETURN $F_M(\vect{x})$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Intuition :} Chaque nouvel arbre $h_m$ prédit les résidus (erreurs) du modèle actuel $F_{m-1}$, on l'ajoute avec un petit poids $\eta$.
+
+\subsection{Hyperparamètres}
+
+\begin{itemize}
+    \item \texttt{n\_estimators} : Nombre d'arbres $M$
+    \item \texttt{learning\_rate} $\eta$ : Poids de chaque arbre (trade-off avec $M$)
+    \item \texttt{max\_depth} : Profondeur des arbres (typiquement faible : 3-6)
+    \item \texttt{subsample} : Fraction de données par arbre (stochastic gradient boosting)
+    \item \texttt{min\_samples\_split}, \texttt{min\_samples\_leaf} : Régularisation
+\end{itemize}
+
+\subsection{XGBoost, LightGBM, CatBoost}
+
+Implémentations optimisées et étendues de Gradient Boosting :
+
+\textbf{XGBoost (Extreme Gradient Boosting) :}
+\begin{itemize}
+    \item Régularisation $L^1$ et $L^2$
+    \item Gestion des valeurs manquantes
+    \item Parallélisation et optimisations
+    \item Très utilisé en compétitions Kaggle
+\end{itemize}
+
+\textbf{LightGBM :}
+\begin{itemize}
+    \item Gradient-based One-Side Sampling (GOSS)
+    \item Exclusive Feature Bundling (EFB)
+    \item Très rapide et efficace en mémoire
+    \item Excellentes performances sur gros datasets
+\end{itemize}
+
+\textbf{CatBoost :}
+\begin{itemize}
+    \item Gestion native des features catégorielles
+    \item Ordered boosting (évite target leakage)
+    \item Robuste aux hyperparamètres
+\end{itemize}
+
+\begin{lstlisting}[caption=Gradient Boosting avec XGBoost]
+from xgboost import XGBClassifier
+
+xgb = XGBClassifier(
+    n_estimators=100,
+    learning_rate=0.1,
+    max_depth=5,
+    subsample=0.8,
+    random_state=42
+)
+xgb.fit(X_train, y_train)
+y_pred = xgb.predict(X_test)
+\end{lstlisting}
+
+% ===== SVM =====
+\section{Support Vector Machines (SVM)}
+
+\subsection{Principe : Maximum Margin}
+
+\begin{definition}{SVM}
+SVM cherche l'hyperplan qui sépare les classes avec la \textbf{marge maximale}. La marge est la distance entre l'hyperplan et les points les plus proches (support vectors).
+\end{definition}
+
+\textbf{Cas linéairement séparable :}
+
+L'hyperplan est défini par :
+\begin{equation}
+    \vect{w}^T \vect{x} + b = 0
+\end{equation}
+
+Prédiction : $\hat{y} = \text{sign}(\vect{w}^T \vect{x} + b)$
+
+\textbf{Objectif :} Maximiser la marge $\frac{2}{\|\vect{w}\|}$ $\Leftrightarrow$ Minimiser $\|\vect{w}\|^2$ sous contraintes.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=1.1]
+    % Axes
+    \draw[->] (0,0) -- (8,0) node[right] {$x_1$};
+    \draw[->] (0,0) -- (0,6) node[above] {$x_2$};
+
+    % Points classe -1 (rouge, cercles)
+    \foreach \x/\y in {1/1.5, 1.5/2.5, 2/1, 1.2/3.5, 2.5/2, 1.8/4, 2.2/3}
+        \draw[red, thick] (\x,\y) circle (3pt);
+
+    % Points classe +1 (bleu, croix)
+    \foreach \x/\y in {5/2, 5.5/3.5, 6/1.5, 6.5/4, 5.8/2.8, 7/2.5, 6.2/4.5}
+        \draw[blue, thick] (\x-0.15,\y-0.15) -- (\x+0.15,\y+0.15) (\x-0.15,\y+0.15) -- (\x+0.15,\y-0.15);
+
+    % Hyperplan de décision (w^T x + b = 0)
+    \draw[black, very thick] (3.5,0.5) -- (4.5,5.5) node[right, black] {$\vect{w}^T\vect{x} + b = 0$};
+
+    % Marges (w^T x + b = ±1)
+    \draw[green!60!black, thick, dashed] (2.5,0.5) -- (3.5,5.5) node[above left, green!60!black, font=\small] {$\vect{w}^T\vect{x} + b = -1$};
+    \draw[green!60!black, thick, dashed] (4.5,0.5) -- (5.5,5.5) node[above right, green!60!black, font=\small] {$\vect{w}^T\vect{x} + b = +1$};
+
+    % Support vectors (encerclés)
+    \draw[orange, very thick] (2,1) circle (5pt);
+    \draw[orange, very thick] (2.5,2) circle (5pt);
+    \draw[orange, very thick] (5,2) circle (5pt);
+    \draw[orange, very thick] (6,1.5) circle (5pt);
+
+    % Annotation support vectors
+    \node[orange, below] at (4, 0.2) {Support Vectors};
+    \draw[->, orange, thick] (4, 0.4) -- (2, 0.9);
+    \draw[->, orange, thick] (4, 0.4) -- (6, 1.4);
+
+    % Marge (double flèche)
+    \draw[<->, very thick, purple] (3.5,3) -- (4.5,3);
+    \node[purple, above, align=center] at (4,3) {Marge\\$\frac{2}{\|\vect{w}\|}$};
+
+    % Vecteur normal w
+    \draw[->, very thick, cyan] (4,2.5) -- (4.7,3.9);
+    \node[cyan, right] at (4.7,3.9) {$\vect{w}$};
+
+    % Légende
+    \node[draw, fill=white, align=left, rounded corners] at (2, 5.3) {
+        \textcolor{red}{$\circ$} Classe $-1$\\
+        \textcolor{blue}{$\times$} Classe $+1$\\
+        \textcolor{orange}{$\bigcirc$} Support vectors
+    };
+
+\end{tikzpicture}
+\caption{SVM avec marge maximale: l'hyperplan noir sépare les classes, les marges (vertes) définissent la zone, et les support vectors (orange) sont les points les plus proches qui déterminent l'hyperplan. La marge est maximisée.}
+\label{fig:svm_margin}
+\end{figure}
+
+\subsection{Formulation Mathématique}
+
+\textbf{Hard-margin SVM (séparable) :}
+\begin{equation}
+    \min_{\vect{w}, b} \frac{1}{2} \|\vect{w}\|^2 \quad \text{s.t.} \quad y_i(\vect{w}^T\vect{x}_i + b) \geq 1, \; \forall i
+\end{equation}
+
+\textbf{Soft-margin SVM (non-séparable) :}
+Introduire des variables de slack $\xi_i \geq 0$ pour permettre des erreurs :
+\begin{equation}
+    \min_{\vect{w}, b, \xi} \frac{1}{2} \|\vect{w}\|^2 + C \sum_{i=1}^n \xi_i \quad \text{s.t.} \quad y_i(\vect{w}^T\vect{x}_i + b) \geq 1 - \xi_i, \; \xi_i \geq 0
+\end{equation}
+
+\textbf{Hyperparamètre $C$ :}
+\begin{itemize}
+    \item $C$ grand : Peu d'erreurs tolérées (risque overfitting)
+    \item $C$ petit : Plus d'erreurs tolérées (underfitting)
+\end{itemize}
+
+\subsection{Kernel Trick}
+
+Pour gérer des données non-linéairement séparables, on projette les données dans un espace de dimension supérieure via une fonction $\phi(\vect{x})$.
+
+\textbf{Problème :} Calcul coûteux de $\phi(\vect{x})$ en haute dimension.
+
+\textbf{Solution : Kernel Trick}
+On n'a besoin que des produits scalaires $\phi(\vect{x})^T \phi(\vect{x}')$, qu'on calcule efficacement via un \textbf{kernel} $K(\vect{x}, \vect{x}')$.
+
+\textbf{Kernels courants :}
+\begin{itemize}
+    \item \textbf{Linéaire :} $K(\vect{x}, \vect{x}') = \vect{x}^T\vect{x}'$
+    \item \textbf{Polynomial :} $K(\vect{x}, \vect{x}') = (\gamma \vect{x}^T\vect{x}' + r)^d$
+    \item \textbf{RBF (Gaussian) :} $K(\vect{x}, \vect{x}') = \exp(-\gamma \|\vect{x} - \vect{x}'\|^2)$
+    \item \textbf{Sigmoid :} $K(\vect{x}, \vect{x}') = \tanh(\gamma \vect{x}^T\vect{x}' + r)$
+\end{itemize}
+
+Le kernel RBF est le plus populaire (frontières très flexibles).
+
+\subsection{Hyperparamètres}
+
+\begin{itemize}
+    \item \texttt{C} : Régularisation (trade-off marge vs erreurs)
+    \item \texttt{kernel} : Type de kernel
+    \item \texttt{gamma} (pour RBF) : Inverse du rayon d'influence
+    \begin{itemize}
+        \item $\gamma$ petit : Influence large, modèle simple
+        \item $\gamma$ grand : Influence locale, modèle complexe (overfitting)
+    \end{itemize}
+\end{itemize}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Efficace en haute dimension
+    \item Robuste à l'overfitting (régularisation $C$)
+    \item Versatile (différents kernels)
+    \item Bonne performance théorique
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Coût d'entraînement : $O(n^2)$ à $O(n^3)$ (mauvais pour gros datasets)
+    \item Sensible au choix de kernel et hyperparamètres
+    \item Nécessite normalisation des features
+    \item Difficile à interpréter
+\end{itemize}
+
+\begin{lstlisting}[caption=SVM]
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+
+# Normalisation importante pour SVM
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# SVM avec kernel RBF
+svm = SVC(kernel='rbf', C=1.0, gamma='scale')
+svm.fit(X_train_scaled, y_train)
+y_pred = svm.predict(X_test_scaled)
+\end{lstlisting}
+
+% ===== COMPARAISON =====
+\section{Comparaison des Algorithmes}
+
+\begin{table}[h]
+\centering
+\caption{Comparaison des algorithmes de classification}
+\small
+\begin{tabular}{lllll}
+\toprule
+\textbf{Algorithme} & \textbf{Interprétabilité} & \textbf{Vitesse} & \textbf{Performance} & \textbf{Scalabilité} \\
+\midrule
+KNN & Moyenne & Lente (test) & Bonne & Mauvaise \\
+Arbre de décision & Excellente & Rapide & Moyenne & Bonne \\
+Random Forest & Faible & Moyenne & Excellente & Bonne \\
+Gradient Boosting & Faible & Lente (train) & Excellente & Bonne \\
+SVM & Faible & Lente (train) & Bonne & Mauvaise \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{astuce}
+\textbf{Recommandations pratiques :}
+\begin{itemize}
+    \item \textbf{Baseline rapide :} KNN, arbre de décision
+    \item \textbf{Haute performance :} Random Forest, Gradient Boosting (XGBoost/LightGBM)
+    \item \textbf{Interprétabilité :} Arbre de décision peu profond
+    \item \textbf{Haute dimension :} SVM (kernel RBF)
+    \item \textbf{Gros datasets :} LightGBM, régression logistique
+\end{itemize}
+\end{astuce}
+
+% ===== RÉSUMÉ =====
+\section{Résumé}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{KNN :} Simple, basé instance, nécessite normalisation
+    \item \textbf{Arbres :} Interprétables, overfitting facile, frontières orthogonales
+    \item \textbf{Random Forest :} Bagging + randomisation, excellente performance, réduit overfitting
+    \item \textbf{Gradient Boosting :} Boosting séquentiel, état de l'art (XGBoost, LightGBM)
+    \item \textbf{SVM :} Maximum margin, kernel trick, efficace haute dimension
+    \item \textbf{Ensemble learning :} Combiner modèles améliore performance
+\end{itemize}
+
+% ===== EXERCICES =====
+\section{Exercices}
+
+\textit{Voir notebooks} \texttt{04\_exercices.ipynb}
+
+\section{Pour Aller Plus Loin}
+
+Chapitre suivant : \textbf{Chapitre 05 - Apprentissage Non-Supervisé}
+
+\section*{Références}
+
+\begin{enumerate}
+    \item Hastie, T., Tibshirani, R., \& Friedman, J. (2009). \textit{The Elements of Statistical Learning}. Springer.
+    \item James, G. et al. (2021). \textit{An Introduction to Statistical Learning} (2e éd.). Springer.
+    \item Géron, A. (2022). \textit{Hands-On Machine Learning} (3e éd.). O'Reilly.
+\end{enumerate}
+
+\end{document}

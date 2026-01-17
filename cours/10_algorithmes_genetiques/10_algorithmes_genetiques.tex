@@ -1,0 +1,398 @@
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% ===== UNICODE CHARACTERS SUPPORT =====
+\usepackage{newunicodechar}
+
+% Emojis et symboles
+\newunicodechar{✅}{\textcolor{green!60!black}{$\checkmark$}}
+\newunicodechar{❌}{\textcolor{red!60!black}{$\times$}}
+\newunicodechar{✓}{\textcolor{green!60!black}{$\checkmark$}}
+\newunicodechar{✗}{\textcolor{red!60!black}{$\times$}}
+\newunicodechar{⚠}{\textcolor{orange!80!black}{\textbf{/!\textbackslash}}}
+\newunicodechar{💡}{\textcolor{blue!70!black}{\textbf{(i)}}}
+\newunicodechar{🎯}{\textcolor{purple!70!black}{\textbf{$\star$}}}
+\newunicodechar{📊}{\textcolor{blue!70!black}{\textbf{[=]}}}
+
+% Étoiles (pour tableaux)
+\newunicodechar{★}{\textcolor{orange!80!black}{$\star$}}
+\newunicodechar{☆}{\textcolor{gray!50}{$\star$}}
+
+% Flèches
+\newunicodechar{→}{$\rightarrow$}
+\newunicodechar{←}{$\leftarrow$}
+\newunicodechar{↑}{$\uparrow$}
+\newunicodechar{↓}{$\downarrow$}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, pdftitle={Chapitre 10 - Algorithmes Génétiques}}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 10 - Algorithmes Génétiques}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    frame=single,
+}
+\lstset{style=pythonstyle}
+
+\newtcolorbox{definition}[1]{colback=blue!5!white, colframe=blue!75!black, fonttitle=\bfseries, title=Définition: #1, breakable}
+\newtcolorbox{exemple}[1]{colback=orange!5!white, colframe=orange!75!black, fonttitle=\bfseries, title=Exemple: #1, breakable}
+\newtcolorbox{astuce}{colback=yellow!10!white, colframe=yellow!75!black, fonttitle=\bfseries, title=💡 Astuce, breakable}
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+    \vspace{1cm}
+    {\LARGE Chapitre 10}\\[0.3cm]
+    {\LARGE\bfseries Algorithmes Génétiques et Optimisation Évolutionnaire}\\[2cm]
+    \vfill
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Comprendre les algorithmes génétiques (AG)
+        \item Maîtriser sélection, crossover, mutation
+        \item Appliquer les AG à des problèmes d'optimisation
+        \item Découvrir les variantes modernes
+    \end{itemize}
+    }
+    \vfill
+    {\large \textbf{Durée estimée :} 4-6 heures}
+    \vfill
+    {\large Cours ML - Sandbox-ML\\ Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+\subsection{Inspiration biologique}
+
+Les \textbf{algorithmes génétiques (AG)} s'inspirent de l'évolution naturelle :
+\begin{itemize}
+    \item \textbf{Population} : Ensemble de solutions candidates
+    \item \textbf{Fitness} : Qualité d'une solution
+    \item \textbf{Sélection} : Les meilleurs survivent
+    \item \textbf{Crossover} : Reproduction (combinaison de solutions)
+    \item \textbf{Mutation} : Variation aléatoire
+\end{itemize}
+
+\subsection{Quand utiliser les AG ?}
+
+\begin{itemize}
+    \item Espace de recherche discret, combinatoire
+    \item Fonction objectif non différentiable
+    \item Optimisation multi-objectifs
+    \item Pas de méthode analytique disponible
+\end{itemize}
+
+\section{Algorithme Génétique Standard}
+
+\subsection{Représentation}
+
+\textbf{Chromosome} : Encodage d'une solution
+
+\begin{exemple}{Encodages courants}
+\begin{itemize}
+    \item \textbf{Binaire} : $[1, 0, 1, 1, 0]$
+    \item \textbf{Réel} : $[2.5, -1.3, 0.8]$
+    \item \textbf{Permutation} : $[3, 1, 4, 2]$ (TSP)
+\end{itemize}
+\end{exemple}
+
+\subsection{Algorithme principal}
+
+\begin{algorithm}[H]
+\caption{Algorithme Génétique}
+\begin{algorithmic}[1]
+\STATE Initialiser population $P$ aléatoirement
+\STATE Évaluer fitness de chaque individu
+\WHILE{critère d'arrêt non atteint}
+    \STATE \textbf{Sélection} : Choisir parents selon fitness
+    \STATE \textbf{Crossover} : Créer enfants par recombinaison
+    \STATE \textbf{Mutation} : Appliquer mutations aléatoires
+    \STATE \textbf{Évaluation} : Calculer fitness des enfants
+    \STATE \textbf{Remplacement} : Nouvelle génération
+\ENDWHILE
+\RETURN Meilleur individu
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Opérateurs de sélection}
+
+\textbf{1. Roulette Wheel (Proportionnelle)}
+\begin{equation}
+    P(\text{sélectionner } i) = \frac{f_i}{\sum_{j=1}^N f_j}
+\end{equation}
+
+\textbf{2. Tournament Selection}
+\begin{itemize}
+    \item Choisir $k$ individus aléatoirement
+    \item Sélectionner le meilleur
+\end{itemize}
+
+\textbf{3. Rank-Based}
+\begin{itemize}
+    \item Trier par fitness
+    \item Probabilité basée sur le rang
+\end{itemize}
+
+\subsection{Crossover (Recombinaison)}
+
+\textbf{One-Point Crossover :}
+\begin{verbatim}
+Parent 1: [1 1 0 | 1 0 1]
+Parent 2: [0 1 1 | 0 1 0]
+          -------+-------
+Enfant 1: [1 1 0 | 0 1 0]
+Enfant 2: [0 1 1 | 1 0 1]
+\end{verbatim}
+
+\textbf{Uniform Crossover :}
+Chaque gène a 50\% de chance de venir de chaque parent.
+
+\textbf{Arithmetic (réels) :}
+\begin{equation}
+    \text{enfant} = \alpha \cdot \text{parent}_1 + (1-\alpha) \cdot \text{parent}_2
+\end{equation}
+
+\subsection{Mutation}
+
+\textbf{Bit Flip (binaire) :}
+\begin{equation}
+    [1, 0, 1, 0] \xrightarrow{\text{mutation}} [1, 1, 1, 0]
+\end{equation}
+
+\textbf{Gaussian (réel) :}
+\begin{equation}
+    x' = x + \mathcal{N}(0, \sigma^2)
+\end{equation}
+
+\textbf{Taux de mutation :} Typiquement $p_m = 1/L$ où $L$ est la longueur du chromosome.
+
+\section{Implémentation}
+
+\begin{lstlisting}[caption=AG simple en Python]
+import numpy as np
+
+class GeneticAlgorithm:
+    def __init__(self, fitness_func, pop_size=100, chrom_length=10,
+                 crossover_rate=0.8, mutation_rate=0.01):
+        self.fitness_func = fitness_func
+        self.pop_size = pop_size
+        self.chrom_length = chrom_length
+        self.crossover_rate = crossover_rate
+        self.mutation_rate = mutation_rate
+
+    def initialize_population(self):
+        return np.random.randint(0, 2, (self.pop_size, self.chrom_length))
+
+    def evaluate(self, population):
+        return np.array([self.fitness_func(ind) for ind in population])
+
+    def selection(self, population, fitness):
+        # Tournament selection
+        selected = []
+        for _ in range(self.pop_size):
+            i, j = np.random.choice(self.pop_size, 2, replace=False)
+            winner = i if fitness[i] > fitness[j] else j
+            selected.append(population[winner].copy())
+        return np.array(selected)
+
+    def crossover(self, parent1, parent2):
+        if np.random.rand() > self.crossover_rate:
+            return parent1.copy(), parent2.copy()
+
+        point = np.random.randint(1, self.chrom_length)
+        child1 = np.concatenate([parent1[:point], parent2[point:]])
+        child2 = np.concatenate([parent2[:point], parent1[point:]])
+        return child1, child2
+
+    def mutate(self, chromosome):
+        for i in range(len(chromosome)):
+            if np.random.rand() < self.mutation_rate:
+                chromosome[i] = 1 - chromosome[i]
+        return chromosome
+
+    def run(self, generations=100):
+        population = self.initialize_population()
+        best_fitness_history = []
+
+        for gen in range(generations):
+            fitness = self.evaluate(population)
+            best_fitness_history.append(fitness.max())
+
+            if gen % 10 == 0:
+                print(f"Gen {gen}: Best fitness = {fitness.max():.4f}")
+
+            # Selection
+            parents = self.selection(population, fitness)
+
+            # Crossover + Mutation
+            offspring = []
+            for i in range(0, self.pop_size, 2):
+                child1, child2 = self.crossover(parents[i], parents[i+1])
+                offspring.append(self.mutate(child1))
+                offspring.append(self.mutate(child2))
+
+            population = np.array(offspring[:self.pop_size])
+
+        # Résultat final
+        final_fitness = self.evaluate(population)
+        best_idx = final_fitness.argmax()
+        return population[best_idx], final_fitness[best_idx], best_fitness_history
+
+# Exemple : Maximiser nombre de 1
+def fitness(chromosome):
+    return chromosome.sum()
+
+ga = GeneticAlgorithm(fitness, pop_size=50, chrom_length=20)
+best, best_fit, history = ga.run(generations=50)
+print(f"\nMeilleure solution: {best}")
+print(f"Fitness: {best_fit}")
+\end{lstlisting}
+
+\section{Applications}
+
+\subsection{Problème du voyageur de commerce (TSP)}
+
+Trouver le chemin le plus court visitant toutes les villes.
+
+\begin{itemize}
+    \item \textbf{Chromosome} : Permutation des villes
+    \item \textbf{Fitness} : $1 / \text{distance totale}$
+    \item \textbf{Crossover} : Order Crossover (OX)
+    \item \textbf{Mutation} : Swap, Inversion
+\end{itemize}
+
+\subsection{Optimisation de fonctions}
+
+Minimiser $f(x_1, x_2) = x_1^2 + x_2^2 - 10\cos(2\pi x_1) - 10\cos(2\pi x_2)$ (Rastrigin)
+
+\subsection{Hyperparameter Tuning}
+
+Optimiser hyperparamètres d'un ML model (alternative à Grid/Random Search).
+
+\subsection{Neuroévolution}
+
+Optimiser poids et architecture de réseaux de neurones.
+
+\section{Variantes modernes}
+
+\subsection{CMA-ES (Covariance Matrix Adaptation)}
+
+Algorithme évolutionnaire pour optimisation continue, très performant.
+
+\subsection{NSGA-II (Non-dominated Sorting GA)}
+
+Pour optimisation multi-objectifs (Pareto-optimal).
+
+\subsection{Differential Evolution}
+
+Mutation basée sur différences entre individus :
+\begin{equation}
+    \vect{v} = \vect{x}_r + F(\vect{x}_a - \vect{x}_b)
+\end{equation}
+
+\section{Résumé}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item AG = Métaheuristique inspirée de l'évolution
+    \item Opérateurs : Sélection, Crossover, Mutation
+    \item Bon pour optimisation combinatoire, non différentiable
+    \item Variantes : CMA-ES, NSGA-II, Differential Evolution
+\end{itemize}
+
+\subsection{Avantages et Limites}
+
+\textbf{Avantages :}
+\begin{itemize}
+    \item Pas besoin de gradient
+    \item Exploration globale
+    \item Flexible (encodages variés)
+\end{itemize}
+
+\textbf{Limites :}
+\begin{itemize}
+    \item Pas de garantie de convergence
+    \item Lent comparé à méthodes gradient
+    \item Nombreux hyperparamètres
+\end{itemize}
+
+\section{Pour Aller Plus Loin}
+
+\subsection{Bibliothèques Python}
+\begin{itemize}
+    \item DEAP : Framework AG complet
+    \item PyGAD : Simple et pédagogique
+    \item Optuna : Hyperparameter tuning
+\end{itemize}
+
+\subsection{Lectures}
+\begin{itemize}
+    \item Goldberg - \textit{Genetic Algorithms in Search, Optimization and Machine Learning}
+    \item Eiben \& Smith - \textit{Introduction to Evolutionary Computing}
+\end{itemize}
+
+\section{Notebooks Pratiques}
+
+Ce chapitre est accompagné des notebooks suivants :
+
+\begin{itemize}
+    \item \texttt{10\_demo\_ag\_base.ipynb} : Introduction aux algorithmes génétiques
+    \begin{itemize}
+        \item Implémentation AG from scratch
+        \item Optimisation de fonctions mathématiques
+        \item Résolution du problème du voyageur de commerce (TSP)
+        \item Visualisation de l'évolution des populations
+    \end{itemize}
+
+    \item \texttt{10\_demo\_applications.ipynb} : Applications pratiques des AG
+    \begin{itemize}
+        \item Hyperparameter tuning avec AG
+        \item Feature selection
+        \item Comparaison avec Grid Search et Random Search
+        \item Cas d'usage sur datasets réels
+    \end{itemize}
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,516 @@
+\documentclass[11pt,a4paper]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% ===== UNICODE CHARACTERS SUPPORT =====
+\usepackage{newunicodechar}
+
+% Emojis et symboles
+\newunicodechar{✅}{\textcolor{green!60!black}{$\checkmark$}}
+\newunicodechar{❌}{\textcolor{red!60!black}{$\times$}}
+\newunicodechar{✓}{\textcolor{green!60!black}{$\checkmark$}}
+\newunicodechar{✗}{\textcolor{red!60!black}{$\times$}}
+\newunicodechar{⚠}{\textcolor{orange!80!black}{\textbf{/!\textbackslash}}}
+\newunicodechar{💡}{\textcolor{blue!70!black}{\textbf{(i)}}}
+\newunicodechar{🎯}{\textcolor{purple!70!black}{\textbf{$\star$}}}
+\newunicodechar{📊}{\textcolor{blue!70!black}{\textbf{[=]}}}
+
+% Étoiles (pour tableaux)
+\newunicodechar{★}{\textcolor{orange!80!black}{$\star$}}
+\newunicodechar{☆}{\textcolor{gray!50}{$\star$}}
+
+% Flèches
+\newunicodechar{→}{$\rightarrow$}
+\newunicodechar{←}{$\leftarrow$}
+\newunicodechar{↑}{$\uparrow$}
+\newunicodechar{↓}{$\downarrow$}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    pdftitle={Chapitre 09 - Reinforcement Learning},
+}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+% ===== TCOLORBOX AVEC EMOJIS =====
+\newtcolorbox{attention}{
+    colback=red!5!white,
+    colframe=red!75!black,
+    fonttitle=\bfseries,
+    title=⚠ Attention,
+    breakable
+}
+
+\newtcolorbox{definition}{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=Définition,
+    breakable
+}
+
+\newtcolorbox{astuce}{
+    colback=green!5!white,
+    colframe=green!60!black,
+    fonttitle=\bfseries,
+    title=💡 Astuce,
+    breakable
+}
+
+\newtcolorbox{remarque}{
+    colback=yellow!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=💡 Remarque,
+    breakable
+}
+
+\newtcolorbox{important}{
+    colback=purple!5!white,
+    colframe=purple!75!black,
+    fonttitle=\bfseries,
+    title=⚠ Important,
+    breakable
+}
+
+\newtcolorbox{exemple}{
+    colback=gray!5!white,
+    colframe=gray!75!black,
+    fonttitle=\bfseries,
+    title=Exemple,
+    breakable
+}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Chapitre 09 - Reinforcement Learning}
+\fancyhead[R]{\small Cours Machine Learning}
+\fancyfoot[C]{\thepage}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    frame=single,
+}
+\lstset{style=pythonstyle}
+
+
+
+
+
+
+
+
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\argmax}{\operatorname{argmax}}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\bfseries Cours Machine Learning}\\[0.5cm]
+    \vspace{1cm}
+    {\LARGE Chapitre 09}\\[0.3cm]
+    {\LARGE\bfseries Reinforcement Learning}\\[2cm]
+    \vfill
+    {\large
+    \textbf{Objectifs d'apprentissage :}\\[0.5cm]
+    \begin{itemize}
+        \item Comprendre le paradigme du Reinforcement Learning
+        \item Maîtriser Q-Learning et Deep Q-Network (DQN)
+        \item Découvrir Policy Gradient et Actor-Critic
+        \item Appliquer le RL à des environnements pratiques
+    \end{itemize}
+    }
+    \vfill
+    {\large
+    \textbf{Prérequis :} Chapitres 06 (MLP)\\[0.3cm]
+    \textbf{Durée estimée :} 6-8 heures
+    }
+    \vfill
+    {\large Cours ML - Sandbox-ML\\ Version 1.0 - 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Introduction au Reinforcement Learning}
+
+\subsection{Paradigme RL vs Supervised Learning}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+ & \textbf{Supervised Learning} & \textbf{Reinforcement Learning} \\
+\midrule
+Données & Labels explicites & Récompenses différées \\
+Feedback & Immédiat & Delayed \\
+Objectif & Prédire $y$ depuis $x$ & Maximiser récompense cumulative \\
+Exemples & Classification, Régression & Jeux, Robotique \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Composants du RL}
+
+\begin{definition}{Markov Decision Process (MDP)}
+Un MDP est défini par $(S, A, P, R, \gamma)$ :
+\begin{itemize}
+    \item $S$ : États (states)
+    \item $A$ : Actions
+    \item $P(s' | s, a)$ : Probabilités de transition
+    \item $R(s, a, s')$ : Fonction de récompense
+    \item $\gamma \in [0, 1]$ : Facteur de discount
+\end{itemize}
+\end{definition}
+
+\textbf{Objectif :} Apprendre une \textbf{policy} $\pi(a|s)$ qui maximise la récompense cumulative :
+\begin{equation}
+    G_t = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}
+\end{equation}
+
+\section{Q-Learning}
+
+\subsection{Q-Function}
+
+\begin{definition}{Q-Function}
+La Q-function représente la récompense cumulative attendue en prenant l'action $a$ dans l'état $s$ puis en suivant la policy $\pi$ :
+\begin{equation}
+    Q^\pi(s, a) = \E_\pi \left[ \sum_{k=0}^{\infty} \gamma^k R_{t+k+1} \mid S_t = s, A_t = a \right]
+\end{equation}
+\end{definition}
+
+\textbf{Équation de Bellman :}
+\begin{equation}
+    Q(s, a) = R(s, a) + \gamma \max_{a'} Q(s', a')
+\end{equation}
+
+\subsection{Algorithme Q-Learning}
+
+\begin{algorithm}[H]
+\caption{Q-Learning}
+\begin{algorithmic}[1]
+\REQUIRE Environnement, learning rate $\alpha$, discount $\gamma$, exploration $\epsilon$
+\STATE Initialiser $Q(s, a) = 0$ pour tout $s, a$
+\FOR{chaque episode}
+    \STATE Initialiser état $s$
+    \REPEAT
+        \STATE Choisir action $a$ : $\epsilon$-greedy sur $Q(s, \cdot)$
+        \STATE Exécuter $a$, observer $r, s'$
+        \STATE $Q(s, a) \leftarrow Q(s, a) + \alpha [r + \gamma \max_{a'} Q(s', a') - Q(s, a)]$
+        \STATE $s \leftarrow s'$
+    \UNTIL{$s$ terminal}
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Implémentation}
+
+\begin{lstlisting}[caption=Q-Learning simple]
+import numpy as np
+
+class QLearning:
+    def __init__(self, n_states, n_actions, alpha=0.1, gamma=0.99, epsilon=0.1):
+        self.Q = np.zeros((n_states, n_actions))
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+
+    def choose_action(self, state):
+        if np.random.rand() < self.epsilon:
+            return np.random.randint(self.Q.shape[1])  # Explore
+        return np.argmax(self.Q[state])  # Exploit
+
+    def update(self, state, action, reward, next_state):
+        target = reward + self.gamma * np.max(self.Q[next_state])
+        self.Q[state, action] += self.alpha * (target - self.Q[state, action])
+\end{lstlisting}
+
+\section{Deep Q-Network (DQN)}
+
+\subsection{Motivation}
+
+Pour des espaces d'états larges/continus (images), stocker $Q(s, a)$ dans une table devient impossible. Solution : approximer $Q$ avec un réseau de neurones.
+
+\subsection{Innovations DQN}
+
+\begin{enumerate}
+    \item \textbf{Experience Replay} : Stocker transitions dans buffer, échantillonner mini-batches
+    \item \textbf{Target Network} : Réseau cible gelé pour stabiliser l'entraînement
+\end{enumerate}
+
+\subsection{Algorithme}
+
+\begin{algorithm}[H]
+\caption{Deep Q-Network (DQN)}
+\begin{algorithmic}[1]
+\STATE Initialiser réseau $Q(s, a; \theta)$ et réseau cible $Q(s, a; \theta^-)$
+\STATE Initialiser replay buffer $D$
+\FOR{chaque episode}
+    \STATE Initialiser état $s_1$
+    \FOR{$t = 1, \ldots, T$}
+        \STATE $a_t = \epsilon$-greedy($s_t$)
+        \STATE Exécuter $a_t$, observer $r_t, s_{t+1}$
+        \STATE Stocker $(s_t, a_t, r_t, s_{t+1})$ dans $D$
+        \STATE Échantillonner mini-batch de $D$
+        \STATE Calculer target : $y = r + \gamma \max_{a'} Q(s', a'; \theta^-)$
+        \STATE Gradient descent sur $(y - Q(s, a; \theta))^2$
+        \STATE Mettre à jour $\theta^-$ périodiquement
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Implémentation PyTorch}
+
+\begin{lstlisting}[caption=DQN avec PyTorch]
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import random
+from collections import deque
+
+class DQN(nn.Module):
+    def __init__(self, state_dim, action_dim, hidden_dim=128):
+        super(DQN, self).__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim)
+        )
+
+    def forward(self, x):
+        return self.fc(x)
+
+class ReplayBuffer:
+    def __init__(self, capacity=10000):
+        self.buffer = deque(maxlen=capacity)
+
+    def push(self, state, action, reward, next_state, done):
+        self.buffer.append((state, action, reward, next_state, done))
+
+    def sample(self, batch_size):
+        return random.sample(self.buffer, batch_size)
+
+    def __len__(self):
+        return len(self.buffer)
+
+class DQNAgent:
+    def __init__(self, state_dim, action_dim):
+        self.policy_net = DQN(state_dim, action_dim)
+        self.target_net = DQN(state_dim, action_dim)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-3)
+        self.memory = ReplayBuffer()
+        self.gamma = 0.99
+        self.epsilon = 1.0
+        self.epsilon_decay = 0.995
+        self.epsilon_min = 0.01
+
+    def select_action(self, state):
+        if random.random() < self.epsilon:
+            return random.randint(0, self.policy_net.fc[-1].out_features - 1)
+
+        with torch.no_grad():
+            state_tensor = torch.FloatTensor(state).unsqueeze(0)
+            q_values = self.policy_net(state_tensor)
+            return q_values.argmax().item()
+
+    def train(self, batch_size=64):
+        if len(self.memory) < batch_size:
+            return
+
+        batch = self.memory.sample(batch_size)
+        states, actions, rewards, next_states, dones = zip(*batch)
+
+        states = torch.FloatTensor(states)
+        actions = torch.LongTensor(actions)
+        rewards = torch.FloatTensor(rewards)
+        next_states = torch.FloatTensor(next_states)
+        dones = torch.FloatTensor(dones)
+
+        # Q(s, a)
+        q_values = self.policy_net(states).gather(1, actions.unsqueeze(1))
+
+        # Target: r + gamma * max Q(s', a')
+        with torch.no_grad():
+            next_q_values = self.target_net(next_states).max(1)[0]
+            targets = rewards + self.gamma * next_q_values * (1 - dones)
+
+        # Loss et backprop
+        loss = nn.MSELoss()(q_values.squeeze(), targets)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        # Decay epsilon
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+    def update_target_network(self):
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+\end{lstlisting}
+
+\section{Policy Gradient}
+
+\subsection{Policy directe}
+
+Au lieu d'apprendre $Q$ puis dériver policy, apprendre directement $\pi_\theta(a | s)$.
+
+\begin{definition}{Policy Gradient Theorem}
+Le gradient de l'objectif $J(\theta) = \E_\pi [G_t]$ est :
+\begin{equation}
+    \nabla_\theta J(\theta) = \E_\pi [\nabla_\theta \log \pi_\theta(a|s) \cdot G_t]
+\end{equation}
+\end{definition}
+
+\subsection{REINFORCE}
+
+\begin{algorithm}[H]
+\caption{REINFORCE}
+\begin{algorithmic}[1]
+\STATE Initialiser policy network $\pi_\theta$
+\FOR{chaque episode}
+    \STATE Générer épisode $\{s_1, a_1, r_1, \ldots, s_T, a_T, r_T\}$ en suivant $\pi_\theta$
+    \FOR{$t = 1, \ldots, T$}
+        \STATE $G_t \leftarrow \sum_{k=t}^T \gamma^{k-t} r_k$
+        \STATE $\theta \leftarrow \theta + \alpha \nabla_\theta \log \pi_\theta(a_t | s_t) \cdot G_t$
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\section{Actor-Critic}
+
+Combiner policy gradient (actor) et value function (critic).
+
+\begin{itemize}
+    \item \textbf{Actor} : Policy $\pi_\theta(a|s)$
+    \item \textbf{Critic} : Value function $V_\phi(s)$
+\end{itemize}
+
+\textbf{Advantage :}
+\begin{equation}
+    A(s, a) = Q(s, a) - V(s) \approx r + \gamma V(s') - V(s)
+\end{equation}
+
+\subsection{A3C (Asynchronous Advantage Actor-Critic)}
+
+Version parallélisée avec plusieurs agents explorant en parallèle.
+
+\section{Applications}
+
+\begin{exemple}{Domaines d'application}
+\begin{itemize}
+    \item \textbf{Jeux} : AlphaGo, Atari (DQN), Dota 2, StarCraft
+    \item \textbf{Robotique} : Manipulation d'objets, locomotion
+    \item \textbf{Recommandation} : Systèmes adaptatifs
+    \item \textbf{Finance} : Trading algorithmique
+    \item \textbf{Ressources} : Optimisation énergétique, data centers
+\end{itemize}
+\end{exemple}
+
+\section{Résumé}
+
+\subsection{Points Clés}
+
+\begin{itemize}
+    \item \textbf{MDP} : États, actions, récompenses, transitions
+    \item \textbf{Q-Learning} : Apprentissage de $Q(s, a)$ par équation de Bellman
+    \item \textbf{DQN} : Approximation neuronale + replay buffer + target network
+    \item \textbf{Policy Gradient} : Optimisation directe de la policy
+    \item \textbf{Actor-Critic} : Combinaison policy + value function
+\end{itemize}
+
+\subsection{Formules Essentielles}
+
+\begin{tcolorbox}[colback=blue!5!white, colframe=blue!75!black, title=Formules à retenir]
+\textbf{Q-Learning Update :}
+\begin{equation*}
+    Q(s, a) \leftarrow Q(s, a) + \alpha [r + \gamma \max_{a'} Q(s', a') - Q(s, a)]
+\end{equation*}
+
+\textbf{Policy Gradient :}
+\begin{equation*}
+    \nabla_\theta J(\theta) = \E_\pi [\nabla_\theta \log \pi_\theta(a|s) \cdot G_t]
+\end{equation*}
+\end{tcolorbox}
+
+\section{Pour Aller Plus Loin}
+
+\subsection{Lectures}
+\begin{itemize}
+    \item Sutton \& Barto - \textit{Reinforcement Learning: An Introduction}
+    \item Mnih et al. (2015) - "Human-level control through deep RL" (DQN)
+    \item Silver et al. (2016) - "Mastering the game of Go with deep neural networks" (AlphaGo)
+\end{itemize}
+
+\subsection{Environnements}
+\begin{itemize}
+    \item OpenAI Gym : \texttt{gym.openai.com}
+    \item Stable Baselines3 : Implémentations RL
+\end{itemize}
+
+\section{Notebooks Pratiques}
+
+Ce chapitre est accompagné des notebooks suivants :
+
+\begin{itemize}
+    \item \texttt{09\_demo\_qlearning.ipynb} : Implémentation de Q-Learning sur FrozenLake
+    \begin{itemize}
+        \item Algorithme Q-Learning from scratch
+        \item Environnement OpenAI Gym FrozenLake
+        \item Construction et visualisation de la Q-table
+        \item Analyse de la convergence
+    \end{itemize}
+
+    \item \texttt{09\_demo\_dqn.ipynb} : Deep Q-Network (DQN) sur CartPole
+    \begin{itemize}
+        \item Architecture DQN avec PyTorch
+        \item Experience Replay et Target Network
+        \item Entraînement et évaluation
+        \item Visualisation des performances
+    \end{itemize}
+\end{itemize}
+
+\end{document}
