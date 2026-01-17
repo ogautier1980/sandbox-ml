@@ -376,15 +376,18 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
   - Fix tcolorbox avec emojis dans titres
   - Suppression redéfinition \tanh (Ch08)
   - Fix float placement (Ch02): suppression environnements `table` dans tcolorbox
-- **Correction diagramme Ch02:**
-  - Fix superposition labels dans courbe Precision-Recall
-  - Repositionnement labels: "Excellent modèle", "Bon modèle", "Seuil optimal"
-  - Réduction taille police à `\scriptsize` pour clarté
+- **Correction superposition labels dans diagrammes TikZ:**
+  - Audit complet: 16 diagrammes avec potentiel chevauchement identifiés
+  - Ch01: Produit scalaire (ligne 384) - séparation labels vecteurs u, v, projection
+  - Ch02: Courbe ROC (ligne 535) - repositionnement 5 labels avec coordonnées explicites
+  - Ch02: Courbe Precision-Recall (ligne 625) - repositionnement 4 labels
+  - Technique: Séparation `\draw` et `\node`, utilisation `at (x,y)`, police `\scriptsize`
+  - Autres diagrammes (Ch03, Ch04): déjà bien structurés, pas de modification nécessaire
 - **Git Repository:**
   - Re-création .git après suppression accidentelle
-  - Commit complet: 32 diagrammes + corrections + nettoyage
+  - 3 commits: corrections Unicode, Ch02 PR/ROC, Ch01 produit scalaire
   - Push réussi vers https://github.com/ogautier1980/sandbox-ml.git
-- **Résultat:** 338 pages, 7.51 MB, 13/16 chapitres 0 erreurs
+- **Résultat:** 338 pages, 7.51 MB, 13/16 chapitres 0 erreurs, 3 diagrammes corrigés
 
 **2026-01-17** - Corrections PDFs cours
 - Fix liens Colab dans 45 notebooks (XX_CHAPTER → vrais chemins)
