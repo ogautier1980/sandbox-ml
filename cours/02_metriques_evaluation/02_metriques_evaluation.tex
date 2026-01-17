@@ -331,7 +331,7 @@ Sur 1000 emails analysés :
     \item TN = 810 : emails légitimes correctement classés
 \end{itemize}
 
-\begin{table}
+\vspace{0.3cm}
 \centering
 \begin{tabular}{cc|cc|c}
 \toprule
@@ -345,7 +345,7 @@ Sur 1000 emails analysés :
 & Total & 170 & 830 & 1000 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\vspace{0.3cm}
 \end{exemple}
 
 \subsection{Accuracy (Exactitude)}
@@ -637,25 +637,27 @@ La \textbf{courbe Precision-Recall} trace la precision en fonction du recall pou
         \draw (0.05,\y) -- (-0.05,\y) node[left] {\pgfmathparse{\y/5}\pgfmathprintnumber[precision=1]{\pgfmathresult}};
 
     % Ligne baseline (classifieur naïf pour classes déséquilibrées 10%)
-    \draw[dashed, gray, thick] (0,0.5) -- (5,0.5) node[right, black] {Baseline (10\% positifs)};
+    \draw[dashed, gray, thick] (0,0.5) -- (5,0.5);
+    \node[black, font=\scriptsize] at (3.8, 0.25) {Baseline (10\% positifs)};
 
     % Courbe PR - Modèle médiocre
     \draw[orange, thick, smooth]
-        plot coordinates {(0,5) (1,3.5) (2,2.0) (3,1.2) (4,0.8) (5,0.5)}
-        node[below right, black] {Modèle faible};
+        plot coordinates {(0,5) (1,3.5) (2,2.0) (3,1.2) (4,0.8) (5,0.5)};
+    \node[black, font=\scriptsize] at (4.5, 0.8) {Modèle faible};
 
     % Courbe PR - Bon modèle
     \draw[blue, very thick, smooth]
-        plot coordinates {(0,5) (1,4.8) (2,4.5) (3,4.0) (4,3.2) (5,1.5)}
-        node[right, black] {Bon modèle};
+        plot coordinates {(0,5) (1,4.8) (2,4.5) (3,4.0) (4,3.2) (5,1.5)};
+    \node[black, font=\scriptsize] at (4.3, 2.0) {Bon modèle};
 
     % Courbe PR - Excellent modèle
     \draw[green!60!black, very thick, smooth]
-        plot coordinates {(0,5) (1,5) (2,4.95) (3,4.9) (4,4.8) (5,4.5)}
-        node[above, black] {Excellent modèle};
+        plot coordinates {(0,5) (1,5) (2,4.95) (3,4.9) (4,4.8) (5,4.5)};
+    \node[black, font=\scriptsize] at (3.5, 5.2) {Excellent modèle};
 
     % Point optimal
-    \filldraw[red] (3,4.9) circle (2pt) node[below right, black] {Seuil optimal};
+    \filldraw[red] (3,4.9) circle (2pt);
+    \node[black, font=\scriptsize, above right] at (3,4.9) {Seuil optimal};
 
     % Zone AUC-PR
     \fill[blue!10, opacity=0.3]
@@ -663,7 +665,8 @@ La \textbf{courbe Precision-Recall} trace la precision en fonction du recall pou
         -- (5,0) -- (0,0) -- cycle;
 
     % Point parfait
-    \filldraw[green!60!black] (5,5) circle (2pt) node[below left, black] {Parfait (1, 1)};
+    \filldraw[green!60!black] (5,5) circle (2pt);
+    \node[black, font=\scriptsize, below left] at (5,5) {Parfait (1, 1)};
 
 \end{tikzpicture}
 \caption{Courbe Precision-Recall: particulièrement utile pour les classes déséquilibrées. Contrairement à la courbe ROC, elle ignore les vrais négatifs (TN) et se concentre sur la détection des positifs.}
@@ -708,9 +711,8 @@ Pour les problèmes de classification à plus de 2 classes, on peut calculer les
 \end{definition}
 
 \begin{exemple}{Classification d'images (3 classes)}
-\begin{table}
+\vspace{0.3cm}
 \centering
-\caption{Résultats par classe}
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Classe} & \textbf{Support} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
@@ -723,7 +725,7 @@ Oiseau & 20 & 0.70 & 0.60 & 0.65 \\
 \textbf{Weighted avg} & 220 & 0.87 & 0.85 & 0.86 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\vspace{0.3cm}
 
 \textbf{Analyse :}
 \begin{itemize}

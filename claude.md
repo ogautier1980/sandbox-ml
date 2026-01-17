@@ -369,6 +369,23 @@ docker exec ml-sandbox bash -c "cd /workspace/cours/XX_chapitre && xelatex -inte
 - Déplacement SOLUTIONS_SUMMARY.md → docs/
 - **Résultat:** Racine propre (2 fichiers: claude.md, requirements.txt), scripts/ minimal (4 fichiers essentiels)
 
+**2026-01-17** - Corrections LaTeX et Push GitHub (COMPLÉTÉ) ✅
+- **Corrections Unicode et LaTeX:**
+  - Ajout package `newunicodechar` aux 16 fichiers .tex
+  - Support emojis (✅❌⚠💡), étoiles (★☆), flèches (→←), symboles (●◆)
+  - Fix tcolorbox avec emojis dans titres
+  - Suppression redéfinition \tanh (Ch08)
+  - Fix float placement (Ch02): suppression environnements `table` dans tcolorbox
+- **Correction diagramme Ch02:**
+  - Fix superposition labels dans courbe Precision-Recall
+  - Repositionnement labels: "Excellent modèle", "Bon modèle", "Seuil optimal"
+  - Réduction taille police à `\scriptsize` pour clarté
+- **Git Repository:**
+  - Re-création .git après suppression accidentelle
+  - Commit complet: 32 diagrammes + corrections + nettoyage
+  - Push réussi vers https://github.com/ogautier1980/sandbox-ml.git
+- **Résultat:** 338 pages, 7.51 MB, 13/16 chapitres 0 erreurs
+
 **2026-01-17** - Corrections PDFs cours
 - Fix liens Colab dans 45 notebooks (XX_CHAPTER → vrais chemins)
 - Fix diagrammes TikZ, tableaux trop étroits, numérotation redondante
