@@ -548,23 +548,17 @@ La courbe ROC trace TPR vs FPR pour tous les seuils possibles (0 à 1).
 
     % Ligne diagonale (classifieur aléatoire)
     \draw[dashed, gray, thick] (0,0) -- (5,5);
-    \node[black, font=\scriptsize] at (4.0, 4.5) {Aléatoire};
-    \node[black, font=\scriptsize] at (4.0, 4.1) {(AUC=0.5)};
 
     % Courbe ROC - Bon modèle
     \draw[blue, very thick, smooth]
         plot coordinates {(0,0) (0.2,1.5) (0.4,2.5) (0.6,3.5) (0.8,4.0) (1.2,4.5) (2.0,4.8) (5,5)};
-    \node[black, font=\scriptsize] at (3.0, 5.2) {Bon modèle};
-    \node[black, font=\scriptsize] at (3.0, 4.85) {(AUC=0.85)};
 
     % Courbe ROC - Excellent modèle
     \draw[green!60!black, very thick, smooth]
         plot coordinates {(0,0) (0.1,2.5) (0.15,3.5) (0.25,4.2) (0.4,4.6) (0.6,4.85) (1.5,4.95) (5,5)};
-    \node[black, font=\scriptsize, align=center] at (1.2, 5.35) {Excellent modèle\\(AUC=0.95)};
 
     % Point optimal
     \filldraw[red] (0.15,3.5) circle (2pt);
-    \node[black, font=\scriptsize, right] at (0.35,3.5) {Seuil optimal};
 
     % Zone AUC (aire sous la courbe)
     \fill[blue!10, opacity=0.3]
@@ -573,8 +567,22 @@ La courbe ROC trace TPR vs FPR pour tous les seuils possibles (0 à 1).
 
     % Point parfait
     \filldraw[green!60!black] (0,5) circle (2pt);
-    \node[black, font=\scriptsize, right] at (0.2,5) {Classifieur};
-    \node[black, font=\scriptsize, right] at (0.2,4.7) {parfait (0, 1)};
+
+    % Labels - positionnés à droite avec flèches
+    \node[black, font=\scriptsize, align=left] at (7.2, 4.8) {Excellent modèle\\(AUC=0.95)};
+    \draw[->, thin, gray] (6.5, 4.8) -- (1.0, 4.95);
+
+    \node[black, font=\scriptsize, align=left] at (7.2, 4.0) {Bon modèle\\(AUC=0.85)};
+    \draw[->, thin, gray] (6.5, 4.0) -- (2.5, 4.85);
+
+    \node[black, font=\scriptsize, align=left] at (7.2, 3.2) {Aléatoire\\(AUC=0.5)};
+    \draw[->, thin, gray] (6.5, 3.2) -- (4.0, 4.0);
+
+    \node[black, font=\scriptsize] at (7.2, 5.4) {Parfait (0, 1)};
+    \draw[->, thin, gray] (6.9, 5.3) -- (0.3, 5);
+
+    \node[black, font=\scriptsize] at (7.2, 2.4) {Seuil optimal};
+    \draw[->, thin, gray] (6.9, 2.4) -- (0.4, 3.5);
 
 \end{tikzpicture}
 \caption{Courbe ROC: comparaison de différents modèles. Plus la courbe s'approche du coin supérieur gauche, meilleur est le modèle. L'AUC (aire sous la courbe) quantifie cette performance.}
@@ -644,26 +652,21 @@ La \textbf{courbe Precision-Recall} trace la precision en fonction du recall pou
 
     % Ligne baseline (classifieur naïf pour classes déséquilibrées 10%)
     \draw[dashed, gray, thick] (0,0.5) -- (5,0.5);
-    \node[black, font=\scriptsize] at (3.8, 0.25) {Baseline (10\% positifs)};
 
     % Courbe PR - Modèle médiocre
     \draw[orange, thick, smooth]
         plot coordinates {(0,5) (1,3.5) (2,2.0) (3,1.2) (4,0.8) (5,0.5)};
-    \node[black, font=\scriptsize] at (4.5, 0.8) {Modèle faible};
 
     % Courbe PR - Bon modèle
     \draw[blue, very thick, smooth]
         plot coordinates {(0,5) (1,4.8) (2,4.5) (3,4.0) (4,3.2) (5,1.5)};
-    \node[black, font=\scriptsize] at (4.3, 2.0) {Bon modèle};
 
     % Courbe PR - Excellent modèle
     \draw[green!60!black, very thick, smooth]
         plot coordinates {(0,5) (1,5) (2,4.95) (3,4.9) (4,4.8) (5,4.5)};
-    \node[black, font=\scriptsize] at (3.5, 5.2) {Excellent modèle};
 
     % Point optimal
     \filldraw[red] (3,4.9) circle (2pt);
-    \node[black, font=\scriptsize, above right] at (3,4.9) {Seuil optimal};
 
     % Zone AUC-PR
     \fill[blue!10, opacity=0.3]
@@ -672,7 +675,25 @@ La \textbf{courbe Precision-Recall} trace la precision en fonction du recall pou
 
     % Point parfait
     \filldraw[green!60!black] (5,5) circle (2pt);
-    \node[black, font=\scriptsize, below left] at (5,5) {Parfait (1, 1)};
+
+    % Labels - positionnés à droite avec flèches
+    \node[black, font=\scriptsize] at (7.0, 5.0) {Excellent modèle};
+    \draw[->, thin, gray] (6.5, 5.0) -- (3.5, 4.9);
+
+    \node[black, font=\scriptsize] at (7.0, 4.2) {Bon modèle};
+    \draw[->, thin, gray] (6.5, 4.2) -- (4.0, 3.5);
+
+    \node[black, font=\scriptsize] at (7.0, 3.4) {Modèle faible};
+    \draw[->, thin, gray] (6.5, 3.4) -- (4.5, 1.0);
+
+    \node[black, font=\scriptsize, align=left] at (7.0, 2.6) {Baseline\\(10\% positifs)};
+    \draw[->, thin, gray] (6.5, 2.6) -- (3.5, 0.5);
+
+    \node[black, font=\scriptsize] at (7.0, 5.5) {Parfait (1, 1)};
+    \draw[->, thin, gray] (6.8, 5.5) -- (5.2, 5);
+
+    \node[black, font=\scriptsize] at (7.0, 1.8) {Seuil optimal};
+    \draw[->, thin, gray] (6.8, 1.8) -- (3.2, 4.9);
 
 \end{tikzpicture}
 \caption{Courbe Precision-Recall: particulièrement utile pour les classes déséquilibrées. Contrairement à la courbe ROC, elle ignore les vrais négatifs (TN) et se concentre sur la détection des positifs.}
