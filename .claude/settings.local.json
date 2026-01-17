@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose up:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker ps:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ls:*)",
+      "Bash(pdftotext:*)",
+      "Bash(docker exec:*)",
+      "Bash(for dir in cours/*/)",
+      "Bash(while read dir)",
+      "Bash(xelatex:*)",
+      "Bash(wc:*)",
+      "Bash(bash:*)",
+      "Bash(chmod:*)",
+      "Bash(python fix_notebook_refs.py:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(docker-compose restart:*)",
+      "Bash(find:*)",
+      "Bash(timeout 60 git push:*)",
+      "Bash(pdflatex:*)",
+      "Bash(pdfinfo:*)",
+      "Bash(winpty docker exec ml-sandbox bash -c \"ls -la /workspace/ | grep cours\")",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec:*)",
+      "Bash(tree:*)",
+      "Bash(where:*)",
+      "Bash(powershell -Command \"Remove-Item -Path ''cours-crypto'' -Recurse -Force; Remove-Item -Path ''cours-securite'' -Recurse -Force; Write-Host ''Dossiers supprimés''\")"
+    ]
+  }
+}

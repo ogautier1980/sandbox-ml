@@ -1,0 +1,82 @@
+{
+  "name": "ML Sandbox",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "ml-sandbox",
+  "workspaceFolder": "/workspace",
+
+  // Extensions à installer dans le container
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Python
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "ms-python.black-formatter",
+
+        // Jupyter
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+
+        // AI
+        "anthropic.claude-code",
+
+        // PDF & LaTeX
+        "tomoki1207.pdf",
+        "james-yu.latex-workshop",
+
+        // Data
+        "mechatroner.rainbow-csv",
+        "GrapeCity.gc-excelviewer",
+
+        // Markdown
+        "yzhang.markdown-all-in-one",
+        "shd101wyy.markdown-preview-enhanced",
+
+        // Git
+        "eamodio.gitlens",
+
+        // Code Quality
+        "charliermarsh.ruff",
+
+        // Utilities
+        "christian-kohler.path-intellisense",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.analysis.typeCheckingMode": "basic",
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true
+        },
+        "jupyter.askForKernelRestart": false,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  // Ports à exposer
+  "forwardPorts": [8888, 6006, 5000],
+  "portsAttributes": {
+    "8888": {"label": "Jupyter Lab", "onAutoForward": "openBrowser"},
+    "6006": {"label": "TensorBoard"},
+    "5000": {"label": "MLflow"}
+  },
+
+  // Commande post-création
+  "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt",
+
+  // Fonctionnalités additionnelles
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  // Monter le dossier SSH pour git
+  "mounts": [
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+  ],
+
+  "remoteUser": "root"
+}
