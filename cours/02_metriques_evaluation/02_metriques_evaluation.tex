@@ -547,20 +547,24 @@ La courbe ROC trace TPR vs FPR pour tous les seuils possibles (0 à 1).
         \draw (0.05,\y) -- (-0.05,\y) node[left] {\pgfmathparse{\y/5}\pgfmathprintnumber[precision=1]{\pgfmathresult}};
 
     % Ligne diagonale (classifieur aléatoire)
-    \draw[dashed, gray, thick] (0,0) -- (5,5) node[right, black] {Aléatoire (AUC=0.5)};
+    \draw[dashed, gray, thick] (0,0) -- (5,5);
+    \node[black, font=\scriptsize] at (4.0, 4.5) {Aléatoire};
+    \node[black, font=\scriptsize] at (4.0, 4.1) {(AUC=0.5)};
 
     % Courbe ROC - Bon modèle
     \draw[blue, very thick, smooth]
-        plot coordinates {(0,0) (0.2,1.5) (0.4,2.5) (0.6,3.5) (0.8,4.0) (1.2,4.5) (2.0,4.8) (5,5)}
-        node[right, black] {Bon modèle (AUC=0.85)};
+        plot coordinates {(0,0) (0.2,1.5) (0.4,2.5) (0.6,3.5) (0.8,4.0) (1.2,4.5) (2.0,4.8) (5,5)};
+    \node[black, font=\scriptsize] at (3.0, 5.2) {Bon modèle};
+    \node[black, font=\scriptsize] at (3.0, 4.85) {(AUC=0.85)};
 
     % Courbe ROC - Excellent modèle
     \draw[green!60!black, very thick, smooth]
-        plot coordinates {(0,0) (0.1,2.5) (0.15,3.5) (0.25,4.2) (0.4,4.6) (0.6,4.85) (1.5,4.95) (5,5)}
-        node[above left, black] {Excellent modèle (AUC=0.95)};
+        plot coordinates {(0,0) (0.1,2.5) (0.15,3.5) (0.25,4.2) (0.4,4.6) (0.6,4.85) (1.5,4.95) (5,5)};
+    \node[black, font=\scriptsize, align=center] at (1.2, 5.35) {Excellent modèle\\(AUC=0.95)};
 
     % Point optimal
-    \filldraw[red] (0.15,3.5) circle (2pt) node[above right, black] {Seuil optimal};
+    \filldraw[red] (0.15,3.5) circle (2pt);
+    \node[black, font=\scriptsize, right] at (0.35,3.5) {Seuil optimal};
 
     % Zone AUC (aire sous la courbe)
     \fill[blue!10, opacity=0.3]
@@ -568,7 +572,9 @@ La courbe ROC trace TPR vs FPR pour tous les seuils possibles (0 à 1).
         -- (5,0) -- cycle;
 
     % Point parfait
-    \filldraw[green!60!black] (0,5) circle (2pt) node[right, black] {Classifieur parfait (0, 1)};
+    \filldraw[green!60!black] (0,5) circle (2pt);
+    \node[black, font=\scriptsize, right] at (0.2,5) {Classifieur};
+    \node[black, font=\scriptsize, right] at (0.2,4.7) {parfait (0, 1)};
 
 \end{tikzpicture}
 \caption{Courbe ROC: comparaison de différents modèles. Plus la courbe s'approche du coin supérieur gauche, meilleur est le modèle. L'AUC (aire sous la courbe) quantifie cette performance.}
